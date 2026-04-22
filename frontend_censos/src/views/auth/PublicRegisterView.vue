@@ -49,24 +49,34 @@
                   <p class="field-hint">Solicita este código a tu presidente o secretario</p>
                 </div>
 
-                <!-- Comunidad encontrada -->
-                <div v-if="foundCommunity" class="community-found">
-                  <div class="community-card">
-                    <div class="community-icon">
-                      <span class="material-symbols-outlined">check_circle</span>
-                    </div>
-                    <div class="community-info">
-                      <h4 class="community-name">{{ foundCommunity.neighborhood }}</h4>
-                      <p class="community-detail">{{ foundCommunity.city }}, {{ foundCommunity.department }}</p>
-                      <p class="community-code">Código: <strong>{{ foundCommunity.code }}</strong></p>
+                <!-- Resultados de búsqueda -->
+                <div v-if="communityCode.length >= 1" class="search-results">
+                  <!-- Coincidencias encontradas -->
+                  <div v-if="matchingCommunities.length > 0" class="matching-list">
+                    <p class="results-title">Comunidades encontradas:</p>
+                    <div
+                      v-for="community in matchingCommunities"
+                      :key="community._id"
+                      class="community-item"
+                      :class="{ selected: foundCommunity?._id === community._id }"
+                      @click="selectCommunity(community)"
+                    >
+                      <div class="community-item-info">
+                        <h4 class="community-item-name">{{ community.neighborhood }}</h4>
+                        <p class="community-item-detail">{{ community.city }}, {{ community.department }}</p>
+                      </div>
+                      <div class="community-item-code">
+                        <span class="code-label">Código:</span>
+                        <span class="code-value">{{ community.code }}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Error: comunidad no encontrada -->
-                <div v-if="communityNotFound" class="community-not-found">
-                  <span class="material-symbols-outlined">error</span>
-                  <p>Código no encontrado. Verifica e intenta nuevamente.</p>
+                  <!-- No hay coincidencias -->
+                  <div v-else-if="communityCode.length >= 3 && !isSearching" class="no-results">
+                    <span class="material-symbols-outlined">search_off</span>
+                    <p>No se encontraron comunidades con ese código</p>
+                  </div>
                 </div>
               </div>
             </section>
@@ -171,7 +181,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth.store'
@@ -182,6 +192,11 @@ const $q = useQuasar()
 const authStore = useAuthStore()
 const communityStore = useCommunityStore()
 
+// Cargar comunidades al montar
+onMounted(async () => {
+  allCommunities.value = await communityStore.fetchPublicCommunities()
+})
+
 const isPwd = ref(true)
 const loading = ref(false)
 const communityCode = ref('')
@@ -189,6 +204,7 @@ const foundCommunity = ref(null)
 const communityNotFound = ref(false)
 const isSearching = ref(false)
 const searchTimeout = ref(null)
+const allCommunities = ref([])
 
 const form = ref({
   fullName: '',
@@ -232,9 +248,31 @@ const onCodeInput = () => {
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)
   }
+
+  // Si tiene menos de 3 dígitos, limpiar resultados
+  if (communityCode.value.length < 3) {
+    foundCommunity.value = null
+    communityNotFound.value = false
+    return
+  }
+
   searchTimeout.value = setTimeout(() => {
     searchCommunity()
-  }, 500)
+  }, 300)
+}
+
+// Comunidades que coinciden con el código escrito
+const matchingCommunities = computed(() => {
+  if (communityCode.value.length < 1) return []
+  const code = communityCode.value.trim()
+  return allCommunities.value.filter(c => c.code.startsWith(code))
+})
+
+// Seleccionar una comunidad de la lista
+const selectCommunity = (community) => {
+  communityCode.value = community.code
+  foundCommunity.value = community
+  communityNotFound.value = false
 }
 
 const handleRegister = async () => {
@@ -249,7 +287,7 @@ const handleRegister = async () => {
   if (!foundCommunity.value) {
     $q.notify({
       type: 'warning',
-      message: 'Primero debes buscar y seleccionar una comunidad válida'
+      message: 'Primero debes seleccionar una comunidad válida de la lista'
     })
     return
   }
@@ -519,6 +557,107 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.search-results {
+  margin-top: 16px;
+}
+
+.results-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.matching-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.community-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.community-item:hover {
+  background: var(--surface-container-high);
+  border-color: var(--primary);
+}
+
+.community-item.selected {
+  background: var(--tertiary-fixed);
+  border-color: var(--tertiary);
+}
+
+.community-item-info {
+  flex: 1;
+}
+
+.community-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0 0 2px 0;
+}
+
+.community-item-detail {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  margin: 0;
+}
+
+.community-item-code {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.code-label {
+  font-size: 10px;
+  color: var(--outline);
+  text-transform: uppercase;
+}
+
+.code-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  font-family: monospace;
+  background: var(--surface-container);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.no-results {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
+  color: var(--on-surface-variant);
+}
+
+.no-results .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--outline);
+}
+
+.no-results p {
+  font-size: 13px;
+  margin: 0;
 }
 
 .community-found {
