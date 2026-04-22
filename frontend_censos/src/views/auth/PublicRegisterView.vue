@@ -32,16 +32,41 @@
 
               <div class="form-grid">
                 <div class="form-field full-width">
-                  <label class="field-label">Código de Comunidad</label>
-                  <input
-                    v-model="communityCode"
-                    required
-                    class="field-input"
-                    placeholder="Ej. 123456"
-                    type="text"
-                    maxlength="6"
-                  />
+                  <label class="field-label">Buscar Comunidad por Código</label>
+                  <div class="search-wrapper">
+                    <input
+                      v-model="communityCode"
+                      @input="onCodeInput"
+                      class="field-input"
+                      placeholder="Ej. 123456"
+                      type="text"
+                      maxlength="6"
+                    />
+                    <span v-if="isSearching" class="search-loading">
+                      <q-spinner size="20px" color="primary" />
+                    </span>
+                  </div>
                   <p class="field-hint">Solicita este código a tu presidente o secretario</p>
+                </div>
+
+                <!-- Comunidad encontrada -->
+                <div v-if="foundCommunity" class="community-found">
+                  <div class="community-card">
+                    <div class="community-icon">
+                      <span class="material-symbols-outlined">check_circle</span>
+                    </div>
+                    <div class="community-info">
+                      <h4 class="community-name">{{ foundCommunity.neighborhood }}</h4>
+                      <p class="community-detail">{{ foundCommunity.city }}, {{ foundCommunity.department }}</p>
+                      <p class="community-code">Código: <strong>{{ foundCommunity.code }}</strong></p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Error: comunidad no encontrada -->
+                <div v-if="communityNotFound" class="community-not-found">
+                  <span class="material-symbols-outlined">error</span>
+                  <p>Código no encontrado. Verifica e intenta nuevamente.</p>
                 </div>
               </div>
             </section>
@@ -163,6 +188,7 @@ const communityCode = ref('')
 const foundCommunity = ref(null)
 const communityNotFound = ref(false)
 const isSearching = ref(false)
+const searchTimeout = ref(null)
 
 const form = ref({
   fullName: '',
@@ -175,6 +201,13 @@ const form = ref({
 
 const searchCommunity = async () => {
   if (!communityCode.value.trim()) {
+    foundCommunity.value = null
+    communityNotFound.value = false
+    return
+  }
+
+  // Solo buscar si tiene 6 dígitos
+  if (communityCode.value.length !== 6) {
     foundCommunity.value = null
     communityNotFound.value = false
     return
@@ -193,6 +226,17 @@ const searchCommunity = async () => {
   }
   isSearching.value = false
 }
+
+// Búsqueda con debounce al escribir
+const onCodeInput = () => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value)
+  }
+  searchTimeout.value = setTimeout(() => {
+    searchCommunity()
+  }, 500)
+}
+</script>
 
 const handleRegister = async () => {
   if (form.value.password !== form.value.confirmPassword) {
@@ -470,27 +514,12 @@ const handleRegister = async () => {
   align-items: center;
 }
 
-.search-btn {
+.search-loading {
   position: absolute;
-  right: 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
+  right: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
-  transition: all 0.2s;
-}
-
-.search-btn:hover {
-  background: var(--surface-container-high);
-}
-
-.search-btn .material-symbols-outlined {
-  color: var(--primary);
-  font-size: 20px;
 }
 
 .community-found {
