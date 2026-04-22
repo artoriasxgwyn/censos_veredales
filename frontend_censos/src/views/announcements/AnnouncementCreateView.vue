@@ -1,0 +1,187 @@
+<template>
+  <div class="page-container">
+    <div class="page-header">
+      <q-btn
+        flat
+        icon="arrow_back"
+        label="Volver"
+        @click="router.back()"
+      />
+      <h1 class="title">Crear Anuncio</h1>
+    </div>
+
+    <q-card class="form-card">
+      <q-card-section>
+        <h2 class="section-title">Información del Anuncio</h2>
+        <p class="section-description">
+          Crea un nuevo anuncio para la comunidad. Puedes guardarlo como borrador o publicarlo inmediatamente.
+        </p>
+      </q-card-section>
+
+      <q-card-section>
+        <q-form @submit="handleSubmit" class="form">
+          <div class="row q-col-gutter-md">
+            <div class="col-12">
+              <q-input
+                v-model="form.title"
+                label="Título del Anuncio"
+                outlined
+                dense
+                :rules="[val => !!val || 'El título es requerido']"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="title" />
+                </template>
+              </q-input>
+            </div>
+
+            <div class="col-12">
+              <q-editor
+                v-model="form.content"
+                label="Contenido"
+                outlined
+                min-height="200px"
+                :rules="[val => !!val || 'El contenido es requerido']"
+              />
+            </div>
+
+            <div class="col-12">
+              <q-toggle
+                v-model="form.isPublished"
+                label="Publicar inmediatamente"
+              />
+              <p class="toggle-help">
+                {{ form.isPublished
+                  ? 'El anuncio será visible para todos los residentes inmediatamente.'
+                  : 'El anuncio se guardará como borrador y no será visible públicamente.'
+                }}
+              </p>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <q-btn
+              color="grey"
+              label="Cancelar"
+              flat
+              @click="router.back()"
+            />
+            <q-btn
+              type="submit"
+              color="primary"
+              label="Guardar Anuncio"
+              :loading="announcementStore.loading"
+            />
+          </div>
+        </q-form>
+      </q-card-section>
+    </q-card>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { useAnnouncementStore } from '@/stores/announcement.store'
+
+const router = useRouter()
+const $q = useQuasar()
+const announcementStore = useAnnouncementStore()
+
+const form = ref({
+  title: '',
+  content: '',
+  isPublished: false
+})
+
+const handleSubmit = async () => {
+  const announcementData = {
+    title: form.value.title,
+    content: form.value.content,
+    isPublished: form.value.isPublished
+  }
+
+  const result = await announcementStore.createAnnouncement(announcementData)
+
+  if (result.success) {
+    $q.notify({
+      type: 'positive',
+      message: form.value.isPublished ? 'Anuncio publicado exitosamente' : 'Borrador guardado exitosamente'
+    })
+    router.push('/admin/announcements')
+  } else {
+    $q.notify({
+      type: 'negative',
+      message: result.message || 'Error al crear anuncio'
+    })
+  }
+}
+</script>
+
+<style scoped>
+.page-container {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0;
+  flex: 1;
+}
+
+.form-card {
+  border-radius: 12px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0 0 8px 0;
+}
+
+.section-description {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 24px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggle-help {
+  font-size: 12px;
+  color: var(--outline);
+  margin: 8px 0 0 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+:deep(.q-editor) {
+  border-radius: 8px;
+}
+
+:deep(.q-editor__content) {
+  min-height: 150px;
+}
+</style>

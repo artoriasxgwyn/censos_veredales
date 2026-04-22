@@ -1,0 +1,28 @@
+{
+  "name": "api_censos_veredales",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Censos Veredales - Backend",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "dev": "node --watch app.js",
+    "start": "node app.js",
+    "seed": "node scripts/seed.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.17.2",
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.22.0",
+    "nodemailer": "^6.9.0",
+    "dotenv": "^17.2.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.0",
+    "morgan": "^1.10.0",
+    "swagger-ui-express": "^5.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "uuid": "^11.1.0"
+  }
+}

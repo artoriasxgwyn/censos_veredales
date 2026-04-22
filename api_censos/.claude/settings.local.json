@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b /s C:\\\\Users\\\\ryomen\\\\Documents\\\\censos_veredales\\\\real\\\\api_censos)",
+      "Bash(findstr /i \"modelo\\\\|controlador\\\\|ruta\")",
+      "Read(//d/censos_veredales/**)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000/api/auth/me -H \"x-token: test\")",
+      "Bash(npm install *)",
+      "WebFetch(domain:www.plantuml.com)",
+      "Bash(curl -s \"http://www.plantuml.com/plantuml/svg/SoWkIImgAStDuSf9BIvGqBLJSE98pKiXISyZrD27LIz8pUd9BPLN2D81I8ZLX8c02W00\" -o diagram.svg)",
+      "Bash(java -jar plantuml.jar database-schema.puml)"
+    ]
+  }
+}

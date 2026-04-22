@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"C:\\\\Users\\\\ryomen\\\\Documents\\\\censos_veredales\\\\api_censos\")",
+      "Bash(findstr /v node_modules)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "mcp__stitch__get_project",
+      "Bash(curl -s http://localhost:5179)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}
