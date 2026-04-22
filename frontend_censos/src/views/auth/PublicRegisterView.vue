@@ -236,7 +236,6 @@ const onCodeInput = () => {
     searchCommunity()
   }, 500)
 }
-</script>
 
 const handleRegister = async () => {
   if (form.value.password !== form.value.confirmPassword) {
