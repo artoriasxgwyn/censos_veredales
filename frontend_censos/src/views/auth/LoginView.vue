@@ -161,10 +161,53 @@ const handleLogin = async () => {
       router.push('/resident/dashboard')
     }
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Credenciales inválidas'
-    })
+    // Analizar el mensaje de error para determinar qué campo falló
+    const errorMsg = result.message || ''
+
+    // Errores específicos según la respuesta del backend
+    if (errorMsg.toLowerCase().includes('correo') || errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('usuario no encontrado')) {
+      errors.value.email = ['El correo electrónico no está registrado']
+      $q.notify({
+        type: 'negative',
+        message: 'El correo electrónico no está registrado',
+        caption: 'Verifica tu correo o crea una nueva cuenta'
+      })
+    } else if (errorMsg.toLowerCase().includes('contraseña') || errorMsg.toLowerCase().includes('password') || errorMsg.toLowerCase().includes('clave')) {
+      errors.value.password = ['La contraseña es incorrecta']
+      form.value.password = '' // Limpiar password
+      $q.notify({
+        type: 'negative',
+        message: 'La contraseña es incorrecta',
+        caption: 'Intenta nuevamente o restablece tu contraseña'
+      })
+    } else if (errorMsg.toLowerCase().includes('comunidad') || errorMsg.toLowerCase().includes('asignada')) {
+      // Usuario sin comunidad asignada
+      errors.value.email = ['Usuario sin comunidad asignada']
+      $q.notify({
+        type: 'negative',
+        message: 'Usuario sin comunidad asignada',
+        caption: 'Contacta al administrador para que asigne tu comunidad'
+      })
+    } else {
+      // Error genérico "Credenciales inválidas" - no especificamos cuál para seguridad
+      // Marcar ambos campos como con error
+      errors.value.email = [' ']
+      errors.value.password = [' ']
+      form.value.password = '' // Limpiar password por seguridad
+      $q.notify({
+        type: 'negative',
+        message: 'Credenciales inválidas',
+        caption: 'El correo o la contraseña son incorrectos',
+        timeout: 4000,
+        actions: [
+          {
+            label: '¿Olvidaste tu contraseña?',
+            color: 'white',
+            handler: () => router.push('/forgot-password')
+          }
+        ]
+      })
+    }
   }
 }
 </script>
