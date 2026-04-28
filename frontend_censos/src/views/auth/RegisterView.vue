@@ -31,25 +31,30 @@
               </div>
 
               <div class="form-grid">
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('neighborhood') }">
                   <label class="field-label">Barrio / Vereda</label>
-                  <input v-model="community.neighborhood" required class="field-input" placeholder="Ej. Los Almendros" type="text"/>
+                  <input v-model="community.neighborhood" class="field-input" placeholder="Ej. Los Almendros" type="text"/>
+                  <span v-if="hasError('neighborhood')" class="error-message">{{ getFieldError('neighborhood') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('city') }">
                   <label class="field-label">Ciudad</label>
-                  <input v-model="community.city" required class="field-input" placeholder="Ej. Medellín" type="text"/>
+                  <input v-model="community.city" class="field-input" placeholder="Ej. Medellín" type="text"/>
+                  <span v-if="hasError('city')" class="error-message">{{ getFieldError('city') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('department') }">
                   <label class="field-label">Departamento</label>
-                  <input v-model="community.department" required class="field-input" placeholder="Ej. Antioquia" type="text"/>
+                  <input v-model="community.department" class="field-input" placeholder="Ej. Antioquia" type="text"/>
+                  <span v-if="hasError('department')" class="error-message">{{ getFieldError('department') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('estimatedResidentCount') }">
                   <label class="field-label">Residentes estimados</label>
                   <input v-model.number="community.estimatedResidentCount" class="field-input" placeholder="0" type="number"/>
+                  <span v-if="hasError('estimatedResidentCount')" class="error-message">{{ getFieldError('estimatedResidentCount') }}</span>
                 </div>
-                <div class="form-field full-width">
+                <div class="form-field full-width" :class="{ 'has-error': hasError('communityHallAddress') }">
                   <label class="field-label">Dirección Exacta (Salón Comunal)</label>
-                  <input v-model="community.communityHallAddress" required class="field-input" placeholder="Carrera 45 # 12-34" type="text"/>
+                  <input v-model="community.communityHallAddress" class="field-input" placeholder="Carrera 45 # 12-34" type="text"/>
+                  <span v-if="hasError('communityHallAddress')" class="error-message">{{ getFieldError('communityHallAddress') }}</span>
                 </div>
               </div>
             </section>
@@ -64,34 +69,40 @@
               </div>
 
               <div class="form-grid">
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('fullName') }">
                   <label class="field-label">Nombre Completo</label>
-                  <input v-model="president.fullName" required class="field-input" type="text"/>
+                  <input v-model="president.fullName" class="field-input" type="text"/>
+                  <span v-if="hasError('fullName')" class="error-message">{{ getFieldError('fullName') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('documentNumber') }">
                   <label class="field-label">Cédula</label>
-                  <input v-model="president.documentNumber" required class="field-input" type="text"/>
+                  <input v-model="president.documentNumber" class="field-input" type="text" placeholder="Ej: 1234567890"/>
+                  <span v-if="hasError('documentNumber')" class="error-message">{{ getFieldError('documentNumber') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('email') }">
                   <label class="field-label">Correo Electrónico</label>
-                  <input v-model="president.email" required class="field-input" type="email"/>
+                  <input v-model="president.email" class="field-input" type="email"/>
+                  <span v-if="hasError('email')" class="error-message">{{ getFieldError('email') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('phone') }">
                   <label class="field-label">Teléfono</label>
-                  <input v-model="president.phone" required class="field-input" type="tel"/>
+                  <input v-model="president.phone" class="field-input" type="tel" placeholder="3001234567"/>
+                  <span v-if="hasError('phone')" class="error-message">{{ getFieldError('phone') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('password') }">
                   <label class="field-label">Contraseña</label>
-                  <input v-model="president.password" required class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                  <input v-model="president.password" class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                  <span v-if="hasError('password')" class="error-message">{{ getFieldError('password') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('confirmPassword') }">
                   <label class="field-label">Confirmar contraseña</label>
                   <div class="password-input-wrapper">
-                    <input v-model="president.confirmPassword" required class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                    <input v-model="president.confirmPassword" class="field-input" :type="isPwd ? 'password' : 'text'"/>
                     <button @click.prevent="isPwd = !isPwd" class="toggle-password" type="button">
                       <span class="material-symbols-outlined">{{ isPwd ? 'visibility' : 'visibility_off' }}</span>
                     </button>
                   </div>
+                  <span v-if="hasError('confirmPassword')" class="error-message">{{ getFieldError('confirmPassword') }}</span>
                 </div>
               </div>
             </section>
@@ -138,6 +149,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useCommunityStore } from '@/stores/community.store'
+import { createCommunitySchema } from '@/schemas/community.schema'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -145,6 +157,7 @@ const communityStore = useCommunityStore()
 
 const isPwd = ref(true)
 const loading = ref(false)
+const errors = ref({})
 
 const community = ref({
   neighborhood: '',
@@ -165,8 +178,50 @@ const president = ref({
   confirmPassword: ''
 })
 
+// Validar y obtener errores de un campo
+const getFieldError = (field) => errors.value[field] || errors.value[`president.${field}`] || null
+const hasError = (field) => !!getFieldError(field)
+
 const handleRegister = async () => {
+  // Resetear errores previos
+  errors.value = {}
+
+  // Preparar datos para validación
+  const dataToValidate = {
+    neighborhood: community.value.neighborhood,
+    city: community.value.city,
+    department: community.value.department,
+    communityHallAddress: community.value.communityHallAddress,
+    mapLocation: community.value.mapLocation || undefined,
+    estimatedResidentCount: community.value.estimatedResidentCount || undefined,
+    president: {
+      fullName: president.value.fullName,
+      documentNumber: president.value.documentNumber,
+      birthDate: president.value.birthDate || undefined,
+      phone: president.value.phone.replace(/-/g, ''),
+      email: president.value.email,
+      password: president.value.password
+    }
+  }
+
+  // Validar con Zod
+  const validation = createCommunitySchema.safeParse(dataToValidate)
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten().fieldErrors
+    errors.value = fieldErrors
+
+    // Mostrar notificación con el primer error
+    const firstError = Object.values(fieldErrors)[0]?.[0]
+    $q.notify({
+      type: 'warning',
+      message: firstError || 'Error de validación'
+    })
+    return
+  }
+
+  // Verificar contraseñas
   if (president.value.password !== president.value.confirmPassword) {
+    errors.value['president.confirmPassword'] = ['Las contraseñas no coinciden']
     $q.notify({
       type: 'warning',
       message: 'Las contraseñas no coinciden'
@@ -177,19 +232,19 @@ const handleRegister = async () => {
   loading.value = true
 
   const communityData = {
-    neighborhood: community.value.neighborhood,
-    city: community.value.city,
-    department: community.value.department,
-    communityHallAddress: community.value.communityHallAddress,
-    mapLocation: community.value.mapLocation || undefined,
-    estimatedResidentCount: community.value.estimatedResidentCount || undefined,
+    neighborhood: validation.data.neighborhood,
+    city: validation.data.city,
+    department: validation.data.department,
+    communityHallAddress: validation.data.communityHallAddress,
+    mapLocation: validation.data.mapLocation,
+    estimatedResidentCount: validation.data.estimatedResidentCount,
     president: {
-      fullName: president.value.fullName,
-      documentNumber: president.value.documentNumber.toString(),
-      birthDate: president.value.birthDate || undefined,
-      phone: president.value.phone.replace(/-/g, ''),
-      email: president.value.email,
-      password: president.value.password
+      fullName: validation.data.president.fullName,
+      documentNumber: validation.data.president.documentNumber,
+      birthDate: validation.data.president.birthDate,
+      phone: validation.data.president.phone,
+      email: validation.data.president.email,
+      password: validation.data.president.password
     }
   }
 
@@ -428,6 +483,24 @@ const handleRegister = async () => {
 .field-input:focus {
   background: var(--surface-container-lowest);
   box-shadow: 0 0 0 2px var(--primary);
+}
+
+.field-input.error {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.form-field.has-error .field-input {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.error-message {
+  font-size: 11px;
+  color: var(--error);
+  margin-top: 4px;
+  padding-left: 4px;
+  display: block;
 }
 
 .password-input-wrapper {

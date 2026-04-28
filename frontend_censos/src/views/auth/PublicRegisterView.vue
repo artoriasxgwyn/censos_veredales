@@ -91,34 +91,40 @@
               </div>
 
               <div class="form-grid">
-                <div class="form-field full-width">
+                <div class="form-field full-width" :class="{ 'has-error': hasError('fullName') }">
                   <label class="field-label">Nombre Completo</label>
-                  <input v-model="form.fullName" required class="field-input" type="text"/>
+                  <input v-model="form.fullName" class="field-input" type="text"/>
+                  <span v-if="hasError('fullName')" class="error-message">{{ getFieldError('fullName') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('documentNumber') }">
                   <label class="field-label">Cédula</label>
-                  <input v-model="form.documentNumber" required class="field-input" type="text"/>
+                  <input v-model="form.documentNumber" class="field-input" type="text" placeholder="Ej: 1234567890"/>
+                  <span v-if="hasError('documentNumber')" class="error-message">{{ getFieldError('documentNumber') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('phone') }">
                   <label class="field-label">Teléfono</label>
-                  <input v-model="form.phone" required class="field-input" type="tel"/>
+                  <input v-model="form.phone" class="field-input" type="tel" placeholder="3001234567"/>
+                  <span v-if="hasError('phone')" class="error-message">{{ getFieldError('phone') }}</span>
                 </div>
-                <div class="form-field full-width">
+                <div class="form-field full-width" :class="{ 'has-error': hasError('email') }">
                   <label class="field-label">Correo Electrónico</label>
-                  <input v-model="form.email" required class="field-input" type="email"/>
+                  <input v-model="form.email" class="field-input" type="email"/>
+                  <span v-if="hasError('email')" class="error-message">{{ getFieldError('email') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('password') }">
                   <label class="field-label">Contraseña</label>
-                  <input v-model="form.password" required class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                  <input v-model="form.password" class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                  <span v-if="hasError('password')" class="error-message">{{ getFieldError('password') }}</span>
                 </div>
-                <div class="form-field">
+                <div class="form-field" :class="{ 'has-error': hasError('confirmPassword') }">
                   <label class="field-label">Confirmar contraseña</label>
                   <div class="password-input-wrapper">
-                    <input v-model="form.confirmPassword" required class="field-input" :type="isPwd ? 'password' : 'text'"/>
+                    <input v-model="form.confirmPassword" class="field-input" :type="isPwd ? 'password' : 'text'"/>
                     <button @click.prevent="isPwd = !isPwd" class="toggle-password" type="button">
                       <span class="material-symbols-outlined">{{ isPwd ? 'visibility' : 'visibility_off' }}</span>
                     </button>
                   </div>
+                  <span v-if="hasError('confirmPassword')" class="error-message">{{ getFieldError('confirmPassword') }}</span>
                 </div>
               </div>
             </section>
@@ -203,6 +209,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useCommunityStore } from '@/stores/community.store'
 import { uploadService } from '@/services/upload.service'
 import SignaturePad from '@/components/SignaturePad.vue'
+import { publicRegisterSchema } from '@/schemas/user.schema'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -224,6 +231,7 @@ const isSearching = ref(false)
 const searchTimeout = ref(null)
 const allCommunities = ref([])
 const signatureData = ref('')
+const errors = ref({})
 
 const form = ref({
   fullName: '',
@@ -233,6 +241,10 @@ const form = ref({
   password: '',
   confirmPassword: ''
 })
+
+// Helpers para errores
+const getFieldError = (field) => errors.value[field] || null
+const hasError = (field) => !!getFieldError(field)
 
 const searchCommunity = async () => {
   if (!communityCode.value.trim()) {
@@ -295,10 +307,31 @@ const selectCommunity = (community) => {
 }
 
 const handleRegister = async () => {
-  if (form.value.password !== form.value.confirmPassword) {
+  // Resetear errores previos
+  errors.value = {}
+
+  // Validar con Zod
+  const dataToValidate = {
+    fullName: form.value.fullName,
+    documentNumber: form.value.documentNumber,
+    phone: form.value.phone.replace(/-/g, ''),
+    email: form.value.email,
+    password: form.value.password,
+    confirmPassword: form.value.confirmPassword,
+    communityCode: communityCode.value,
+    digitalSignature: signatureData.value
+  }
+
+  const validation = publicRegisterSchema.safeParse(dataToValidate)
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten().fieldErrors
+    errors.value = fieldErrors
+
+    // Mostrar notificación con el primer error
+    const firstError = Object.values(fieldErrors)[0]?.[0]
     $q.notify({
       type: 'warning',
-      message: 'Las contraseñas no coinciden'
+      message: firstError || 'Error de validación'
     })
     return
   }
@@ -307,14 +340,6 @@ const handleRegister = async () => {
     $q.notify({
       type: 'warning',
       message: 'Primero debes seleccionar una comunidad válida de la lista'
-    })
-    return
-  }
-
-  if (!signatureData.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'Debes firmar el registro antes de continuar'
     })
     return
   }
@@ -344,14 +369,14 @@ const handleRegister = async () => {
     const signatureUrl = await uploadService.uploadImage(file, 'signature')
     uploadingSignature.value = false
 
-    // 2. Registrar usuario con la firma
+    // 2. Registrar usuario con la firma (datos ya validados por Zod)
     const registerData = {
-      communityCode: communityCode.value,
-      fullName: form.value.fullName,
-      documentNumber: form.value.documentNumber,
-      phone: form.value.phone.replace(/-/g, ''),
-      email: form.value.email,
-      password: form.value.password,
+      communityCode: validation.data.communityCode,
+      fullName: validation.data.fullName,
+      documentNumber: validation.data.documentNumber,
+      phone: validation.data.phone,
+      email: validation.data.email,
+      password: validation.data.password,
       digitalSignature: signatureUrl
     }
 
@@ -603,6 +628,24 @@ const handleRegister = async () => {
 .field-input:focus {
   background: var(--surface-container-lowest);
   box-shadow: 0 0 0 2px var(--primary);
+}
+
+.field-input.error {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.form-field.has-error .field-input {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.error-message {
+  font-size: 11px;
+  color: var(--error);
+  margin-top: 4px;
+  padding-left: 4px;
+  display: block;
 }
 
 .field-hint {

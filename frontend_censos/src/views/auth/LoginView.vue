@@ -13,7 +13,7 @@
 
         <form @submit.prevent="handleLogin" class="auth-form">
           <!-- Campo de Email/Documento -->
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': hasError('email') }">
             <label class="field-label">Cédula o correo electrónico</label>
             <div class="input-wrapper">
               <span class="material-symbols-outlined input-icon">person</span>
@@ -22,13 +22,13 @@
                 type="text"
                 placeholder="Ej: 1.234.567-8 o usuario@mail.com"
                 class="auth-input"
-                required
               />
             </div>
+            <span v-if="hasError('email')" class="error-message">{{ getFieldError('email') }}</span>
           </div>
 
           <!-- Campo de Contraseña -->
-          <div class="form-group">
+          <div class="form-group" :class="{ 'has-error': hasError('password') }">
             <label class="field-label">Contraseña</label>
             <div class="input-wrapper">
               <span class="material-symbols-outlined input-icon">lock</span>
@@ -37,7 +37,6 @@
                 :type="isPwd ? 'password' : 'text'"
                 placeholder="••••••••"
                 class="auth-input"
-                required
               />
               <button
                 type="button"
@@ -50,6 +49,7 @@
                 </span>
               </button>
             </div>
+            <span v-if="hasError('password')" class="error-message">{{ getFieldError('password') }}</span>
           </div>
 
           <!-- Olvidó contraseña -->
@@ -99,6 +99,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth.store'
+import { loginSchema } from '@/schemas/user.schema'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -106,13 +107,40 @@ const authStore = useAuthStore()
 
 const isPwd = ref(true)
 const currentYear = new Date().getFullYear()
+const errors = ref({})
 const form = ref({
   email: '',
   password: ''
 })
 
+// Helpers para errores
+const getFieldError = (field) => errors.value[field] || null
+const hasError = (field) => !!getFieldError(field)
+
 const handleLogin = async () => {
-  const result = await authStore.login(form.value.email, form.value.password)
+  // Resetear errores previos
+  errors.value = {}
+
+  // Validar con Zod
+  const validation = loginSchema.safeParse({
+    email: form.value.email,
+    password: form.value.password
+  })
+
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten().fieldErrors
+    errors.value = fieldErrors
+
+    // Mostrar notificación con el primer error
+    const firstError = Object.values(fieldErrors)[0]?.[0]
+    $q.notify({
+      type: 'warning',
+      message: firstError || 'Error de validación'
+    })
+    return
+  }
+
+  const result = await authStore.login(validation.data.email, validation.data.password)
 
   if (result.success) {
     $q.notify({
@@ -294,6 +322,24 @@ const handleLogin = async () => {
 .auth-input:focus {
   background: var(--surface-container-lowest);
   box-shadow: 0 0 0 2px var(--primary);
+}
+
+.auth-input.error {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.form-group.has-error .auth-input {
+  background: var(--error-container);
+  box-shadow: 0 0 0 2px var(--error);
+}
+
+.error-message {
+  font-size: 11px;
+  color: var(--error);
+  margin-top: 4px;
+  padding-left: 2px;
+  display: block;
 }
 
 .auth-input::placeholder {

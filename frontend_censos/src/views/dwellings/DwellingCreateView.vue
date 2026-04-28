@@ -27,6 +27,8 @@
                 label="Nomenclatura de la Vivienda"
                 outlined
                 hint="Ej: Carrera 15 #123-45"
+                :error="hasError('houseNomenclature')"
+                :error-message="getFieldError('houseNomenclature')"
               >
                 <template v-slot:prepend>
                   <q-icon name="home" />
@@ -40,8 +42,9 @@
                 label="Instrucciones de Llegada"
                 type="textarea"
                 outlined
-                :rules="[val => !!val || 'Las instrucciones son requeridas']"
                 hint="Descripción de cómo llegar a la vivienda"
+                :error="hasError('arrivalInstructions')"
+                :error-message="getFieldError('arrivalInstructions')"
               >
                 <template v-slot:prepend>
                   <q-icon name="directions" />
@@ -56,6 +59,8 @@
                 outlined
                 type="url"
                 hint="Enlace de Google Maps o similar"
+                :error="hasError('mapLocation')"
+                :error-message="getFieldError('mapLocation')"
               >
                 <template v-slot:prepend>
                   <q-icon name="map" />
@@ -116,6 +121,8 @@
                 hint="Si el propietario está registrado, se vinculará automáticamente"
                 mask="###.###.###"
                 fill-mask
+                :error="hasError('cedulaPropietario')"
+                :error-message="getFieldError('cedulaPropietario')"
               >
                 <template v-slot:prepend>
                   <q-icon name="badge" />
@@ -151,12 +158,14 @@ import { useQuasar } from 'quasar'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { uploadService } from '@/services/upload.service'
+import { createDwellingSchema } from '@/schemas/dwelling.schema'
 
 const router = useRouter()
 const $q = useQuasar()
 const dwellingStore = useDwellingStore()
 const authStore = useAuthStore()
 
+const errors = ref({})
 const form = ref({
   houseNomenclature: '',
   arrivalInstructions: '',
@@ -170,6 +179,10 @@ const uploadingPhoto = ref(false)
 const photoPreview = ref(null)
 
 const fileInputRef = ref(null)
+
+// Helpers para errores
+const getFieldError = (field) => errors.value[field] || null
+const hasError = (field) => !!getFieldError(field)
 
 const triggerFileInput = () => {
   fileInputRef.value?.click()
@@ -200,18 +213,29 @@ const removePhoto = () => {
 }
 
 const handleSubmit = async () => {
-  if (!form.value.cedulaPropietario) {
-    $q.notify({
-      type: 'warning',
-      message: 'La cédula del propietario es requerida'
-    })
-    return
+  // Resetear errores previos
+  errors.value = {}
+
+  // Preparar datos para validación
+  const dataToValidate = {
+    houseNomenclature: form.value.houseNomenclature || undefined,
+    arrivalInstructions: form.value.arrivalInstructions,
+    mapLocation: form.value.mapLocation || undefined,
+    constructionDate: form.value.constructionDate || undefined,
+    cedulaPropietario: form.value.cedulaPropietario.replace(/\./g, '')
   }
 
-  if (!form.value.arrivalInstructions) {
+  // Validar con Zod
+  const validation = createDwellingSchema.safeParse(dataToValidate)
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten().fieldErrors
+    errors.value = fieldErrors
+
+    // Mostrar notificación con el primer error
+    const firstError = Object.values(fieldErrors)[0]?.[0]
     $q.notify({
       type: 'warning',
-      message: 'Las instrucciones de llegada son requeridas'
+      message: firstError || 'Error de validación'
     })
     return
   }
@@ -235,13 +259,14 @@ const handleSubmit = async () => {
 
   uploadingPhoto.value = false
 
+  // Datos ya validados por Zod
   const dwellingData = {
-    houseNomenclature: form.value.houseNomenclature || undefined,
-    arrivalInstructions: form.value.arrivalInstructions,
-    mapLocation: form.value.mapLocation || undefined,
-    constructionDate: form.value.constructionDate || undefined,
+    houseNomenclature: validation.data.houseNomenclature,
+    arrivalInstructions: validation.data.arrivalInstructions,
+    mapLocation: validation.data.mapLocation,
+    constructionDate: validation.data.constructionDate,
     homePhoto: homePhotoUrl,
-    cedulaPropietario: form.value.cedulaPropietario.replace(/\./g, ''), // Enviar sin puntos
+    cedulaPropietario: validation.data.cedulaPropietario,
     communityId: authStore.communityId
   }
 
