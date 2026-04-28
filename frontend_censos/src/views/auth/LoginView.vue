@@ -43,8 +43,9 @@
                 type="button"
                 @click="isPwd = !isPwd"
                 class="toggle-password"
+                :aria-label="isPwd ? 'Mostrar contraseña' : 'Ocultar contraseña'"
               >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined" aria-hidden="true">
                   {{ isPwd ? 'visibility_off' : 'visibility' }}
                 </span>
               </button>
@@ -64,7 +65,7 @@
             class="auth-button"
             :disabled="authStore.loading"
           >
-            <span v-if="authStore.loading" class="spinner"></span>
+            <q-spinner v-if="authStore.loading" size="20px" color="white" />
             <span v-else>Iniciar sesión</span>
           </button>
         </form>
@@ -88,7 +89,7 @@
     </main>
 
     <footer class="auth-footer-legal">
-      <p class="legal-text">© 2024 CENSOS VEREDALES • SISTEMA DE GESTIÓN COMUNAL</p>
+      <p class="legal-text">© {{ currentYear }} CENSOS VEREDALES • SISTEMA DE GESTIÓN COMUNAL</p>
     </footer>
   </div>
 </template>
@@ -104,6 +105,7 @@ const $q = useQuasar()
 const authStore = useAuthStore()
 
 const isPwd = ref(true)
+const currentYear = new Date().getFullYear()
 const form = ref({
   email: '',
   password: ''
@@ -379,17 +381,9 @@ const handleLogin = async () => {
   cursor: not-allowed;
 }
 
-.spinner {
+.auth-button .q-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: var(--on-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .auth-footer {

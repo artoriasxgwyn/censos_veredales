@@ -266,7 +266,7 @@
           dense
           round
           icon="menu"
-          aria-label="Menu"
+          aria-label="Abrir menú de navegación"
           @click="toggleLeftDrawer"
           class="mobile-menu-btn"
         />
@@ -281,6 +281,8 @@
             round
             icon="notifications"
             @click="showNotifications = !showNotifications"
+            aria-label="Notificaciones"
+            :aria-busy="hasNotifications"
           >
             <q-badge color="red" floating v-if="hasNotifications">
               {{ notificationCount }}
@@ -310,9 +312,12 @@ const authStore = useAuthStore()
 
 const leftDrawerOpen = ref(false)
 const showNotifications = ref(false)
+
+// Variables para notificaciones (pendientes de implementar)
 const hasNotifications = ref(false)
 const notificationCount = ref(0)
 
+// Rol admin: presidente, tesorero o secretario
 const isAdmin = computed(() => {
   return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
 })

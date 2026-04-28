@@ -339,9 +339,9 @@ const formatDate = (date) => {
   letter-spacing: 0.05em;
 }
 
-.dwelling-badge.pending { background: var(--warning); color: var(--on-primary); }
-.dwelling-badge.approved { background: var(--tertiary); color: var(--on-primary); }
-.dwelling-badge.rejected { background: var(--error); color: var(--on-primary); }
+.dwelling-badge.pending { background: var(--warning); color: var(--on-warning); }
+.dwelling-badge.approved { background: var(--tertiary); color: var(--on-tertiary); }
+.dwelling-badge.rejected { background: var(--error); color: var(--on-error); }
 
 .dwelling-icon {
   width: 48px;

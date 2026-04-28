@@ -50,6 +50,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const canvasRef = ref(null)
 let signaturePad = null
+let resizeTimeout = null
 
 onMounted(() => {
   if (canvasRef.value) {
@@ -58,12 +59,18 @@ onMounted(() => {
       const canvas = canvasRef.value
       // Ajustar el tamaño del canvas
       const parent = canvas.parentElement
-      canvas.width = parent.clientWidth
-      canvas.height = 200
+      const rect = parent.getBoundingClientRect()
+      canvas.width = rect.width
+      canvas.height = Math.max(200, rect.width * 0.4) // Responsive height
+
+      // Obtener colores del tema CSS
+      const style = getComputedStyle(document.documentElement)
+      const surfaceColor = style.getPropertyValue('--surface-container-lowest').trim() || '#ffffff'
+      const onSurfaceColor = style.getPropertyValue('--on-surface').trim() || '#000000'
 
       signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgba(255, 255, 255, 1)',
-        penColor: 'rgb(0, 0, 0)',
+        backgroundColor: 'transparent',
+        penColor: onSurfaceColor || 'rgb(0, 0, 0)',
         minWidth: 2,
         maxWidth: 4
       })
@@ -111,6 +118,32 @@ watch(() => props.modelValue, (newValue) => {
     signaturePad.clear()
   }
 })
+
+// Manejar resize de ventana
+const handleResize = () => {
+  if (resizeTimeout) clearTimeout(resizeTimeout)
+  resizeTimeout = setTimeout(() => {
+    if (canvasRef.value && signaturePad) {
+      const canvas = canvasRef.value
+      const parent = canvas.parentElement
+      const rect = parent.getBoundingClientRect()
+
+      // Guardar datos actuales
+      const data = signaturePad.toData()
+
+      // Redimensionar canvas
+      canvas.width = rect.width
+      canvas.height = Math.max(200, rect.width * 0.4)
+
+      // Restaurar datos
+      signaturePad.fromData(data)
+    }
+  }, 250)
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', handleResize)
+}
 </script>
 
 <style scoped>
@@ -119,23 +152,23 @@ watch(() => props.modelValue, (newValue) => {
 }
 
 .signature-pad-wrapper {
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  background: white;
+  border: 2px solid var(--surface-container-highest);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
   width: 100%;
 }
 
 .signature-pad {
   width: 100%;
-  height: 200px;
-  border-radius: 8px;
+  height: 100%;
+  border-radius: var(--radius-md);
   cursor: crosshair;
 }
 
 .signature-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: var(--spacing-sm);
 }
 </style>

@@ -22,7 +22,7 @@
     <q-separator />
 
     <q-card-section class="announcement-body">
-      <p class="announcement-excerpt" v-html="getExcerpt(announcement.body)"></p>
+      <p class="announcement-excerpt">{{ getExcerpt(announcement.body) }}</p>
     </q-card-section>
 
     <q-card-actions align="right" v-if="showActions">
