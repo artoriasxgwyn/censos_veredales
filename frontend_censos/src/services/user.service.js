@@ -31,10 +31,9 @@ export const userService = {
     return response.data
   },
 
-  async removeRole(id, role) {
-    const response = await api.delete(`/users/${id}/role`, {
-      params: { role }
-    })
+  async removeRole(id) {
+    // El backend quita el rol actual del usuario, no necesita que se especifique cuál
+    const response = await api.delete(`/users/${id}/role`)
     return response.data
   }
 }

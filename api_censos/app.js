@@ -17,6 +17,7 @@ import rolesRoutes from './routes/roles.routes.js';
 import lettersRoutes from './routes/letter.routes.js';
 import announcementsRoutes from './routes/announcement.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 
 dotenv.config();
 
@@ -108,12 +109,31 @@ app.use(cors({
 app.use(morgan('dev'));
 app.use(express.json());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { success: false, message: 'Demasiadas solicitudes, intente más tarde' }
+// Rate limiter general para todas las rutas API
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 200, // 200 peticiones por IP
+  message: { success: false, message: 'Demasiadas solicitudes, intente más tarde' },
+  // Excluir rutas de autenticación del limiter general
+  skip: (req) => req.path.startsWith('/auth/')
 });
-app.use('/api', limiter);
+app.use('/api', generalLimiter);
+
+// Rate limiter específico para login (prevenir brute force)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20, // 20 intentos de login por IP
+  message: { success: false, message: 'Demasiados intentos de inicio de sesión, intente más tarde' },
+  // Solo aplicar a POST /auth/login
+  keyGenerator: (req) => req.ip
+});
+
+// Rate limiter para logout y refresh (más permisivo)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 50, // 50 peticiones por IP
+  message: { success: false, message: 'Demasiadas solicitudes de autenticación' }
+});
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -126,6 +146,7 @@ app.use('/api/roles', rolesRoutes);
 app.use('/api/letters', lettersRoutes);
 app.use('/api/announcements', announcementsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.get('/', (req, res) => {
   res.json({

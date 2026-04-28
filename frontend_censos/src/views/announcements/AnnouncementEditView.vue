@@ -36,9 +36,23 @@
             </div>
 
             <div class="col-12">
+              <q-input
+                v-model="form.header"
+                label="Encabezado"
+                outlined
+                dense
+                :rules="[val => !!val || 'El encabezado es requerido']"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="article" />
+                </template>
+              </q-input>
+            </div>
+
+            <div class="col-12">
               <q-editor
-                v-model="form.content"
-                label="Contenido"
+                v-model="form.body"
+                label="Cuerpo del mensaje"
                 outlined
                 min-height="200px"
                 :rules="[val => !!val || 'El contenido es requerido']"
@@ -94,7 +108,8 @@ const announcementId = computed(() => route.params.id)
 
 const form = ref({
   title: '',
-  content: '',
+  header: '',
+  body: '',
   isPublished: false
 })
 
@@ -105,8 +120,9 @@ onMounted(async () => {
   if (announcement) {
     form.value = {
       title: announcement.title || '',
-      content: announcement.content || '',
-      isPublished: announcement.isPublished ?? false
+      header: announcement.header || '',
+      body: announcement.body || '',
+      isPublished: !!(announcement.publishedAt && new Date(announcement.publishedAt) <= new Date())
     }
   }
 })
@@ -114,8 +130,9 @@ onMounted(async () => {
 const handleSubmit = async () => {
   const updateData = {
     title: form.value.title,
-    content: form.value.content,
-    isPublished: form.value.isPublished
+    header: form.value.header,
+    body: form.value.body,
+    publishedAt: form.value.isPublished ? new Date().toISOString() : null
   }
 
   const result = await announcementStore.updateAnnouncement(announcementId.value, updateData)

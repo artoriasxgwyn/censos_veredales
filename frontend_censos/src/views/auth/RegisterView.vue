@@ -238,6 +238,7 @@ const handleRegister = async () => {
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
+  height: 64px;
 }
 
 .icon-button {
@@ -270,14 +271,14 @@ const handleRegister = async () => {
 
 /* Main Content */
 .main-content {
-  padding: 104px 16px 48px;
+  padding: 80px 16px 48px;
   max-width: 1280px;
   margin: 0 auto;
 }
 
 @media (min-width: 768px) {
   .main-content {
-    padding: 104px 32px 48px;
+    padding: 80px 32px 48px;
   }
 }
 

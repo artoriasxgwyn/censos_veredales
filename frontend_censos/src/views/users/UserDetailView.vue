@@ -8,15 +8,6 @@
         @click="router.back()"
       />
       <h1 class="title">Detalle del Usuario</h1>
-      <div class="header-actions">
-        <q-btn
-          color="primary"
-          label="Asignar Rol"
-          icon="badge"
-          @click="showAssignRole = true"
-          v-if="canManageRoles"
-        />
-      </div>
     </div>
 
     <div v-if="!userStore.loading && user" class="content">
@@ -28,13 +19,9 @@
           <div class="user-info">
             <h2 class="user-name">{{ user.fullName }}</h2>
             <p class="user-email">{{ user.email }}</p>
-            <div class="user-roles">
-              <q-badge
-                v-for="role in user.roles"
-                :key="role"
-                :color="getRoleColor(role)"
-              >
-                {{ getRoleLabel(role) }}
+            <div class="user-roles" v-if="user.role">
+              <q-badge :color="getRoleColor(user.role)">
+                {{ getRoleLabel(user.role) }}
               </q-badge>
             </div>
           </div>
@@ -92,32 +79,55 @@
 
         <q-card-section v-if="canManageRoles">
           <h3 class="section-title">Gestión de Roles</h3>
+          <p class="roles-hint">
+            <span class="material-symbols-outlined">info</span>
+            Cada usuario solo puede tener un rol a la vez. Para cambiar el rol, primero remueve el actual.
+          </p>
+
+          <!-- Usuario ya tiene un rol -->
+          <div v-if="user.role" class="current-role">
+            <div class="current-role-badge">
+              <span class="material-symbols-outlined">badge</span>
+              <span>Rol actual: <strong>{{ getRoleLabel(user.role) }}</strong></span>
+            </div>
+          </div>
+
           <div class="roles-management">
             <div
               v-for="role in availableRoles"
               :key="role"
               class="role-item"
-              :class="{ assigned: user.roles?.includes(role) }"
+              :class="{
+                assigned: user.role === role,
+                disabled: user.role && user.role !== role
+              }"
             >
               <div class="role-info">
                 <span class="role-name">{{ getRoleLabel(role) }}</span>
                 <span class="role-description">{{ getRoleDescription(role) }}</span>
               </div>
               <q-btn
-                v-if="!user.roles?.includes(role)"
+                v-if="!user.role"
                 color="primary"
                 label="Asignar"
                 size="sm"
                 @click="handleAssignRole(role)"
               />
               <q-btn
-                v-else
+                v-else-if="user.role === role"
                 color="negative"
                 label="Remover"
                 size="sm"
-                @click="handleRemoveRole(role)"
-                :disable="isLastAdmin(role)"
+                @click="handleRemoveRole()"
               />
+              <q-badge
+                v-else
+                color="grey"
+                outline
+              >
+                <span class="material-symbols-outlined" style="font-size: 14px;">lock</span>
+                Bloqueado
+              </q-badge>
             </div>
           </div>
         </q-card-section>
@@ -133,33 +143,6 @@
       <span class="material-symbols-outlined">error</span>
       <p>Usuario no encontrado</p>
     </div>
-
-    <!-- Dialog para asignar rol -->
-    <q-dialog v-model="showAssignRole">
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">Asignar Rol</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-select
-            v-model="selectedRole"
-            :options="availableRolesOptions"
-            option-value="value"
-            option-label="label"
-            label="Selecciona un rol"
-            outlined
-            emit-value
-            map-options
-          />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancelar" color="grey" v-close-popup />
-          <q-btn label="Asignar" color="primary" @click="confirmAssignRole" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </div>
 </template>
 
@@ -172,6 +155,7 @@ import { useResidentStore } from '@/stores/resident.store'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useCommunityStore } from '@/stores/community.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { useRoleStore } from '@/stores/role.store'
 
 const route = useRoute()
 const router = useRouter()
@@ -181,43 +165,36 @@ const residentStore = useResidentStore()
 const dwellingStore = useDwellingStore()
 const communityStore = useCommunityStore()
 const authStore = useAuthStore()
+const roleStore = useRoleStore()
 
 const userId = computed(() => route.params.id)
 const user = computed(() => userStore.currentUser)
 
 const canManageRoles = computed(() => {
-  return authStore.user?.roles?.includes('admin')
+  // President, tesorero y secretario pueden gestionar roles
+  const userRole = authStore.user?.role || authStore.userRole
+  const result = userRole === 'president' || userRole === 'tesorero' || userRole === 'secretario'
+  console.log('canManageRoles:', { userRole, result, authStoreUser: authStore.user })
+  return result
 })
 
 const userResident = computed(() => {
   return residentStore.residents.find(r => r.userId?._id === userId.value || r.userId === userId.value)
 })
 
-const showAssignRole = ref(false)
-const selectedRole = ref('')
-
-const availableRoles = ['president', 'treasurer', 'secretary', 'residente', 'censista']
-
-const availableRolesOptions = availableRoles.map(role => ({
-  value: role,
-  label: getRoleLabel(role)
-}))
-
-onMounted(async () => {
-  await Promise.all([
-    userStore.fetchUserById(userId.value),
-    residentStore.fetchResidents(),
-    dwellingStore.fetchDwellings(),
-    communityStore.fetchCommunities()
-  ])
+// Roles asignables desde el store (excluye president por seguridad)
+const availableRoles = computed(() => {
+  const roles = roleStore.roles
+    .filter(r => r.isActive && r.name !== 'president' && r.name !== 'residente') // residente es el rol por defecto
+    .map(r => r.customName || r.name)
+  return roles
 })
 
 const getRoleColor = (role) => {
   const colors = {
-    admin: 'purple',
     president: 'primary',
-    treasurer: 'secondary',
-    secretary: 'info',
+    tesorero: 'secondary',
+    secretario: 'info',
     residente: 'positive',
     censista: 'teal'
   }
@@ -225,16 +202,31 @@ const getRoleColor = (role) => {
 }
 
 const getRoleLabel = (role) => {
+  // Buscar si es un rol personalizado con customName
+  const roleFromStore = roleStore.roles.find(r => (r.customName || r.name) === role)
+  if (roleFromStore?.customName) {
+    return roleFromStore.customName
+  }
+
   const labels = {
-    admin: 'Administrador',
     president: 'Presidente',
-    treasurer: 'Tesorero',
-    secretary: 'Secretario',
+    tesorero: 'Tesorero',
+    secretario: 'Secretario',
     residente: 'Residente',
     censista: 'Censista'
   }
   return labels[role] || role
 }
+
+onMounted(async () => {
+  await Promise.all([
+    userStore.fetchUserById(userId.value),
+    residentStore.fetchResidents(),
+    dwellingStore.fetchDwellings(),
+    communityStore.fetchCommunities(),
+    roleStore.fetchCommunityRoles()
+  ])
+})
 
 const getRoleDescription = (role) => {
   const descriptions = {
@@ -277,39 +269,61 @@ const getCommunityName = (communityId) => {
   return community?.name || 'Comunidad'
 }
 
-const handleAssignRole = (role) => {
-  selectedRole.value = role
-  showAssignRole.value = true
-}
-
-const confirmAssignRole = async () => {
-  if (!selectedRole.value) return
-
-  const result = await userStore.assignRole(userId.value, selectedRole.value)
-
-  if (result.success) {
-    $q.notify({
-      type: 'positive',
-      message: 'Rol asignado exitosamente'
-    })
-    await userStore.fetchUserById(userId.value)
-    showAssignRole.value = false
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al asignar rol'
-    })
-  }
-}
-
-const handleRemoveRole = async (role) => {
+const handleAssignRole = async (role) => {
   $q.dialog({
-    title: 'Remover Rol',
-    message: `¿Estás seguro de que quieres remover el rol de ${getRoleLabel(role)} a este usuario?`,
+    title: 'Confirmar asignación de rol',
+    message: `¿Estás seguro de que deseas asignar el rol <strong>${getRoleLabel(role)}</strong> a este usuario?<br><br>El usuario perderá cualquier rol que tenga actualmente.`,
+    html: true,
     cancel: true,
-    persistent: true
+    persistent: true,
+    ok: {
+      label: 'Asignar',
+      color: 'primary',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
   }).onOk(async () => {
-    const result = await userStore.removeRole(userId.value, role)
+    const result = await userStore.assignRole(userId.value, role)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: `Rol ${getRoleLabel(role)} asignado exitosamente`
+      })
+      await userStore.fetchUserById(userId.value)
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.message || 'Error al asignar rol'
+      })
+    }
+  })
+}
+
+const handleRemoveRole = async () => {
+  const currentRole = user.value.role
+  $q.dialog({
+    title: 'Confirmar remoción de rol',
+    message: `¿Estás seguro de que deseas remover el rol <strong>${getRoleLabel(currentRole)}</strong> de este usuario?<br><br>El usuario quedará sin rol asignado.`,
+    html: true,
+    cancel: true,
+    persistent: true,
+    ok: {
+      label: 'Remover',
+      color: 'negative',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    const result = await userStore.removeRole(userId.value)
 
     if (result.success) {
       $q.notify({
@@ -327,9 +341,10 @@ const handleRemoveRole = async (role) => {
 }
 
 const isLastAdmin = (role) => {
-  if (role !== 'admin') return false
-  const admins = userStore.users.filter(u => u.roles?.includes('admin'))
-  return admins.length <= 1
+  // Solo aplica para roles de junta directiva
+  if (!['president', 'tesorero', 'secretario'].includes(role)) return false
+  // No bloquear la remoción - el backend puede validar si es necesario
+  return false
 }
 </script>
 
@@ -418,7 +433,44 @@ const isLastAdmin = (role) => {
   font-size: 16px;
   font-weight: 600;
   color: var(--on-surface);
-  margin: 0 0 16px 0;
+  margin: 0 0 8px 0;
+}
+
+.roles-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  background: var(--surface-container);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.roles-hint .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--primary);
+}
+
+.current-role {
+  margin-bottom: 16px;
+}
+
+.current-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.current-role-badge .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .info-grid {
@@ -470,6 +522,11 @@ const isLastAdmin = (role) => {
 .role-item.assigned {
   border-color: var(--tertiary);
   background: var(--tertiary-fixed);
+}
+
+.role-item.disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .role-info {

@@ -62,9 +62,12 @@
             <h2 class="card-title">Accesos Rápidos</h2>
           </div>
           <div class="actions-grid">
-            <router-link to="/admin/communities" class="action-card">
-              <span class="material-symbols-outlined">location_city</span>
-              <span>Comunidades</span>
+            <router-link to="/president/approvals" class="action-card highlight">
+              <span class="material-symbols-outlined">pending_actions</span>
+              <span>Aprobaciones</span>
+              <q-badge v-if="stats.pendingApprovals > 0" color="warning" class="count-badge">
+                {{ stats.pendingApprovals }}
+              </q-badge>
             </router-link>
 
             <router-link to="/admin/dwellings" class="action-card">
@@ -90,6 +93,21 @@
             <router-link to="/admin/users" class="action-card">
               <span class="material-symbols-outlined">group</span>
               <span>Usuarios</span>
+            </router-link>
+
+            <router-link to="/president/roles" class="action-card">
+              <span class="material-symbols-outlined">badge</span>
+              <span>Roles</span>
+            </router-link>
+
+            <router-link to="/president/qr-scanner" class="action-card">
+              <span class="material-symbols-outlined">qr_code_scanner</span>
+              <span>Escanear QR</span>
+            </router-link>
+
+            <router-link to="/president/audit-logs" class="action-card">
+              <span class="material-symbols-outlined">fact_check</span>
+              <span>Auditoría</span>
             </router-link>
           </div>
         </section>
@@ -175,15 +193,29 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { useAuthStore } from '@/stores/auth.store'
+import { useDashboardStore } from '@/stores/dashboard.store'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useResidentStore } from '@/stores/resident.store'
 import { useLetterStore } from '@/stores/letter.store'
 
+const router = useRouter()
 const $q = useQuasar()
+const authStore = useAuthStore()
+const dashboardStore = useDashboardStore()
 const dwellingStore = useDwellingStore()
 const residentStore = useResidentStore()
 const letterStore = useLetterStore()
+
+// Redirect president to their specific dashboard
+onMounted(() => {
+  if (authStore.isPresident) {
+    router.replace('/president/dashboard')
+    return
+  }
+})
 
 const stats = ref({
   totalResidents: 0,
@@ -240,18 +272,39 @@ const pendingItems = computed(() => {
   return items
 })
 
+const dashboardData = computed(() => dashboardStore.adminDashboard)
+
 onMounted(async () => {
+  // Fetch dashboard data from API
+  const data = await dashboardStore.fetchAdminDashboard()
+
+  if (data) {
+    // Use API data for stats
+    stats.value = {
+      totalResidents: data.stats?.residents?.total || 0,
+      totalDwellings: data.stats?.dwellings?.total || 0,
+      pendingLetters: data.stats?.pending?.letters || 0,
+      pendingApprovals: (data.stats?.pending?.residents || 0) +
+                        (data.stats?.pending?.dwellings || 0) +
+                        (data.stats?.pending?.letters || 0)
+    }
+  }
+
+  // Also fetch individual data for pending items list
   await Promise.all([
     dwellingStore.fetchDwellings(),
     residentStore.fetchResidents(),
-    letterStore.fetchMyLetters()
+    letterStore.fetchCommunityLetters()
   ])
 
-  stats.value = {
-    totalResidents: residentStore.residentCount || 0,
-    totalDwellings: dwellingStore.dwellingCount || 0,
-    pendingLetters: letterStore.pendingLetters?.length || 0,
-    pendingApprovals: pendingItems.value.length
+  // Recalculate stats from local stores as fallback
+  if (!data) {
+    stats.value = {
+      totalResidents: residentStore.residentCount || 0,
+      totalDwellings: dwellingStore.dwellingCount || 0,
+      pendingLetters: letterStore.pendingLetters?.length || 0,
+      pendingApprovals: pendingItems.value.length
+    }
   }
 })
 
@@ -275,17 +328,73 @@ const getStatusColor = (status) => {
 }
 
 const handleApprove = async (item) => {
-  $q.notify({
-    type: 'positive',
-    message: `${item.type} aprobado exitosamente`
-  })
+  try {
+    let result
+    const userRole = authStore.userRole
+
+    if (item.type === 'dwelling') {
+      result = await dwellingStore.approveDwelling(item._id, userRole, 'approved')
+    } else if (item.type === 'resident') {
+      result = await residentStore.approveResident(item._id, userRole, 'approved')
+    } else if (item.type === 'letter') {
+      result = await letterStore.approveLetter(item._id, userRole, 'approved')
+    }
+
+    if (result?.success) {
+      $q.notify({
+        type: 'positive',
+        message: `${item.type === 'dwelling' ? 'Vivienda' : item.type === 'resident' ? 'Residente' : 'Carta'} aprobado exitosamente`
+      })
+      // Refresh data
+      await Promise.all([
+        dwellingStore.fetchDwellings(),
+        residentStore.fetchResidents(),
+        letterStore.fetchCommunityLetters()
+      ])
+    } else {
+      throw new Error(result?.message || 'Error al aprobar')
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Error al aprobar'
+    })
+  }
 }
 
 const handleReject = async (item) => {
-  $q.notify({
-    type: 'negative',
-    message: `${item.type} rechazado`
-  })
+  try {
+    let result
+    const userRole = authStore.userRole
+
+    if (item.type === 'dwelling') {
+      result = await dwellingStore.approveDwelling(item._id, userRole, 'rejected')
+    } else if (item.type === 'resident') {
+      result = await residentStore.approveResident(item._id, userRole, 'rejected')
+    } else if (item.type === 'letter') {
+      result = await letterStore.approveLetter(item._id, userRole, 'rejected')
+    }
+
+    if (result?.success) {
+      $q.notify({
+        type: 'negative',
+        message: `${item.type === 'dwelling' ? 'Vivienda' : item.type === 'resident' ? 'Residente' : 'Carta'} rechazado`
+      })
+      // Refresh data
+      await Promise.all([
+        dwellingStore.fetchDwellings(),
+        residentStore.fetchResidents(),
+        letterStore.fetchCommunityLetters()
+      ])
+    } else {
+      throw new Error(result?.message || 'Error al rechazar')
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Error al rechazar'
+    })
+  }
 }
 </script>
 
@@ -299,6 +408,12 @@ const handleReject = async (item) => {
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+@media (max-width: 599px) {
+  .dashboard-content {
+    padding: 16px;
+  }
 }
 
 /* Page Header */
@@ -332,12 +447,40 @@ const handleReject = async (item) => {
   max-width: 600px;
 }
 
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 32px;
+}
+
+@media (max-width: 599px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 399px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-card {
@@ -347,6 +490,13 @@ const handleReject = async (item) => {
   padding: 20px !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 12px rgba(25, 28, 30, 0.04) !important;
+}
+
+@media (max-width: 599px) {
+  .stat-card {
+    padding: 16px !important;
+    gap: 12px;
+  }
 }
 
 .stat-icon {
@@ -386,6 +536,25 @@ const handleReject = async (item) => {
   font-weight: 500;
 }
 
+@media (max-width: 599px) {
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stat-icon .material-symbols-outlined {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+}
+
 /* Bento Grid */
 .bento-grid {
   display: grid;
@@ -408,6 +577,12 @@ const handleReject = async (item) => {
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
 }
 
+@media (max-width: 599px) {
+  .bento-main {
+    padding: 16px;
+  }
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -427,10 +602,44 @@ const handleReject = async (item) => {
   margin: 0;
 }
 
+@media (max-width: 599px) {
+  .card-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .card-header .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+}
+
 .actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
+}
+
+@media (min-width: 1200px) {
+  .actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 399px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .action-card {
@@ -445,12 +654,18 @@ const handleReject = async (item) => {
   text-decoration: none;
   color: var(--on-surface);
   transition: all 0.2s;
+  position: relative;
 }
 
 .action-card:hover {
   background: var(--primary-fixed);
   border-color: var(--primary);
   transform: translateY(-2px);
+}
+
+.action-card.highlight {
+  background: var(--primary-fixed-dim);
+  border-color: var(--primary);
 }
 
 .action-card .material-symbols-outlined {
@@ -462,6 +677,29 @@ const handleReject = async (item) => {
   font-size: 13px;
   font-weight: 600;
   color: var(--on-surface-variant);
+}
+
+@media (max-width: 599px) {
+  .action-card {
+    padding: 16px 12px;
+    gap: 8px;
+  }
+
+  .action-card .material-symbols-outlined {
+    font-size: 28px;
+  }
+
+  .action-card span:last-child {
+    font-size: 12px;
+  }
+}
+
+.count-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
 }
 
 /* Side Panel */
@@ -478,6 +716,13 @@ const handleReject = async (item) => {
   display: flex;
   flex-direction: column;
   min-height: 180px;
+}
+
+@media (max-width: 599px) {
+  .impact-card {
+    padding: 20px;
+    min-height: 140px;
+  }
 }
 
 .impact-icon {
@@ -520,6 +765,30 @@ const handleReject = async (item) => {
   color: var(--on-primary-fixed-variant);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+@media (max-width: 599px) {
+  .impact-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  .impact-title {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .impact-description {
+    font-size: 12px;
+  }
+
+  .impact-value {
+    font-size: 28px;
+  }
+
+  .impact-label {
+    font-size: 9px;
+  }
 }
 
 .status-card {
@@ -572,6 +841,12 @@ const handleReject = async (item) => {
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
 }
 
+@media (max-width: 599px) {
+  .pending-section {
+    padding: 16px;
+  }
+}
+
 .section-header {
   display: flex;
   align-items: center;
@@ -589,6 +864,21 @@ const handleReject = async (item) => {
   font-weight: 700;
   color: var(--on-surface);
   margin: 0;
+}
+
+@media (max-width: 599px) {
+  .section-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .section-header .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .section-title {
+    font-size: 16px;
+  }
 }
 
 .pending-list {

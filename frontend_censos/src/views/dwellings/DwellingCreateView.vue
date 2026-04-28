@@ -77,35 +77,50 @@
             </div>
 
             <div class="col-12">
-              <q-input
-                v-model="form.homePhoto"
-                label="URL de Foto del Hogar"
-                outlined
-                type="url"
-                hint="Enlace a la foto de la vivienda"
-              >
-                <template v-slot:prepend>
-                  <q-icon name="photo" />
-                </template>
-              </q-input>
+              <div class="photo-upload-section">
+                <label class="upload-label">Foto de la Vivienda</label>
+                <div class="upload-area" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleDrop">
+                  <input
+                    ref="fileInputRef"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    @change="handleFileSelect"
+                    class="file-input"
+                  />
+                  <div v-if="!photoPreview" class="upload-placeholder">
+                    <q-icon name="add_a_photo" size="48px" color="primary" />
+                    <p class="upload-text">Toca para tomar o seleccionar una foto</p>
+                    <p class="upload-hint">o arrastra la imagen aquí</p>
+                  </div>
+                  <div v-else class="preview-container">
+                    <img :src="photoPreview" alt="Vista previa" class="preview-image" />
+                    <q-btn
+                      flat
+                      round
+                      color="white"
+                      icon="delete"
+                      class="remove-photo-btn"
+                      @click.stop="removePhoto"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="col-12">
-              <q-select
-                v-model="form.ownerUserId"
-                :options="userOptions"
-                option-value="_id"
-                option-label="fullName"
-                label="Propietario (Usuario)"
+              <q-input
+                v-model="form.cedulaPropietario"
+                label="Cédula del Propietario"
                 outlined
-                emit-value
-                map-options
-                :rules="[val => !!val || 'El propietario es requerido']"
+                hint="Si el propietario está registrado, se vinculará automáticamente"
+                mask="###.###.###"
+                fill-mask
               >
                 <template v-slot:prepend>
-                  <q-icon name="person" />
+                  <q-icon name="badge" />
                 </template>
-              </q-select>
+              </q-input>
             </div>
           </div>
 
@@ -130,17 +145,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useDwellingStore } from '@/stores/dwelling.store'
-import { useUserStore } from '@/stores/user.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { uploadService } from '@/services/upload.service'
 
 const router = useRouter()
 const $q = useQuasar()
 const dwellingStore = useDwellingStore()
-const userStore = useUserStore()
 const authStore = useAuthStore()
 
 const form = ref({
@@ -148,38 +162,100 @@ const form = ref({
   arrivalInstructions: '',
   mapLocation: '',
   constructionDate: '',
-  homePhoto: '',
-  ownerUserId: ''
+  homePhoto: null,
+  cedulaPropietario: ''
 })
 
-const userOptions = computed(() => {
-  return userStore.users.map(u => ({
-    _id: u._id,
-    fullName: u.fullName
-  }))
-})
+const uploadingPhoto = ref(false)
+const photoPreview = ref(null)
 
-onMounted(async () => {
-  await userStore.fetchAllUsersPublic()
-})
+const fileInputRef = ref(null)
+
+const triggerFileInput = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileSelect = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    form.value.homePhoto = file
+    photoPreview.value = URL.createObjectURL(file)
+  }
+}
+
+const handleDrop = (event) => {
+  const file = event.dataTransfer.files[0]
+  if (file && file.type.startsWith('image/')) {
+    form.value.homePhoto = file
+    photoPreview.value = URL.createObjectURL(file)
+  }
+}
+
+const removePhoto = () => {
+  form.value.homePhoto = null
+  photoPreview.value = null
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
 
 const handleSubmit = async () => {
+  if (!form.value.cedulaPropietario) {
+    $q.notify({
+      type: 'warning',
+      message: 'La cédula del propietario es requerida'
+    })
+    return
+  }
+
+  if (!form.value.arrivalInstructions) {
+    $q.notify({
+      type: 'warning',
+      message: 'Las instrucciones de llegada son requeridas'
+    })
+    return
+  }
+
+  uploadingPhoto.value = true
+  let homePhotoUrl = null
+
+  // Subir foto si hay una seleccionada
+  if (form.value.homePhoto) {
+    try {
+      homePhotoUrl = await uploadService.uploadImage(form.value.homePhoto, 'facade')
+    } catch (error) {
+      uploadingPhoto.value = false
+      $q.notify({
+        type: 'negative',
+        message: 'Error al subir la foto. Intente nuevamente.'
+      })
+      return
+    }
+  }
+
+  uploadingPhoto.value = false
+
   const dwellingData = {
     houseNomenclature: form.value.houseNomenclature || undefined,
     arrivalInstructions: form.value.arrivalInstructions,
     mapLocation: form.value.mapLocation || undefined,
     constructionDate: form.value.constructionDate || undefined,
-    homePhoto: form.value.homePhoto || undefined,
-    ownerUserId: form.value.ownerUserId,
+    homePhoto: homePhotoUrl,
+    cedulaPropietario: form.value.cedulaPropietario.replace(/\./g, ''), // Enviar sin puntos
     communityId: authStore.communityId
   }
 
   const result = await dwellingStore.createDwelling(dwellingData)
 
   if (result.success) {
+    const message = result.data.ownerUserId
+      ? 'Vivienda creada. El propietario está registrado en el sistema.'
+      : 'Vivienda creada. El propietario no está registrado en el sistema.';
+
     $q.notify({
       type: 'positive',
-      message: 'Vivienda creada exitosamente. Pendiente de aprobación.'
+      message,
+      timeout: 4000
     })
     router.push('/admin/dwellings')
   } else {
@@ -198,11 +274,28 @@ const handleSubmit = async () => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-container {
+    padding: 16px;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
 }
 
 .title {
@@ -217,11 +310,23 @@ const handleSubmit = async () => {
   border-radius: 12px;
 }
 
+@media (max-width: 599px) {
+  .form-card {
+    padding: 16px !important;
+  }
+}
+
 .section-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--on-surface);
   margin: 0 0 8px 0;
+}
+
+@media (max-width: 599px) {
+  .section-title {
+    font-size: 16px;
+  }
 }
 
 .section-description {
@@ -236,10 +341,112 @@ const handleSubmit = async () => {
   gap: 8px;
 }
 
+@media (max-width: 599px) {
+  .form {
+    gap: 12px;
+  }
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 599px) {
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .form-actions .q-btn {
+    width: 100%;
+  }
+}
+
+/* Photo Upload Section */
+.photo-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.upload-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.upload-area {
+  border: 2px dashed var(--outline-variant);
+  border-radius: 8px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface-container-low);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 599px) {
+  .upload-area {
+    padding: 16px;
+    min-height: 160px;
+  }
+}
+
+.upload-area:hover {
+  border-color: var(--primary);
+  background: var(--surface-container-high);
+}
+
+.upload-placeholder {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-text {
+  font-size: 14px;
+  color: var(--on-surface);
+  margin: 0;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: var(--outline);
+  margin: 0;
+}
+
+.file-input {
+  display: none;
+}
+
+.preview-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.preview-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 </style>

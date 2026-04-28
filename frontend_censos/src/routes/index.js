@@ -52,6 +52,12 @@ const UserListView = () => import('@/views/users/UserListView.vue')
 const UserDetailView = () => import('@/views/users/UserDetailView.vue')
 const UserProfileView = () => import('@/views/users/UserProfileView.vue')
 
+// President views
+const ApprovalsView = () => import('@/views/president/ApprovalsView.vue')
+const RoleManagementView = () => import('@/views/president/RoleManagementView.vue')
+const AuditLogsView = () => import('@/views/president/AuditLogsView.vue')
+const QRScannerView = () => import('@/views/president/QRScannerView.vue')
+
 // Public verification page
 const LetterVerifyPublicView = () => import('@/views/letters/LetterVerifyPublicView.vue')
 
@@ -115,118 +121,178 @@ const routes = [
       {
         path: 'dashboard',
         name: 'AdminDashboard',
-        component: AdminDashboardView
+        component: AdminDashboardView,
+        meta: { requiresPermission: { module: 'dashboard', action: 'access' } }
       },
       // Communities
       {
         path: 'communities',
         name: 'CommunityList',
-        component: CommunityListView
+        component: CommunityListView,
+        meta: { requiresPermission: { module: 'community', action: 'read' } }
       },
       {
         path: 'communities/:id',
         name: 'CommunityDetail',
-        component: CommunityDetailView
+        component: CommunityDetailView,
+        meta: { requiresPermission: { module: 'community', action: 'read' } }
       },
       {
         path: 'communities/create',
         name: 'CommunityCreate',
-        component: CommunityCreateView
+        component: CommunityCreateView,
+        meta: { requiresPermission: { module: 'community', action: 'create' } }
       },
       {
         path: 'communities/:id/edit',
         name: 'CommunityEdit',
-        component: CommunityEditView
+        component: CommunityEditView,
+        meta: { requiresPermission: { module: 'community', action: 'update' } }
       },
       // Dwellings
       {
         path: 'dwellings',
         name: 'DwellingList',
-        component: DwellingListView
+        component: DwellingListView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'read' } }
       },
       {
         path: 'dwellings/:id',
         name: 'DwellingDetail',
-        component: DwellingDetailView
+        component: DwellingDetailView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'read' } }
       },
       {
         path: 'dwellings/create',
         name: 'DwellingCreate',
-        component: DwellingCreateView
+        component: DwellingCreateView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'create' } }
       },
       {
         path: 'dwellings/:id/edit',
         name: 'DwellingEdit',
-        component: DwellingEditView
+        component: DwellingEditView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'update' } }
       },
       // Residents
       {
         path: 'residents',
         name: 'ResidentList',
-        component: ResidentListView
+        component: ResidentListView,
+        meta: { requiresPermission: { module: 'resident', action: 'read' } }
       },
       {
         path: 'residents/:id',
         name: 'ResidentDetail',
-        component: ResidentDetailView
+        component: ResidentDetailView,
+        meta: { requiresPermission: { module: 'resident', action: 'read' } }
       },
       {
         path: 'residents/create',
         name: 'ResidentCreate',
-        component: ResidentCreateView
+        component: ResidentCreateView,
+        meta: { requiresPermission: { module: 'resident', action: 'create' } }
       },
       {
         path: 'residents/:id/edit',
         name: 'ResidentEdit',
-        component: ResidentEditView
+        component: ResidentEditView,
+        meta: { requiresPermission: { module: 'resident', action: 'update' } }
       },
       // Letters
       {
         path: 'letters',
         name: 'LetterList',
-        component: LetterListView
+        component: LetterListView,
+        meta: { requiresPermission: { module: 'letter', action: 'read' } }
       },
       {
         path: 'letters/:id',
         name: 'LetterDetail',
-        component: LetterDetailView
+        component: LetterDetailView,
+        meta: { requiresPermission: { module: 'letter', action: 'read' } }
       },
       {
         path: 'verify-letter/:qrCode',
         name: 'LetterVerify',
-        component: LetterVerifyView
+        component: LetterVerifyView,
+        meta: { requiresPermission: { module: 'letter', action: 'read' } }
       },
       // Announcements
       {
         path: 'announcements',
         name: 'AnnouncementList',
-        component: AnnouncementListView
+        component: AnnouncementListView,
+        meta: { requiresPermission: { module: 'announcement', action: 'read' } }
       },
       {
         path: 'announcements/create',
         name: 'AnnouncementCreate',
-        component: AnnouncementCreateView
+        component: AnnouncementCreateView,
+        meta: { requiresPermission: { module: 'announcement', action: 'create' } }
       },
       {
         path: 'announcements/:id',
         name: 'AnnouncementDetail',
-        component: AnnouncementDetailView
+        component: AnnouncementDetailView,
+        meta: { requiresPermission: { module: 'announcement', action: 'read' } }
       },
       {
         path: 'announcements/:id/edit',
         name: 'AnnouncementEdit',
-        component: AnnouncementEditView
+        component: AnnouncementEditView,
+        meta: { requiresPermission: { module: 'announcement', action: 'update' } }
       },
       // Users
       {
         path: 'users',
         name: 'UserList',
-        component: UserListView
+        component: UserListView,
+        meta: { requiresPermission: { module: 'user', action: 'read' } }
       },
       {
         path: 'users/:id',
         name: 'UserDetail',
-        component: UserDetailView
+        component: UserDetailView,
+        meta: { requiresPermission: { module: 'user', action: 'read' } }
+      }
+    ]
+  },
+  // President-only routes (tambien accesible por roles con permisos)
+  {
+    path: '/president',
+    component: MainLayout,
+    meta: { requiresAuth: true, roles: ['president'] },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'PresidentDashboard',
+        component: AdminDashboardView,
+        meta: { requiresPermission: { module: 'dashboard', action: 'access' } }
+      },
+      {
+        path: 'approvals',
+        name: 'PresidentApprovals',
+        component: ApprovalsView,
+        meta: { requiresPermission: { module: 'resident', action: 'update' } }
+      },
+      {
+        path: 'roles',
+        name: 'PresidentRoleManagement',
+        component: RoleManagementView,
+        meta: { requiresPermission: { module: 'user', action: 'manageRoles' } }
+      },
+      {
+        path: 'audit-logs',
+        name: 'PresidentAuditLogs',
+        component: AuditLogsView,
+        meta: { requiresPermission: { module: 'dashboard', action: 'access' } }
+      },
+      {
+        path: 'qr-scanner',
+        name: 'PresidentQRScanner',
+        component: QRScannerView,
+        meta: { requiresPermission: { module: 'letter', action: 'qrScan' } }
       }
     ]
   },
@@ -289,48 +355,75 @@ export const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const authStore = useAuthStore()
 
   // Check if user is authenticated
-  const isAuthenticated = !!authStore.accessToken
+  const hasToken = !!authStore.accessToken
 
-  // If user is not authenticated and route requires auth
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+  // If no token, allow only guest routes
+  if (!hasToken) {
+    if (to.meta.requiresAuth) {
+      return '/login'
+    }
     return
   }
 
-  // If user is authenticated and route requires guest
-  if (to.meta.requiresGuest && isAuthenticated) {
-    // Redirect based on role
-    const role = authStore.userRole
-    if (role === 'president' || role === 'tesorero' || role === 'secretario') {
-      next('/admin/dashboard')
+  // User has token - ensure user data is loaded
+  if (!authStore.user) {
+    const user = await authStore.fetchUser()
+    // If fetch failed, redirect to login
+    if (!user) {
+      return '/login'
+    }
+  }
+
+  // Asegurar que los permisos estén cargados (excepto para presidente)
+  if (!authStore.permissions && authStore.userRole !== 'president') {
+    await authStore.fetchPermissions()
+  }
+
+  const userRole = authStore.userRole
+
+  // If route requires guest but user is authenticated
+  if (to.meta.requiresGuest) {
+    if (userRole === 'president') {
+      return '/president/dashboard'
+    } else if (userRole === 'tesorero' || userRole === 'secretario') {
+      return '/admin/dashboard'
     } else {
-      next('/resident/dashboard')
+      return '/resident/dashboard'
     }
-    return
   }
 
-  // Check role restrictions
-  if (to.meta.roles && isAuthenticated) {
-    const userRole = authStore.userRole
-    if (!to.meta.roles.includes(userRole)) {
-      // Redirect to appropriate dashboard
-      if (userRole === 'president' || userRole === 'tesorero' || userRole === 'secretario') {
-        next('/admin/dashboard')
-      } else {
-        next('/resident/dashboard')
+  // Check role restrictions for protected routes
+  if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+    // Redirect to appropriate dashboard based on role
+    if (userRole === 'president') {
+      return '/president/dashboard'
+    } else if (userRole === 'tesorero' || userRole === 'secretario') {
+      return '/admin/dashboard'
+    } else {
+      return '/resident/dashboard'
+    }
+  }
+
+  // Check permissions if route requires specific permission
+  if (to.meta.requiresPermission) {
+    const { module, action } = to.meta.requiresPermission
+
+    // Presidente tiene todos los permisos
+    if (userRole !== 'president') {
+      // Verificar si el usuario tiene el permiso requerido
+      const hasPerm = authStore.hasPermission(module, action)
+      if (!hasPerm) {
+        // Redirigir al dashboard apropiado si no tiene permisos
+        if (userRole === 'tesorero' || userRole === 'secretario') {
+          return '/admin/dashboard'
+        } else {
+          return '/resident/dashboard'
+        }
       }
-      return
     }
   }
-
-  // Fetch user if not loaded
-  if (isAuthenticated && !authStore.user) {
-    await authStore.fetchUser()
-  }
-
-  next()
 })

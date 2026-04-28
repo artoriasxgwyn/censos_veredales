@@ -23,9 +23,15 @@ const dwellingSchema = new mongoose.Schema({
   homePhoto: {
     type: String
   },
+  cedulaPropietario: {
+    type: String,
+    trim: true
+  },
   ownerUserId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    null: true,
+    default: null
   },
   communityId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -170,6 +170,12 @@ const formatDate = (date) => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -177,6 +183,15 @@ const formatDate = (date) => {
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
 }
 
 .page-subtitle {
@@ -203,6 +218,20 @@ const formatDate = (date) => {
   line-height: 1.6;
   margin: 0;
   max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
 }
 
 /* Filters */
@@ -253,6 +282,13 @@ const formatDate = (date) => {
   gap: 16px;
 }
 
+@media (max-width: 599px) {
+  .letters-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 .letter-card {
   background: var(--surface-container-lowest);
   border: 1px solid var(--surface-container-highest);
@@ -263,10 +299,14 @@ const formatDate = (date) => {
   position: relative;
 }
 
-.letter-card:hover {
-  background: var(--primary-fixed);
-  border-color: var(--primary);
-  transform: translateY(-2px);
+@media (max-width: 599px) {
+  .letter-card {
+    padding: 16px;
+  }
+
+  .letter-card:hover {
+    transform: none;
+  }
 }
 
 .letter-badge {
@@ -297,6 +337,18 @@ const formatDate = (date) => {
   margin-bottom: 16px;
 }
 
+@media (max-width: 599px) {
+  .letter-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .letter-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
 .letter-icon .material-symbols-outlined {
   font-size: 24px;
   color: var(--on-primary);
@@ -309,10 +361,23 @@ const formatDate = (date) => {
   margin: 0 0 4px 0;
 }
 
+@media (max-width: 599px) {
+  .letter-type {
+    font-size: 16px;
+  }
+}
+
 .letter-user {
   font-size: 14px;
   color: var(--on-surface-variant);
   margin: 0 0 16px 0;
+}
+
+@media (max-width: 599px) {
+  .letter-user {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
 }
 
 .approval-status {

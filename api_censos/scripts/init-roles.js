@@ -50,6 +50,17 @@ const baseRoles = [
       user: { changePassword: true, manageRoles: false },
       announcement: { create: false, read: true, update: false, delete: false }
     }
+  },
+  {
+    name: 'censista',
+    permissions: {
+      resident: { create: true, read: true, update: false, delete: false },
+      dwelling: { create: false, read: true, update: false, delete: false },
+      letter: { generateNormal: false, generateSworn: false, qrScan: true },
+      dashboard: { access: true, scope: 'limited' },
+      user: { changePassword: true, manageRoles: false },
+      announcement: { create: false, read: true, update: false, delete: false }
+    }
   }
 ];
 

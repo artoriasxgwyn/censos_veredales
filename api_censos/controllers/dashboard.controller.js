@@ -133,11 +133,14 @@ export const getResidentDashboard = async (req, res) => {
       isActive: true
     }).sort({ createdAt: -1 });
 
-    // Viviendas del usuario
+    // Viviendas del usuario (por ownerUserId O por cedulaPropietario)
     const dwellings = await Dwelling.find({
-      ownerUserId: userId,
       communityId,
-      isActive: true
+      isActive: true,
+      $or: [
+        { ownerUserId: userId },
+        { cedulaPropietario: user.documentNumber }
+      ]
     });
 
     // Anuncios recientes de la comunidad

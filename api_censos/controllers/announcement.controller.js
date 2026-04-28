@@ -6,13 +6,14 @@ import Community from '../models/community.model.js';
  */
 export const createAnnouncement = async (req, res) => {
   try {
-    const { title, header, body, images } = req.body;
+    const { title, header, body, images, publishedAt } = req.body;
 
     const announcement = await Announcement.create({
       title,
       header,
       body,
       images: images || [],
+      publishedAt: publishedAt ? new Date(publishedAt) : null,
       createdBy: req.userId,
       communityId: req.communityId
     });
@@ -109,11 +110,11 @@ export const updateAnnouncement = async (req, res) => {
       });
     }
 
-    announcement.title = title || announcement.title;
-    announcement.header = header || announcement.header;
-    announcement.body = body || announcement.body;
-    announcement.images = images || announcement.images;
-    announcement.publishedAt = publishedAt || announcement.publishedAt;
+    announcement.title = title ?? announcement.title;
+    announcement.header = header ?? announcement.header;
+    announcement.body = body ?? announcement.body;
+    announcement.images = images ?? announcement.images;
+    announcement.publishedAt = publishedAt !== undefined ? publishedAt : announcement.publishedAt;
 
     await announcement.save();
 

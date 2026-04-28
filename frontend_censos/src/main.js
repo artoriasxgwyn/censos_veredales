@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { Quasar, Notify, Dialog, Loading } from 'quasar'
 import { createPinia } from 'pinia'
+import { useAuthStore } from './stores/auth.store'
 
 import '@quasar/extras/material-icons/material-icons.css'
 import '@quasar/extras/material-icons-outlined/material-icons-outlined.css'
@@ -15,6 +16,35 @@ const pinia = createPinia()
 const { router } = await import('./routes')
 
 const app = createApp(App)
+
+// Directiva v-permission para verificar permisos
+app.directive('permission', {
+  beforeMount(el, binding) {
+    const authStore = useAuthStore()
+    const { module, action } = binding.value
+
+    if (!authStore.hasPermission(module, action)) {
+      // Remover elemento del DOM si no tiene permiso
+      el.remove()
+    }
+  }
+})
+
+// Directiva v-permission-any para verificar múltiples permisos (cualquiera)
+app.directive('permissionAny', {
+  beforeMount(el, binding) {
+    const authStore = useAuthStore()
+    const permissions = binding.value // array de { module, action }
+
+    const hasAnyPermission = permissions.some(perm =>
+      authStore.hasPermission(perm.module, perm.action)
+    )
+
+    if (!hasAnyPermission) {
+      el.remove()
+    }
+  }
+})
 
 app.use(Quasar, {
   plugins: {

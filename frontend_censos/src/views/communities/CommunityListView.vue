@@ -13,7 +13,7 @@
           label="Nueva Comunidad"
           icon="add"
           @click="router.push('/admin/communities/create')"
-          v-if="authStore.isPresident"
+          v-if="authStore.hasPermission('community', 'create')"
           class="create-btn"
         >
           <template v-slot:append>
@@ -71,7 +71,7 @@
             color="primary"
             label="Crear primera comunidad"
             @click="router.push('/admin/communities/create')"
-            v-if="authStore.isPresident"
+            v-if="authStore.hasPermission('community', 'create')"
             class="create-btn"
           />
         </div>
@@ -113,6 +113,12 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -120,6 +126,15 @@ onMounted(async () => {
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
 }
 
 .page-subtitle {
@@ -146,6 +161,20 @@ onMounted(async () => {
   line-height: 1.6;
   margin: 0;
   max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
 }
 
 .create-btn {
@@ -196,6 +225,18 @@ onMounted(async () => {
   transition: all 0.2s;
 }
 
+@media (max-width: 599px) {
+  .community-item {
+    gap: 16px;
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+
+  .community-item:hover {
+    transform: none;
+  }
+}
+
 .community-item:hover {
   background: var(--primary-fixed);
   transform: translateX(4px);
@@ -210,6 +251,17 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .community-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .community-icon .material-symbols-outlined {
+    font-size: 22px;
+  }
 }
 
 .community-icon .material-symbols-outlined {
@@ -230,11 +282,24 @@ onMounted(async () => {
   margin-bottom: 6px;
 }
 
+@media (max-width: 599px) {
+  .community-header {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
 .community-name {
   font-size: 18px;
   font-weight: 700;
   color: var(--on-surface);
   margin: 0;
+}
+
+@media (max-width: 599px) {
+  .community-name {
+    font-size: 16px;
+  }
 }
 
 .status-badge {
@@ -245,6 +310,13 @@ onMounted(async () => {
   letter-spacing: 0.05em;
 }
 
+@media (max-width: 599px) {
+  .status-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}
+
 .community-location {
   display: flex;
   align-items: center;
@@ -252,6 +324,18 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--on-surface-variant);
   margin: 0 0 10px 0;
+}
+
+@media (max-width: 599px) {
+  .community-location {
+    font-size: 13px;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .community-location .material-symbols-outlined {
+    font-size: 14px;
+  }
 }
 
 .community-location .material-symbols-outlined {

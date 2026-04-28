@@ -144,9 +144,11 @@ export const useAnnouncementStore = defineStore('announcement', {
         return { success: false, message: 'Anuncio no encontrado' }
       }
 
-      if (announcement.isPublished) {
-        // Mover a borrador - usar update
-        return await this.updateAnnouncement(id, { isPublished: false })
+      const isPublished = announcement.publishedAt && new Date(announcement.publishedAt) <= new Date()
+
+      if (isPublished) {
+        // Mover a borrador - establecer publishedAt en null
+        return await this.updateAnnouncement(id, { publishedAt: null })
       } else {
         // Publicar
         return await this.publishAnnouncement(id)

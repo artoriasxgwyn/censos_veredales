@@ -119,10 +119,10 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async removeRole(id, role) {
+    async removeRole(id) {
       this.loading = true
       try {
-        const response = await userService.removeRole(id, role)
+        const response = await userService.removeRole(id)
         const index = this.users.findIndex(u => u._id === id)
         if (index !== -1) {
           this.users[index] = response.data

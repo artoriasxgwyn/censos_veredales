@@ -118,6 +118,9 @@ const handleLogin = async () => {
       message: '¡Bienvenido!'
     })
 
+    // Cargar permisos del usuario
+    await authStore.fetchPermissions()
+
     // Redirigir según el rol
     if (authStore.isPresident || authStore.isTreasurer || authStore.isSecretary) {
       router.push('/admin/dashboard')
@@ -176,6 +179,12 @@ const handleLogin = async () => {
   }
 }
 
+@media (max-width: 599px) {
+  .auth-card {
+    padding: 24px;
+  }
+}
+
 .auth-header {
   text-align: center;
   margin-bottom: 40px;
@@ -194,6 +203,12 @@ const handleLogin = async () => {
   color: var(--primary);
 }
 
+@media (max-width: 599px) {
+  .logo-icon {
+    font-size: 40px;
+  }
+}
+
 .logo-title {
   font-size: 24px;
   font-weight: 800;
@@ -202,12 +217,24 @@ const handleLogin = async () => {
   margin: 0;
 }
 
+@media (max-width: 599px) {
+  .logo-title {
+    font-size: 20px;
+  }
+}
+
 .logo-subtitle {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--outline);
   margin: 4px 0 0 0;
+}
+
+@media (max-width: 599px) {
+  .logo-subtitle {
+    font-size: 12px;
+  }
 }
 
 .auth-form {
@@ -329,6 +356,13 @@ const handleLogin = async () => {
   gap: 8px;
   border: none;
   cursor: pointer;
+}
+
+@media (max-width: 599px) {
+  .auth-button {
+    padding: 14px;
+    font-size: 13px;
+  }
 }
 
 .auth-button:hover:not(:disabled) {

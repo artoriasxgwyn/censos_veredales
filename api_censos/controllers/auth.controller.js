@@ -149,6 +149,7 @@ export const register = async (req, res) => {
       email: email.toLowerCase(),
       password: hashedPassword,
       phone,
+      digitalSignature: req.body.digitalSignature || null,
       role: null,
       communityId: community._id
     });

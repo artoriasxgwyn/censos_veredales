@@ -106,6 +106,7 @@ body {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: inherit;
 }
 
 /* Material Icons - fallback para compatibilidad */
@@ -123,6 +124,34 @@ body {
   direction: ltr;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: inherit;
+}
+
+/* Iconos dentro de botones Quasar - asegurar visibilidad */
+.q-btn .material-icons,
+.q-btn .material-symbols-outlined {
+  color: currentColor !important;
+}
+
+.q-btn.flat .material-icons,
+.q-btn.flat .material-symbols-outlined {
+  color: var(--on-surface) !important;
+}
+
+.q-btn.round .material-icons,
+.q-btn.round .material-symbols-outlined {
+  color: var(--on-surface) !important;
+}
+
+/* Padding superior para contenido debajo del header fijo */
+.q-page-container {
+  padding-top: 72px !important;
+}
+
+@media (max-width: 599px) {
+  .q-page-container {
+    padding-top: 64px !important;
+  }
 }
 
 /* Utility classes */

@@ -14,15 +14,15 @@
           <span>{{ formatDate(announcement.createdAt) }}</span>
         </div>
       </div>
-      <q-badge :color="getStatusColor(announcement.isPublished)">
-        {{ getStatusLabel(announcement.isPublished) }}
+      <q-badge :color="getStatusColor(isPublished(announcement))">
+        {{ getStatusLabel(isPublished(announcement)) }}
       </q-badge>
     </q-card-section>
 
     <q-separator />
 
     <q-card-section class="announcement-body">
-      <p class="announcement-excerpt" v-html="getExcerpt(announcement.content)"></p>
+      <p class="announcement-excerpt" v-html="getExcerpt(announcement.body)"></p>
     </q-card-section>
 
     <q-card-actions align="right" v-if="showActions">
@@ -70,6 +70,10 @@ const getAuthorName = (user) => {
   }
   const foundUser = props.users.find(u => u._id === user)
   return foundUser?.fullName || 'Administrador'
+}
+
+const isPublished = (announcement) => {
+  return announcement.publishedAt && new Date(announcement.publishedAt) <= new Date()
 }
 
 const getExcerpt = (content) => {

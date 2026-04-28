@@ -33,7 +33,7 @@
             <q-item
               clickable
               v-ripple
-              :to="{ name: 'AdminDashboard' }"
+              :to="presidentDashboardRoute"
               exact
               class="nav-item"
             >
@@ -53,7 +53,7 @@
               clickable
               v-ripple
               :to="{ name: 'CommunityList' }"
-              v-if="authStore.isPresident"
+              v-if="hasPermission('community', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -68,6 +68,7 @@
               clickable
               v-ripple
               :to="{ name: 'DwellingList' }"
+              v-if="hasPermission('dwelling', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -82,6 +83,7 @@
               clickable
               v-ripple
               :to="{ name: 'ResidentList' }"
+              v-if="hasPermission('resident', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -96,6 +98,7 @@
               clickable
               v-ripple
               :to="{ name: 'LetterList' }"
+              v-if="hasPermission('letter', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -110,6 +113,7 @@
               clickable
               v-ripple
               :to="{ name: 'AnnouncementList' }"
+              v-if="hasPermission('announcement', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -120,6 +124,7 @@
               </q-item-section>
             </q-item>
 
+            <!-- Presidente o roles con permisos específicos -->
             <q-separator class="nav-separator" />
 
             <q-item-label header class="nav-header">Administración</q-item-label>
@@ -128,7 +133,7 @@
               clickable
               v-ripple
               :to="{ name: 'UserList' }"
-              v-if="authStore.isPresident"
+              v-if="hasPermission('user', 'read')"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -138,6 +143,39 @@
                 <q-item-label>Usuarios</q-item-label>
               </q-item-section>
             </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              :to="{ name: 'PresidentRoleManagement' }"
+              v-if="hasPermission('user', 'manageRoles')"
+              class="nav-item"
+            >
+              <q-item-section avatar>
+                <span class="material-symbols-outlined">badge</span>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Roles y Permisos</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              :to="{ name: 'PresidentQRScanner' }"
+              v-if="hasPermission('letter', 'qrScan')"
+              class="nav-item"
+            >
+              <q-item-section avatar>
+                <span class="material-symbols-outlined">qr_code_scanner</span>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Escáner QR</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-separator class="nav-separator" />
+
           </template>
 
           <template v-else>
@@ -279,9 +317,26 @@ const isAdmin = computed(() => {
   return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
 })
 
+// Verificar permisos usando el getter del store
+const hasPermission = (module, action) => {
+  return authStore.hasPermission(module, action)
+}
+
+// Verificar si tiene acceso al dashboard de admin (requiere dashboard:access)
+const hasDashboardAccess = computed(() => {
+  return authStore.isPresident || hasPermission('dashboard', 'access')
+})
+
+const presidentDashboardRoute = computed(() => {
+  return authStore.isPresident
+    ? { name: 'PresidentDashboard' }
+    : { name: 'AdminDashboard' }
+})
+
 const pageTitle = computed(() => {
   const titles = {
     AdminDashboard: 'Dashboard',
+    PresidentDashboard: 'Dashboard del Presidente',
     CommunityList: 'Comunidades',
     CommunityDetail: 'Detalle de Comunidad',
     CommunityCreate: 'Nueva Comunidad',
@@ -303,6 +358,10 @@ const pageTitle = computed(() => {
     AnnouncementEdit: 'Editar Anuncio',
     UserList: 'Usuarios',
     UserDetail: 'Detalle de Usuario',
+    PresidentApprovals: 'Aprobaciones',
+    PresidentRoleManagement: 'Roles y Permisos',
+    PresidentQRScanner: 'Escáner QR',
+    PresidentAuditLogs: 'Registro de Auditoría',
     ResidentDashboard: 'Mi Panel',
     MyLetters: 'Mis Cartas',
     LetterRequest: 'Solicitar Carta',
@@ -352,11 +411,23 @@ const handleLogout = async () => {
   width: 280px;
 }
 
+@media (max-width: 1023px) {
+  .sidebar {
+    width: 260px;
+  }
+}
+
 .sidebar-content {
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 20px 16px;
+}
+
+@media (max-width: 599px) {
+  .sidebar-content {
+    padding: 16px 12px;
+  }
 }
 
 .logo-section {
@@ -378,6 +449,21 @@ const handleLogout = async () => {
   color: var(--primary);
   letter-spacing: -0.02em;
   margin: 0;
+}
+
+@media (max-width: 599px) {
+  .logo-section {
+    padding: 16px 12px;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    font-size: 28px;
+  }
+
+  .logo-text {
+    font-size: 16px;
+  }
 }
 
 /* User Profile */
@@ -417,6 +503,21 @@ const handleLogout = async () => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 2px 0 0 0;
+}
+
+@media (max-width: 599px) {
+  .user-profile {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .user-name {
+    font-size: 13px;
+  }
+
+  .user-role {
+    font-size: 10px;
+  }
 }
 
 /* Navigation */
@@ -473,6 +574,26 @@ const handleLogout = async () => {
   color: var(--on-surface-variant);
 }
 
+@media (max-width: 599px) {
+  .nav-item {
+    padding: 10px 12px;
+    margin: 2px;
+  }
+
+  .nav-item .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .nav-item q-item-label {
+    font-size: 13px;
+  }
+
+  .nav-header {
+    padding: 12px 8px 6px;
+    font-size: 10px;
+  }
+}
+
 .logout-item {
   margin-top: auto;
 }
@@ -509,6 +630,11 @@ const handleLogout = async () => {
 
 .mobile-menu-btn {
   display: none;
+  color: var(--on-surface) !important;
+}
+
+.mobile-menu-btn .material-icons {
+  color: var(--on-surface) !important;
 }
 
 @media (max-width: 1023px) {
@@ -517,14 +643,70 @@ const handleLogout = async () => {
   }
 }
 
+@media (max-width: 599px) {
+  .page-title {
+    font-size: 16px;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+}
+
 /* Deep styling for Quasar components */
 :deep(.q-drawer) {
   border-right: none;
 }
 
+:deep(.q-header),
+:deep(.q-header .q-toolbar) {
+  height: 64px !important;
+  min-height: 64px !important;
+}
+
 :deep(.q-toolbar) {
-  min-height: 64px;
-  padding: 0 24px;
+  padding: 0 16px !important;
+}
+
+:deep(.q-toolbar .q-btn) {
+  width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+:deep(.q-toolbar .q-btn .q-icon) {
+  font-size: 24px !important;
+}
+
+:deep(.q-toolbar-title) {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+}
+
+@media (max-width: 599px) {
+  :deep(.q-header),
+  :deep(.q-header .q-toolbar) {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  :deep(.q-toolbar) {
+    padding: 0 12px !important;
+  }
+
+  :deep(.q-toolbar .q-btn) {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+
+  :deep(.q-toolbar .q-btn .q-icon) {
+    font-size: 22px !important;
+  }
+
+  :deep(.q-toolbar-title) {
+    font-size: 16px !important;
+  }
 }
 
 :deep(.q-item) {
@@ -534,5 +716,31 @@ const handleLogout = async () => {
 :deep(.q-badge) {
   font-size: 10px;
   padding: 2px 6px;
+}
+
+@media (max-width: 599px) {
+  :deep(.q-header),
+  :deep(.q-header .q-toolbar) {
+    height: 52px !important;
+    min-height: 52px !important;
+  }
+
+  :deep(.q-toolbar) {
+    padding: 0 12px !important;
+  }
+
+  :deep(.q-toolbar .q-btn) {
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+
+  :deep(.q-toolbar .q-btn .q-icon) {
+    font-size: 22px !important;
+  }
+
+  :deep(.q-toolbar-title) {
+    font-size: 16px !important;
+  }
 }
 </style>

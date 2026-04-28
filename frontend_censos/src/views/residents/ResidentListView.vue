@@ -1,79 +1,103 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
-      <h1 class="title">Residentes</h1>
-      <q-btn
-        color="primary"
-        label="Nuevo Residente"
-        icon="add"
-        @click="router.push('/admin/residents/create')"
-      />
-    </div>
+  <div class="page">
+    <div class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <p class="page-subtitle">Gestión de Residentes</p>
+          <h1 class="page-title">Residentes</h1>
+          <p class="page-description">Administre los residentes de las comunidades</p>
+        </div>
+        <q-btn
+          color="primary"
+          label="Nuevo Residente"
+          icon="add"
+          @click="router.push('/admin/residents/create')"
+          class="create-btn"
+        >
+          <template v-slot:append>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </template>
+        </q-btn>
+      </div>
 
-    <!-- Filtros -->
-    <div class="filters">
-      <q-btn-toggle
-        v-model="statusFilter"
-        toggle-color="primary"
-        :options="statusOptions"
-        outline
-      />
-    </div>
+      <!-- Filters -->
+      <div class="filters-section">
+        <div class="filter-chips">
+          <button
+            v-for="option in statusOptions"
+            :key="option.value"
+            :class="['filter-chip', { active: statusFilter === option.value }]"
+            @click="statusFilter = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
 
-    <div class="residents-list" v-if="!residentStore.loading">
-      <q-card
-        v-for="resident in filteredResidents"
-        :key="resident._id"
-        class="resident-card"
-        @click="router.push(`/admin/residents/${resident._id}`)"
-      >
-        <q-card-section class="resident-header">
-          <div class="resident-icon">
-            <span class="material-symbols-outlined">person</span>
-          </div>
-          <div class="resident-info">
+      <!-- Residents List -->
+      <div class="residents-section" v-if="!residentStore.loading">
+        <div class="residents-grid">
+          <div
+            v-for="resident in filteredResidents"
+            :key="resident._id"
+            class="resident-card"
+            @click="router.push(`/admin/residents/${resident._id}`)"
+          >
+            <div class="resident-badge" :class="resident.status">
+              {{ getStatusLabel(resident.status) }}
+            </div>
+
+            <div class="resident-icon">
+              <span class="material-symbols-outlined">person</span>
+            </div>
+
             <h3 class="resident-name">{{ getUserName(resident.userId) }}</h3>
             <p class="resident-dwelling">{{ getDwellingName(resident.dwellingId) }}</p>
-          </div>
-          <q-badge :color="getStatusColor(resident.status)">
-            {{ getStatusLabel(resident.status) }}
-          </q-badge>
-        </q-card-section>
 
-        <q-separator />
-
-        <q-card-section class="resident-body">
-          <div class="approval-progress">
-            <div class="approval-item" :class="resident.approvedByPresident">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Presidente</span>
+            <div class="approval-status">
+              <div class="approval-item" :class="resident.approvedByPresident">
+                <span class="material-symbols-outlined">
+                  {{ resident.approvedByPresident ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
+              <div class="approval-item" :class="resident.approvedByTreasurer">
+                <span class="material-symbols-outlined">
+                  {{ resident.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
+              <div class="approval-item" :class="resident.approvedBySecretary">
+                <span class="material-symbols-outlined">
+                  {{ resident.approvedBySecretary ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
             </div>
-            <div class="approval-item" :class="resident.approvedByTreasurer">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Tesorero</span>
-            </div>
-            <div class="approval-item" :class="resident.approvedBySecretary">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Secretario</span>
+
+            <div class="resident-footer">
+              <span class="resident-id">
+                <span class="material-symbols-outlined">badge</span>
+                {{ resident.registrationNumber || 'Sin registro' }}
+              </span>
+              <span class="material-symbols-outlined chevron">chevron_right</span>
             </div>
           </div>
+        </div>
 
-          <div class="resident-meta">
-            <span class="material-symbols-outlined">badge</span>
-            {{ resident.registrationNumber || 'Sin número de registro' }}
+        <!-- Empty State -->
+        <div v-if="filteredResidents.length === 0" class="empty-state">
+          <div class="empty-icon">
+            <span class="material-symbols-outlined">people</span>
           </div>
-        </q-card-section>
-      </q-card>
-
-      <div v-if="filteredResidents.length === 0" class="no-data">
-        <span class="material-symbols-outlined">people</span>
-        <p>No hay residentes registrados</p>
+          <h3 class="empty-title">No hay residentes registrados</h3>
+          <p class="empty-description">Los residentes creados aparecerán aquí</p>
+        </div>
       </div>
-    </div>
 
-    <div v-else class="loading">
-      <q-spinner color="primary" size="3em" />
-      <p>Cargando residentes...</p>
+      <!-- Loading State -->
+      <div v-else class="loading-state">
+        <q-spinner color="primary" size="48px" />
+        <p>Cargando residentes...</p>
+      </div>
     </div>
   </div>
 </template>
@@ -129,15 +153,6 @@ const getDwellingName = (dwellingId) => {
   return dwelling?.houseNomenclature || 'Vivienda'
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    pending: 'warning',
-    approved: 'positive',
-    rejected: 'negative'
-  }
-  return colors[status] || 'grey'
-}
-
 const getStatusLabel = (status) => {
   const labels = {
     pending: 'Pendiente',
@@ -146,64 +161,233 @@ const getStatusLabel = (status) => {
   }
   return labels[status] || status
 }
+
+const formatDate = (date) => {
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
 </script>
 
 <style scoped>
-.page-container {
+.page {
+  min-height: 100vh;
+  background: var(--surface-container-lowest);
+}
+
+.page-content {
   padding: 24px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
+/* Page Header */
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+}
+
+.page-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.page-title {
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--on-surface);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 12px 0;
+}
+
+.page-description {
+  font-size: 16px;
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
+}
+
+.create-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  color: var(--on-primary);
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-transform: none;
+  box-shadow: 0 4px 12px rgba(0, 40, 142, 0.3);
+  transition: all 0.2s;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 40, 142, 0.4);
+}
+
+.create-btn .material-symbols-outlined {
+  font-size: 18px;
+  margin-left: 4px;
+}
+
+/* Filters */
+.filters-section {
   margin-bottom: 24px;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--on-surface);
-  margin: 0;
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.filters {
-  margin-bottom: 20px;
-}
-
-.residents-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
-}
-
-.resident-card {
-  border-radius: 12px;
+.filter-chip {
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.resident-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+.filter-chip:hover {
+  background: var(--primary-fixed);
+  border-color: var(--primary);
 }
 
-.resident-header {
-  display: flex;
-  align-items: center;
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Residents Section */
+.residents-section {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+}
+
+.residents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
+
+@media (max-width: 599px) {
+  .residents-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.resident-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+@media (max-width: 599px) {
+  .resident-card {
+    padding: 16px;
+  }
+
+  .resident-card:hover {
+    transform: none;
+  }
+}
+
+.resident-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.resident-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.resident-badge.pending { background: var(--warning); color: var(--on-primary); }
+.resident-badge.approved { background: var(--tertiary); color: var(--on-primary); }
+.resident-badge.rejected { background: var(--error); color: var(--on-primary); }
 
 .resident-icon {
   width: 48px;
   height: 48px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 599px) {
+  .resident-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .resident-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
 }
 
 .resident-icon .material-symbols-outlined {
@@ -211,58 +395,63 @@ const getStatusLabel = (status) => {
   color: var(--on-primary);
 }
 
-.resident-info {
-  flex: 1;
-}
-
 .resident-name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--on-surface);
   margin: 0 0 4px 0;
 }
 
+@media (max-width: 599px) {
+  .resident-name {
+    font-size: 16px;
+  }
+}
+
 .resident-dwelling {
-  font-size: 13px;
-  color: var(--outline);
-  margin: 0;
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 16px 0;
 }
 
-.resident-body {
-  padding-top: 12px !important;
+@media (max-width: 599px) {
+  .resident-dwelling {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
 }
 
-.approval-progress {
+.approval-status {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .approval-item {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  color: var(--on-surface-variant);
+  font-size: 11px;
+  color: var(--outline);
 }
 
 .approval-item .material-symbols-outlined {
   font-size: 16px;
 }
 
-.approval-item.approved {
-  color: var(--primary);
+.approval-item.approved { color: var(--tertiary); }
+.approval-item.rejected { color: var(--error); }
+.approval-item.pending { color: var(--warning); }
+
+.resident-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-container-highest);
 }
 
-.approval-item.rejected {
-  color: var(--error);
-}
-
-.approval-item.pending {
-  color: var(--warning);
-}
-
-.resident-meta {
+.resident-id {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -270,21 +459,65 @@ const getStatusLabel = (status) => {
   color: var(--on-surface-variant);
 }
 
-.resident-meta .material-symbols-outlined {
+.resident-id .material-symbols-outlined {
   font-size: 14px;
 }
 
-.no-data, .loading {
+.chevron {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+}
+
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: var(--on-surface-variant);
-  grid-column: 1 / -1;
 }
 
-.loading {
-  color: var(--outline);
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary-fixed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.empty-icon .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--primary);
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0 0 8px 0;
+}
+
+.empty-description {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 24px 0;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.loading-state p {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin-top: 16px;
 }
 </style>

@@ -188,7 +188,9 @@ const letterId = computed(() => route.params.id)
 const letter = computed(() => letterStore.currentLetter)
 
 const canApprove = computed(() => {
-  return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  // Necesita tener rol de aprobador Y permiso para generar cartas
+  const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return isApprover && authStore.hasPermission('letter', 'generateNormal')
 })
 
 const alreadyApproved = computed(() => {

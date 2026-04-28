@@ -36,9 +36,23 @@
             </div>
 
             <div class="col-12">
+              <q-input
+                v-model="form.header"
+                label="Encabezado"
+                outlined
+                dense
+                :rules="[val => !!val || 'El encabezado es requerido']"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="article" />
+                </template>
+              </q-input>
+            </div>
+
+            <div class="col-12">
               <q-editor
-                v-model="form.content"
-                label="Contenido"
+                v-model="form.body"
+                label="Cuerpo del mensaje"
                 outlined
                 min-height="200px"
                 :rules="[val => !!val || 'El contenido es requerido']"
@@ -53,7 +67,7 @@
               <p class="toggle-help">
                 {{ form.isPublished
                   ? 'El anuncio será visible para todos los residentes inmediatamente.'
-                  : 'El anuncio se guardará como borrador y no será visible públicamente.'
+                  : 'El anuncio se guardará como borrador y podrá publicarse más tarde.'
                 }}
               </p>
             </div>
@@ -91,15 +105,17 @@ const announcementStore = useAnnouncementStore()
 
 const form = ref({
   title: '',
-  content: '',
+  header: '',
+  body: '',
   isPublished: false
 })
 
 const handleSubmit = async () => {
   const announcementData = {
     title: form.value.title,
-    content: form.value.content,
-    isPublished: form.value.isPublished
+    header: form.value.header,
+    body: form.value.body,
+    publishedAt: form.value.isPublished ? new Date().toISOString() : null
   }
 
   const result = await announcementStore.createAnnouncement(announcementData)

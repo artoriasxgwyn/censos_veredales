@@ -18,9 +18,9 @@
         />
         <q-btn
           v-if="canEdit"
-          :color="announcement.isPublished ? 'warning' : 'positive'"
-          :label="announcement.isPublished ? 'Mover a Borrador' : 'Publicar'"
-          :icon="announcement.isPublished ? 'draft' : 'publish'"
+          :color="isPublished ? 'warning' : 'positive'"
+          :label="isPublished ? 'Mover a Borrador' : 'Publicar'"
+          :icon="isPublished ? 'draft' : 'publish'"
           @click="handleTogglePublish"
         />
         <q-btn
@@ -42,8 +42,8 @@
           <div class="announcement-info">
             <h2 class="announcement-title">{{ announcement.title }}</h2>
             <div class="announcement-meta-inline">
-              <q-badge :color="getStatusColor(announcement.status)">
-                {{ getStatusLabel(announcement.status) }}
+              <q-badge :color="getStatusColor(announcementStatus)">
+                {{ getStatusLabel(announcementStatus) }}
               </q-badge>
               <span class="author-text">
                 Por {{ getAuthorName(announcement.createdBy) }}
@@ -55,7 +55,7 @@
         <q-separator />
 
         <q-card-section>
-          <div class="announcement-content" v-html="announcement.content"></div>
+          <div class="announcement-content" v-html="announcement.body"></div>
         </q-card-section>
 
         <q-separator />
@@ -110,12 +110,20 @@ const userStore = useUserStore()
 const announcementId = computed(() => route.params.id)
 const announcement = computed(() => announcementStore.currentAnnouncement)
 
+const isPublished = computed(() => {
+  return announcement.value?.publishedAt && new Date(announcement.value.publishedAt) <= new Date()
+})
+
+const announcementStatus = computed(() => {
+  return isPublished.value ? 'published' : 'draft'
+})
+
 const canEdit = computed(() => {
-  return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return authStore.hasPermission('announcement', 'update')
 })
 
 const canDelete = computed(() => {
-  return authStore.isPresident
+  return authStore.hasPermission('announcement', 'delete')
 })
 
 onMounted(async () => {
@@ -147,10 +155,10 @@ const formatDate = (date) => {
 }
 
 const handleTogglePublish = async () => {
-  const action = announcement.value.isPublished ? 'no publicado' : 'publicado'
+  const action = isPublished.value ? 'no publicado' : 'publicado'
 
   $q.dialog({
-    title: announcement.value.isPublished ? 'Mover a Borrador' : 'Publicar Anuncio',
+    title: isPublished.value ? 'Mover a Borrador' : 'Publicar Anuncio',
     message: `¿Estás seguro de que quieres ${action} este anuncio?`,
     cancel: true,
     persistent: true

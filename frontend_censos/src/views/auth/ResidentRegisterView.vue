@@ -209,6 +209,7 @@ const handleRegister = async () => {
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
+  height: 64px;
 }
 
 .icon-button {
@@ -243,7 +244,7 @@ const handleRegister = async () => {
 /* Main Content */
 .main-content {
   flex-grow: 1;
-  padding: 104px 24px 48px;
+  padding: 80px 24px 48px;
   display: flex;
   align-items: center;
   justify-content: center;

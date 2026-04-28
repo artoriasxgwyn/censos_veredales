@@ -45,8 +45,8 @@
             class="announcement-card"
             @click="router.push(`/admin/announcements/${announcement._id}`)"
           >
-            <div class="announcement-badge" :class="announcement.isPublished ? 'published' : 'draft'">
-              {{ announcement.isPublished ? 'Publicado' : 'Borrador' }}
+            <div class="announcement-badge" :class="isPublished(announcement) ? 'published' : 'draft'">
+              {{ isPublished(announcement) ? 'Publicado' : 'Borrador' }}
             </div>
 
             <div class="announcement-icon">
@@ -54,7 +54,7 @@
             </div>
 
             <h3 class="announcement-title">{{ announcement.title }}</h3>
-            <p class="announcement-excerpt">{{ getExcerpt(announcement.content) }}</p>
+            <p class="announcement-excerpt">{{ getExcerpt(announcement.body) }}</p>
 
             <div class="announcement-footer">
               <div class="announcement-author">
@@ -115,15 +115,19 @@ const statusOptions = [
 ]
 
 const canCreate = computed(() => {
-  return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return authStore.hasPermission('announcement', 'create')
 })
+
+const isPublished = (announcement) => {
+  return announcement.publishedAt && new Date(announcement.publishedAt) <= new Date()
+}
 
 const filteredAnnouncements = computed(() => {
   if (statusFilter.value === 'all') {
     return announcementStore.announcements
   }
-  const status = statusFilter.value === 'published' ? true : false
-  return announcementStore.announcements.filter(a => a.isPublished === status)
+  const isPub = statusFilter.value === 'published'
+  return announcementStore.announcements.filter(a => isPublished(a) === isPub)
 })
 
 onMounted(async () => {
@@ -169,6 +173,12 @@ const formatDate = (date) => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -176,6 +186,15 @@ const formatDate = (date) => {
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
 }
 
 .page-subtitle {
@@ -202,6 +221,20 @@ const formatDate = (date) => {
   line-height: 1.6;
   margin: 0;
   max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
 }
 
 .create-btn {
@@ -275,6 +308,13 @@ const formatDate = (date) => {
   gap: 16px;
 }
 
+@media (max-width: 599px) {
+  .announcements-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 .announcement-card {
   background: var(--surface);
   border: 1px solid var(--surface-container-highest);
@@ -283,6 +323,12 @@ const formatDate = (date) => {
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+}
+
+@media (max-width: 599px) {
+  .announcement-card {
+    padding: 16px;
+  }
 }
 
 .announcement-card:hover {
@@ -324,6 +370,18 @@ const formatDate = (date) => {
   margin-bottom: 16px;
 }
 
+@media (max-width: 599px) {
+  .announcement-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .announcement-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
 .announcement-icon .material-symbols-outlined {
   font-size: 24px;
   color: var(--on-primary);
@@ -336,6 +394,13 @@ const formatDate = (date) => {
   margin: 0 0 10px 0;
 }
 
+@media (max-width: 599px) {
+  .announcement-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+}
+
 .announcement-excerpt {
   font-size: 14px;
   color: var(--on-surface-variant);
@@ -345,6 +410,13 @@ const formatDate = (date) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+@media (max-width: 599px) {
+  .announcement-excerpt {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
 }
 
 .announcement-footer {

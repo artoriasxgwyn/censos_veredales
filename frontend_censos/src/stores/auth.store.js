@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.service'
+import { roleService } from '@/services/role.service'
 import { useQuasar } from 'quasar'
 
 export const useAuthStore = defineStore('auth', {
@@ -7,7 +8,8 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     accessToken: localStorage.getItem('access_token') || null,
     refreshToken: localStorage.getItem('refresh_token') || null,
-    loading: false
+    loading: false,
+    permissions: null
   }),
 
   getters: {
@@ -18,7 +20,17 @@ export const useAuthStore = defineStore('auth', {
     isSecretary: (state) => state.user?.role === 'secretario',
     isResident: (state) => state.user?.role === 'residente',
     isCensista: (state) => state.user?.role === 'censista',
-    communityId: (state) => state.user?.communityId
+    communityId: (state) => state.user?.communityId,
+    hasPermission: (state) => (module, action) => {
+      // Presidente tiene todos los permisos por defecto
+      if (state.user?.role === 'president') return true
+      // Si no hay permisos cargados, denegar
+      if (!state.permissions) return false
+      // Si tiene all: true, tiene todos los permisos
+      if (state.permissions.all === true) return true
+      // Verificar permiso específico
+      return state.permissions[module]?.[action] === true
+    }
   },
 
   actions: {
@@ -74,9 +86,33 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await authService.getMe()
         this.user = response.data
+        // Cargar permisos después de cargar el usuario
+        if (this.user?.role !== 'president') {
+          await this.fetchPermissions()
+        }
         return response.data
       } catch (error) {
         this.logout()
+        return null
+      }
+    },
+
+    async fetchPermissions() {
+      if (!this.accessToken) return
+      if (this.user?.role === 'president') {
+        // Presidente tiene todos los permisos
+        this.permissions = { all: true }
+        return
+      }
+      try {
+        const response = await roleService.getMyPermissions()
+        const perms = response.data?.permissions
+        // Si el backend retorna 'all' o un objeto de permisos
+        this.permissions = perms === 'all' ? { all: true } : (perms || null)
+        return response.data
+      } catch (error) {
+        console.error('Error al cargar permisos:', error)
+        this.permissions = null
         return null
       }
     },

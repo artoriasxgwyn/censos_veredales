@@ -3,7 +3,10 @@ import User from '../models/user.model.js';
 
 export const getDwellings = async (req, res) => {
   try {
-    // Presidente ve todas las viviendas de su comunidad, otros roles solo las suyas
+    // Obtener documento del usuario para obtener su cédula
+    const currentUser = await User.findById(req.userId).select('documentNumber');
+
+    // Presidente ve todas las viviendas de su comunidad
     if (req.userRole === 'president') {
       const dwellings = await Dwelling.find({
         communityId: req.communityId,
@@ -12,10 +15,16 @@ export const getDwellings = async (req, res) => {
       return res.json({ success: true, data: dwellings });
     }
 
-    // Otros roles solo ven sus propias viviendas
+    // Otros roles ven viviendas donde:
+    // 1. ownerUserId coincide con su userId, O
+    // 2. cedulaPropietario coincide con su documentNumber
     const dwellings = await Dwelling.find({
-      ownerUserId: req.userId,
-      isActive: true
+      communityId: req.communityId,
+      isActive: true,
+      $or: [
+        { ownerUserId: req.userId },
+        { cedulaPropietario: currentUser.documentNumber }
+      ]
     }).populate('ownerUserId', 'fullName email');
 
     res.json({ success: true, data: dwellings });
@@ -26,6 +35,9 @@ export const getDwellings = async (req, res) => {
 
 export const getDwellingById = async (req, res) => {
   try {
+    // Obtener documento del usuario para obtener su cédula
+    const currentUser = await User.findById(req.userId).select('documentNumber');
+
     // Presidente puede ver cualquier vivienda de su comunidad
     if (req.userRole === 'president') {
       const dwelling = await Dwelling.findOne({
@@ -40,11 +52,15 @@ export const getDwellingById = async (req, res) => {
       return res.json({ success: true, data: dwelling });
     }
 
-    // Otros roles solo pueden ver sus propias viviendas
+    // Otros roles solo pueden ver sus propias viviendas (por userId o por cédula)
     const dwelling = await Dwelling.findOne({
       _id: req.params.id,
-      ownerUserId: req.userId,
-      isActive: true
+      communityId: req.communityId,
+      isActive: true,
+      $or: [
+        { ownerUserId: req.userId },
+        { cedulaPropietario: currentUser.documentNumber }
+      ]
     }).populate('ownerUserId', 'fullName email');
 
     if (!dwelling) {
@@ -58,11 +74,31 @@ export const getDwellingById = async (req, res) => {
 
 export const createDwelling = async (req, res) => {
   try {
-    const dwelling = await Dwelling.create({
+    const { cedulaPropietario } = req.validatedBody;
+
+    // Buscar usuario por cédula en la comunidad del usuario que crea la vivienda
+    let ownerUserId = null;
+
+    if (cedulaPropietario) {
+      const propietario = await User.findOne({
+        documentNumber: cedulaPropietario,
+        communityId: req.communityId,
+        isActive: true
+      });
+
+      // Si encuentra el usuario, usar su ID, si no, dejar null
+      ownerUserId = propietario?._id || null;
+    }
+
+    // Crear vivienda con ownerUserId (puede ser null si no encontró la cédula)
+    const dwellingData = {
       ...req.validatedBody,
       communityId: req.communityId,
-      ownerUserId: req.userId
-    });
+      ownerUserId,
+      cedulaPropietario
+    };
+
+    const dwelling = await Dwelling.create(dwellingData);
     res.status(201).json({ success: true, data: dwelling });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -71,6 +107,9 @@ export const createDwelling = async (req, res) => {
 
 export const updateDwelling = async (req, res) => {
   try {
+    // Obtener documento del usuario para obtener su cédula
+    const currentUser = await User.findById(req.userId).select('documentNumber');
+
     // Presidente puede actualizar cualquier vivienda de su comunidad
     if (req.userRole === 'president') {
       const dwelling = await Dwelling.findOneAndUpdate(
@@ -85,9 +124,16 @@ export const updateDwelling = async (req, res) => {
       return res.json({ success: true, data: dwelling });
     }
 
-    // Otros roles solo pueden actualizar sus propias viviendas
+    // Otros roles solo pueden actualizar sus propias viviendas (por userId o por cédula)
     const dwelling = await Dwelling.findOneAndUpdate(
-      { _id: req.params.id, ownerUserId: req.userId, communityId: req.communityId },
+      {
+        _id: req.params.id,
+        communityId: req.communityId,
+        $or: [
+          { ownerUserId: req.userId },
+          { cedulaPropietario: currentUser.documentNumber }
+        ]
+      },
       req.validatedBody,
       { new: true, runValidators: true }
     );
@@ -103,6 +149,9 @@ export const updateDwelling = async (req, res) => {
 
 export const deleteDwelling = async (req, res) => {
   try {
+    // Obtener documento del usuario para obtener su cédula
+    const currentUser = await User.findById(req.userId).select('documentNumber');
+
     // Presidente puede eliminar cualquier vivienda de su comunidad
     if (req.userRole === 'president') {
       const dwelling = await Dwelling.findOneAndUpdate(
@@ -117,9 +166,16 @@ export const deleteDwelling = async (req, res) => {
       return res.json({ success: true, message: 'Vivienda eliminada correctamente' });
     }
 
-    // Otros roles solo pueden eliminar sus propias viviendas
+    // Otros roles solo pueden eliminar sus propias viviendas (por userId o por cédula)
     const dwelling = await Dwelling.findOneAndUpdate(
-      { _id: req.params.id, ownerUserId: req.userId, communityId: req.communityId },
+      {
+        _id: req.params.id,
+        communityId: req.communityId,
+        $or: [
+          { ownerUserId: req.userId },
+          { cedulaPropietario: currentUser.documentNumber }
+        ]
+      },
       { isActive: false },
       { new: true }
     );

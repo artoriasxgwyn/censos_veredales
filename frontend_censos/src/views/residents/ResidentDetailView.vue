@@ -167,7 +167,9 @@ const residentId = computed(() => route.params.id)
 const resident = computed(() => residentStore.currentResident)
 
 const canApprove = computed(() => {
-  return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  // Necesita tener rol de aprobador Y permiso para actualizar residentes
+  const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return isApprover && authStore.hasPermission('resident', 'update')
 })
 
 const alreadyApproved = computed(() => {
@@ -300,11 +302,29 @@ const handleDelete = async () => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-container {
+    padding: 16px;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
 }
 
 .title {
@@ -318,6 +338,12 @@ const handleDelete = async () => {
 .header-actions {
   display: flex;
   gap: 8px;
+}
+
+@media (max-width: 599px) {
+  .header-actions {
+    gap: 4px;
+  }
 }
 
 .content {
@@ -336,6 +362,13 @@ const handleDelete = async () => {
   gap: 16px;
 }
 
+@media (max-width: 599px) {
+  .resident-header {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
 .resident-icon {
   width: 56px;
   height: 56px;
@@ -344,6 +377,18 @@ const handleDelete = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .resident-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .resident-icon .material-symbols-outlined {
+    font-size: 24px;
+  }
 }
 
 .resident-icon .material-symbols-outlined {
@@ -356,6 +401,12 @@ const handleDelete = async () => {
   font-weight: 600;
   color: var(--on-surface);
   margin: 0 0 8px 0;
+}
+
+@media (max-width: 599px) {
+  .resident-name {
+    font-size: 18px;
+  }
 }
 
 .section-title {
@@ -373,6 +424,13 @@ const handleDelete = async () => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+}
+
+@media (max-width: 599px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .info-item {

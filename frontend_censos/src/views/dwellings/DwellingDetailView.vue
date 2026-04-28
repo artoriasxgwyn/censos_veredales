@@ -181,7 +181,9 @@ const dwellingId = computed(() => route.params.id)
 const dwelling = computed(() => dwellingStore.currentDwelling)
 
 const canApprove = computed(() => {
-  return authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  // Necesita tener rol de aprobador Y permiso para actualizar viviendas
+  const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return isApprover && authStore.hasPermission('dwelling', 'update')
 })
 
 const alreadyApproved = computed(() => {
@@ -287,11 +289,29 @@ const handleDelete = async () => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-container {
+    padding: 16px;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
 }
 
 .title {
@@ -323,6 +343,13 @@ const handleDelete = async () => {
   gap: 16px;
 }
 
+@media (max-width: 599px) {
+  .dwelling-header {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
 .dwelling-icon {
   width: 56px;
   height: 56px;
@@ -331,6 +358,18 @@ const handleDelete = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .dwelling-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dwelling-icon .material-symbols-outlined {
+    font-size: 24px;
+  }
 }
 
 .dwelling-icon .material-symbols-outlined {
@@ -343,6 +382,12 @@ const handleDelete = async () => {
   font-weight: 600;
   color: var(--on-surface);
   margin: 0 0 8px 0;
+}
+
+@media (max-width: 599px) {
+  .dwelling-name {
+    font-size: 18px;
+  }
 }
 
 .section-title {
@@ -361,6 +406,13 @@ const handleDelete = async () => {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
   margin-bottom: 16px;
+}
+
+@media (max-width: 599px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .info-item {
@@ -423,6 +475,14 @@ const handleDelete = async () => {
   margin-bottom: 20px;
 }
 
+@media (max-width: 599px) {
+  .approval-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+}
+
 .approval-card {
   display: flex;
   align-items: center;
@@ -431,6 +491,13 @@ const handleDelete = async () => {
   background: var(--surface-container-lowest);
   border-radius: 8px;
   border: 2px solid transparent;
+}
+
+@media (max-width: 599px) {
+  .approval-card {
+    padding: 12px;
+    gap: 10px;
+  }
 }
 
 .approval-card.approved {
@@ -455,6 +522,14 @@ const handleDelete = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 599px) {
+  .approval-icon {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 .approved .approval-icon {
@@ -477,9 +552,16 @@ const handleDelete = async () => {
   color: var(--on-primary);
 }
 
+@media (max-width: 599px) {
+  .approval-icon .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
 .approval-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .approval-label {
@@ -488,9 +570,21 @@ const handleDelete = async () => {
   color: var(--outline);
 }
 
+@media (max-width: 599px) {
+  .approval-label {
+    font-size: 11px;
+  }
+}
+
 .approval-status {
   font-size: 14px;
   font-weight: 600;
+}
+
+@media (max-width: 599px) {
+  .approval-status {
+    font-size: 13px;
+  }
 }
 
 .approved .approval-status { color: var(--primary); }

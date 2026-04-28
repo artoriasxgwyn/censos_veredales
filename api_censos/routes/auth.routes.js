@@ -1,10 +1,26 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { login, register, refreshToken, logout, getMe, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
 import { validate } from '../middlewares/validate.js';
 import { loginSchema, refreshTokenSchema, forgotPasswordSchema } from '../schemas/user.schema.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = Router();
+
+// Rate limiter específico para login (prevenir brute force)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20, // 20 intentos de login por IP
+  message: { success: false, message: 'Demasiados intentos de inicio de sesión, intente más tarde' },
+  keyGenerator: (req) => req.ip
+});
+
+// Rate limiter para logout y refresh (más permisivo)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 50, // 50 peticiones por IP
+  message: { success: false, message: 'Demasiadas solicitudes de autenticación' }
+});
 
 /**
  * @swagger
@@ -50,7 +66,7 @@ const router = Router();
  *       401:
  *         description: Credenciales inválidas
  */
-router.post('/login', validate(loginSchema), login);
+router.post('/login', loginLimiter, validate(loginSchema), login);
 
 /**
  * @swagger
@@ -95,7 +111,7 @@ router.post('/register', register);
  *       401:
  *         description: Refresh token inválido o expirado
  */
-router.post('/refresh', validate(refreshTokenSchema), refreshToken);
+router.post('/refresh', authLimiter, validate(refreshTokenSchema), refreshToken);
 
 /**
  * @swagger
@@ -109,7 +125,7 @@ router.post('/refresh', validate(refreshTokenSchema), refreshToken);
  *       200:
  *         description: Sesión cerrada exitosamente
  */
-router.post('/logout', auth, logout);
+router.post('/logout', authLimiter, auth, logout);
 
 /**
  * @swagger

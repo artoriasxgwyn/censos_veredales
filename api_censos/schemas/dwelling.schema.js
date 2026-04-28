@@ -7,6 +7,7 @@ export const createDwellingSchema = z.object({
   constructionDate: z.string().optional(),
   homePhoto: z.string().optional(),
   ownerUserId: z.string().optional(),
+  cedulaPropietario: z.string().min(1, 'La cédula del propietario es requerida'),
   status: z.string().optional()
 });
 
@@ -17,6 +18,7 @@ export const updateDwellingSchema = z.object({
   constructionDate: z.string().optional(),
   homePhoto: z.string().optional(),
   ownerUserId: z.string().optional(),
+  cedulaPropietario: z.string().optional(),
   status: z.string().optional(),
   isActive: z.boolean().optional()
 });

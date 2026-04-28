@@ -53,12 +53,11 @@
               <p class="user-email">{{ user.email }}</p>
               <div class="user-roles">
                 <span
-                  v-for="role in user.roles"
-                  :key="role"
+                  v-if="user.role"
                   class="role-badge"
-                  :class="role"
+                  :class="user.role"
                 >
-                  {{ getRoleLabel(role) }}
+                  {{ getRoleLabel(user.role) }}
                 </span>
               </div>
             </div>
@@ -98,8 +97,8 @@ const roleFilter = ref('all')
 const roleOptions = [
   { label: 'Todos', value: 'all' },
   { label: 'Presidente', value: 'president' },
-  { label: 'Tesorero', value: 'treasurer' },
-  { label: 'Secretario', value: 'secretary' },
+  { label: 'Tesorero', value: 'tesorero' },
+  { label: 'Secretario', value: 'secretario' },
   { label: 'Residente', value: 'residente' },
   { label: 'Censista', value: 'censista' }
 ]
@@ -108,7 +107,7 @@ const filteredUsers = computed(() => {
   let result = userStore.users
 
   if (roleFilter.value !== 'all') {
-    result = result.filter(u => u.roles?.includes(roleFilter.value))
+    result = result.filter(u => u.role === roleFilter.value)
   }
 
   if (searchQuery.value) {
@@ -150,6 +149,12 @@ const getRoleLabel = (role) => {
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
 /* Page Header */
 .page-header {
   display: flex;
@@ -157,6 +162,15 @@ const getRoleLabel = (role) => {
   align-items: flex-start;
   margin-bottom: 32px;
   gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
 }
 
 .page-subtitle {
@@ -183,6 +197,20 @@ const getRoleLabel = (role) => {
   line-height: 1.6;
   margin: 0;
   max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
 }
 
 /* Filters */
@@ -287,6 +315,13 @@ const getRoleLabel = (role) => {
   gap: 16px;
 }
 
+@media (max-width: 599px) {
+  .users-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 .user-card {
   display: flex;
   align-items: center;
@@ -296,6 +331,17 @@ const getRoleLabel = (role) => {
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+@media (max-width: 599px) {
+  .user-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .user-card:hover {
+    transform: none;
+  }
 }
 
 .user-card:hover {

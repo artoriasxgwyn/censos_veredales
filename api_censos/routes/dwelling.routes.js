@@ -53,6 +53,7 @@ router.get('/:id', auth, checkPermission('dwelling', 'read'), getDwellingById);
  *             type: object
  *             required:
  *               - arrivalInstructions
+ *               - cedulaPropietario
  *             properties:
  *               houseNomenclature:
  *                 type: string
@@ -70,9 +71,9 @@ router.get('/:id', auth, checkPermission('dwelling', 'read'), getDwellingById);
  *               homePhoto:
  *                 type: string
  *                 description: URL de la foto del hogar
- *               ownerUserId:
+ *               cedulaPropietario:
  *                 type: string
- *                 description: ID del usuario propietario
+ *                 description: Cédula del propietario (si está registrado, se vincula automáticamente)
  *               status:
  *                 type: string
  *                 description: Estado de la vivienda

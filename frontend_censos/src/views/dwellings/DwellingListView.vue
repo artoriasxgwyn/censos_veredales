@@ -1,79 +1,103 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
-      <h1 class="title">Viviendas</h1>
-      <q-btn
-        color="primary"
-        label="Nueva Vivienda"
-        icon="add"
-        @click="router.push('/admin/dwellings/create')"
-      />
-    </div>
+  <div class="page">
+    <div class="page-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <p class="page-subtitle">Gestión de Viviendas</p>
+          <h1 class="page-title">Viviendas</h1>
+          <p class="page-description">Administre las viviendas registradas en las comunidades</p>
+        </div>
+        <q-btn
+          color="primary"
+          label="Nueva Vivienda"
+          icon="add"
+          @click="router.push('/admin/dwellings/create')"
+          class="create-btn"
+        >
+          <template v-slot:append>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </template>
+        </q-btn>
+      </div>
 
-    <!-- Filtros -->
-    <div class="filters">
-      <q-btn-toggle
-        v-model="statusFilter"
-        toggle-color="primary"
-        :options="statusOptions"
-        outline
-      />
-    </div>
+      <!-- Filters -->
+      <div class="filters-section">
+        <div class="filter-chips">
+          <button
+            v-for="option in statusOptions"
+            :key="option.value"
+            :class="['filter-chip', { active: statusFilter === option.value }]"
+            @click="statusFilter = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
 
-    <div class="dwellings-list" v-if="!dwellingStore.loading">
-      <q-card
-        v-for="dwelling in filteredDwellings"
-        :key="dwelling._id"
-        class="dwelling-card"
-        @click="router.push(`/admin/dwellings/${dwelling._id}`)"
-      >
-        <q-card-section class="dwelling-header">
-          <div class="dwelling-icon">
+      <!-- Dwellings List -->
+      <div class="dwellings-section" v-if="!dwellingStore.loading">
+        <div class="dwellings-grid">
+          <div
+            v-for="dwelling in filteredDwellings"
+            :key="dwelling._id"
+            class="dwelling-card"
+            @click="router.push(`/admin/dwellings/${dwelling._id}`)"
+          >
+            <div class="dwelling-badge" :class="dwelling.status">
+              {{ getStatusLabel(dwelling.status) }}
+            </div>
+
+            <div class="dwelling-icon">
+              <span class="material-symbols-outlined">home</span>
+            </div>
+
+            <h3 class="dwelling-type">{{ dwelling.houseNomenclature || 'Sin nomenclatura' }}</h3>
+            <p class="dwelling-community">{{ dwelling.communityId?.neighborhood || 'Comunidad' }}</p>
+
+            <div class="approval-status">
+              <div class="approval-item" :class="dwelling.approvedByPresident">
+                <span class="material-symbols-outlined">
+                  {{ dwelling.approvedByPresident ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
+              <div class="approval-item" :class="dwelling.approvedByTreasurer">
+                <span class="material-symbols-outlined">
+                  {{ dwelling.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
+              <div class="approval-item" :class="dwelling.approvedBySecretary">
+                <span class="material-symbols-outlined">
+                  {{ dwelling.approvedBySecretary ? 'check_circle' : 'pending' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="dwelling-footer">
+              <span class="dwelling-date">
+                <span class="material-symbols-outlined">calendar_today</span>
+                {{ formatDate(dwelling.createdAt) }}
+              </span>
+              <span class="material-symbols-outlined chevron">chevron_right</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="filteredDwellings.length === 0" class="empty-state">
+          <div class="empty-icon">
             <span class="material-symbols-outlined">home</span>
           </div>
-          <div class="dwelling-info">
-            <h3 class="dwelling-name">{{ dwelling.houseNomenclature || 'Sin nomenclatura' }}</h3>
-            <p class="dwelling-location">{{ dwelling.communityId?.neighborhood || 'Comunidad' }}</p>
-          </div>
-          <q-badge :color="getStatusColor(dwelling.status)">
-            {{ getStatusLabel(dwelling.status) }}
-          </q-badge>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-section class="dwelling-body">
-          <div class="approval-progress">
-            <div class="approval-item" :class="dwelling.approvedByPresident">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Presidente</span>
-            </div>
-            <div class="approval-item" :class="dwelling.approvedByTreasurer">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Tesorero</span>
-            </div>
-            <div class="approval-item" :class="dwelling.approvedBySecretary">
-              <span class="material-symbols-outlined">verified</span>
-              <span>Secretario</span>
-            </div>
-          </div>
-
-          <div class="dwelling-meta">
-            <span class="material-symbols-outlined">calendar_today</span>
-            {{ formatDate(dwelling.createdAt) }}
-          </div>
-        </q-card-section>
-      </q-card>
-
-      <div v-if="filteredDwellings.length === 0" class="no-data">
-        <span class="material-symbols-outlined">home</span>
-        <p>No hay viviendas registradas</p>
+          <h3 class="empty-title">No hay viviendas registradas</h3>
+          <p class="empty-description">Las viviendas creadas aparecerán aquí</p>
+        </div>
       </div>
-    </div>
 
-    <div v-else class="loading">
-      <q-spinner color="primary" size="3em" />
-      <p>Cargando viviendas...</p>
+      <!-- Loading State -->
+      <div v-else class="loading-state">
+        <q-spinner color="primary" size="48px" />
+        <p>Cargando viviendas...</p>
+      </div>
     </div>
   </div>
 </template>
@@ -105,15 +129,6 @@ onMounted(async () => {
   await dwellingStore.fetchDwellings()
 })
 
-const getStatusColor = (status) => {
-  const colors = {
-    pending: 'warning',
-    approved: 'positive',
-    rejected: 'negative'
-  }
-  return colors[status] || 'grey'
-}
-
 const getStatusLabel = (status) => {
   const labels = {
     pending: 'Pendiente',
@@ -124,67 +139,231 @@ const getStatusLabel = (status) => {
 }
 
 const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString('es-ES')
+  if (!date) return 'N/A'
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
 }
 </script>
 
 <style scoped>
-.page-container {
+.page {
+  min-height: 100vh;
+  background: var(--surface-container-lowest);
+}
+
+.page-content {
   padding: 24px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
+@media (max-width: 599px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
+/* Page Header */
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 24px;
+}
+
+@media (max-width: 599px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+}
+
+.page-subtitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.page-title {
+  font-size: 40px;
+  font-weight: 900;
+  color: var(--on-surface);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 12px 0;
+}
+
+.page-description {
+  font-size: 16px;
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 500px;
+}
+
+@media (max-width: 599px) {
+  .page-subtitle {
+    font-size: 10px;
+  }
+
+  .page-title {
+    font-size: 28px;
+  }
+
+  .page-description {
+    font-size: 14px;
+  }
+}
+
+.create-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  color: var(--on-primary);
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-transform: none;
+  box-shadow: 0 4px 12px rgba(0, 40, 142, 0.3);
+  transition: all 0.2s;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 40, 142, 0.4);
+}
+
+.create-btn .material-symbols-outlined {
+  font-size: 18px;
+  margin-left: 4px;
+}
+
+/* Filters */
+.filters-section {
   margin-bottom: 24px;
 }
 
-.title {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--on-surface);
-  margin: 0;
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.filters {
-  margin-bottom: 20px;
-}
-
-.dwellings-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
-}
-
-.dwelling-card {
-  border-radius: 12px;
+.filter-chip {
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.dwelling-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+.filter-chip:hover {
+  background: var(--primary-fixed);
+  border-color: var(--primary);
 }
 
-.dwelling-header {
-  display: flex;
-  align-items: center;
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Dwellings Section */
+.dwellings-section {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+}
+
+.dwellings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
+
+@media (max-width: 599px) {
+  .dwellings-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.dwelling-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+@media (max-width: 599px) {
+  .dwelling-card {
+    padding: 16px;
+  }
+
+  .dwelling-card:hover {
+    transform: none;
+  }
+}
+
+.dwelling-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dwelling-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dwelling-badge.pending { background: var(--warning); color: var(--on-primary); }
+.dwelling-badge.approved { background: var(--tertiary); color: var(--on-primary); }
+.dwelling-badge.rejected { background: var(--error); color: var(--on-primary); }
 
 .dwelling-icon {
   width: 48px;
   height: 48px;
+  border-radius: 12px;
   background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 599px) {
+  .dwelling-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .dwelling-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
 }
 
 .dwelling-icon .material-symbols-outlined {
@@ -192,58 +371,63 @@ const formatDate = (date) => {
   color: var(--on-primary);
 }
 
-.dwelling-info {
-  flex: 1;
-}
-
-.dwelling-name {
-  font-size: 16px;
-  font-weight: 600;
+.dwelling-type {
+  font-size: 18px;
+  font-weight: 700;
   color: var(--on-surface);
   margin: 0 0 4px 0;
 }
 
-.dwelling-location {
-  font-size: 13px;
-  color: var(--outline);
-  margin: 0;
+@media (max-width: 599px) {
+  .dwelling-type {
+    font-size: 16px;
+  }
 }
 
-.dwelling-body {
-  padding-top: 12px !important;
+.dwelling-community {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 16px 0;
 }
 
-.approval-progress {
+@media (max-width: 599px) {
+  .dwelling-community {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+}
+
+.approval-status {
   display: flex;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .approval-item {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  color: var(--on-surface-variant);
+  font-size: 11px;
+  color: var(--outline);
 }
 
 .approval-item .material-symbols-outlined {
   font-size: 16px;
 }
 
-.approval-item.approved {
-  color: var(--primary);
+.approval-item.approved { color: var(--tertiary); }
+.approval-item.rejected { color: var(--error); }
+.approval-item.pending { color: var(--warning); }
+
+.dwelling-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-container-highest);
 }
 
-.approval-item.rejected {
-  color: var(--error);
-}
-
-.approval-item.pending {
-  color: var(--warning);
-}
-
-.dwelling-meta {
+.dwelling-date {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -251,21 +435,65 @@ const formatDate = (date) => {
   color: var(--on-surface-variant);
 }
 
-.dwelling-meta .material-symbols-outlined {
+.dwelling-date .material-symbols-outlined {
   font-size: 14px;
 }
 
-.no-data, .loading {
+.chevron {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+}
+
+/* Empty State */
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: var(--on-surface-variant);
-  grid-column: 1 / -1;
 }
 
-.loading {
-  color: var(--outline);
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--primary-fixed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.empty-icon .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--primary);
+}
+
+.empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0 0 8px 0;
+}
+
+.empty-description {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 24px 0;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.loading-state p {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin-top: 16px;
 }
 </style>

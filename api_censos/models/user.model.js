@@ -21,9 +21,6 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
-  signature: {
-    type: String
-  },
   digitalSignature: {
     type: String
   },

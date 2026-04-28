@@ -123,6 +123,21 @@
               </div>
             </section>
 
+            <!-- Section 3: Firma Digital -->
+            <section class="form-section">
+              <div class="section-header">
+                <div class="section-icon secondary-icon">
+                  <span class="material-symbols-outlined">draw</span>
+                </div>
+                <h3 class="section-title">Firma Digital</h3>
+              </div>
+
+              <div class="signature-section">
+                <p class="signature-instruction">Firma en el recuadro usando tu dedo o mouse</p>
+                <SignaturePad v-model="signatureData" />
+              </div>
+            </section>
+
             <!-- Info Card -->
             <div class="info-card">
               <span class="material-symbols-outlined info-icon">info</span>
@@ -186,6 +201,8 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth.store'
 import { useCommunityStore } from '@/stores/community.store'
+import { uploadService } from '@/services/upload.service'
+import SignaturePad from '@/components/SignaturePad.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -199,12 +216,14 @@ onMounted(async () => {
 
 const isPwd = ref(true)
 const loading = ref(false)
+const uploadingSignature = ref(false)
 const communityCode = ref('')
 const foundCommunity = ref(null)
 const communityNotFound = ref(false)
 const isSearching = ref(false)
 const searchTimeout = ref(null)
 const allCommunities = ref([])
+const signatureData = ref('')
 
 const form = ref({
   fullName: '',
@@ -292,34 +311,75 @@ const handleRegister = async () => {
     return
   }
 
-  loading.value = true
-
-  const registerData = {
-    communityCode: communityCode.value,
-    fullName: form.value.fullName,
-    documentNumber: form.value.documentNumber,
-    phone: form.value.phone.replace(/-/g, ''),
-    email: form.value.email,
-    password: form.value.password
+  if (!signatureData.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Debes firmar el registro antes de continuar'
+    })
+    return
   }
 
-  const result = await authStore.register(registerData)
+  loading.value = true
 
-  loading.value = false
+  try {
+    // 1. Convertir firma a blob y subir a Cloudinary
+    uploadingSignature.value = true
+    const canvas = document.createElement('canvas')
+    const img = new Image()
 
-  if (result.success) {
-    $q.notify({
-      type: 'positive',
-      message: 'Registro exitoso. Un censista te contactará para asignarte una vivienda.'
+    await new Promise((resolve) => {
+      img.onload = () => {
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0)
+        resolve()
+      }
+      img.src = signatureData.value
     })
-    router.push('/login')
-  } else {
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+    const file = new File([blob], 'firma.png', { type: 'image/png' })
+
+    const signatureUrl = await uploadService.uploadImage(file, 'signature')
+    uploadingSignature.value = false
+
+    // 2. Registrar usuario con la firma
+    const registerData = {
+      communityCode: communityCode.value,
+      fullName: form.value.fullName,
+      documentNumber: form.value.documentNumber,
+      phone: form.value.phone.replace(/-/g, ''),
+      email: form.value.email,
+      password: form.value.password,
+      digitalSignature: signatureUrl
+    }
+
+    const result = await authStore.register(registerData)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Registro exitoso. Un censista te contactará para asignarte una vivienda.'
+      })
+      router.push('/login')
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: `${result.message}`,
+        html: true,
+        timeout: 5000
+      })
+    }
+  } catch (error) {
+    console.error('Error en registro:', error)
     $q.notify({
       type: 'negative',
-      message: `${result.message}`,
-      html: true,
-      timeout: 5000
+      message: 'Error al subir la firma. Intente nuevamente.'
     })
+  } finally {
+    loading.value = false
+    uploadingSignature.value = false
   }
 }
 </script>
@@ -348,6 +408,7 @@ const handleRegister = async () => {
   align-items: center;
   gap: 16px;
   padding: 16px 24px;
+  height: 64px;
 }
 
 .icon-button {
@@ -380,14 +441,14 @@ const handleRegister = async () => {
 
 /* Main Content */
 .main-content {
-  padding: 104px 16px 48px;
+  padding: 80px 16px 48px;
   max-width: 1280px;
   margin: 0 auto;
 }
 
 @media (min-width: 768px) {
   .main-content {
-    padding: 104px 32px 48px;
+    padding: 80px 32px 48px;
   }
 }
 
@@ -463,6 +524,11 @@ const handleRegister = async () => {
 .primary-icon {
   background: var(--primary);
   color: var(--on-primary);
+}
+
+.secondary-icon {
+  background: var(--secondary);
+  color: var(--on-secondary);
 }
 
 .tertiary-icon {
@@ -918,5 +984,18 @@ const handleRegister = async () => {
   font-size: 13px;
   color: var(--on-surface-variant);
   line-height: 1.4;
+}
+
+/* Signature Section */
+.signature-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signature-instruction {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 </style>

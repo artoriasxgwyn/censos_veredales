@@ -144,7 +144,7 @@ const communityId = computed(() => route.params.id)
 const community = computed(() => communityStore.currentCommunity)
 
 const canEdit = computed(() => {
-  return authStore.isPresident
+  return authStore.hasPermission('community', 'update')
 })
 
 onMounted(async () => {
