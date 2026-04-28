@@ -48,11 +48,11 @@
             <div class="form-row">
               <div class="form-field">
                 <label class="field-label">Correo</label>
-                <input v-model="form.email" class="field-input" placeholder="correo@ejemplo.com" type="email"/>
+                <input v-model="form.email" class="field-input" placeholder="correo@ejemplo.com" type="text"/>
               </div>
               <div class="form-field">
                 <label class="field-label">Teléfono</label>
-                <input v-model="form.phone" class="field-input" placeholder="3001234567" type="tel"/>
+                <input v-model="form.phone" class="field-input" placeholder="3001234567" type="text"/>
               </div>
             </div>
 

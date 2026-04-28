@@ -103,12 +103,12 @@
                 </div>
                 <div class="form-field" :class="{ 'has-error': hasError('phone') }">
                   <label class="field-label">Teléfono</label>
-                  <input v-model="form.phone" class="field-input" type="tel" placeholder="3001234567"/>
+                  <input v-model="form.phone" class="field-input" type="text" placeholder="3001234567"/>
                   <span v-if="hasError('phone')" class="error-message">{{ getFieldError('phone') }}</span>
                 </div>
                 <div class="form-field full-width" :class="{ 'has-error': hasError('email') }">
                   <label class="field-label">Correo Electrónico</label>
-                  <input v-model="form.email" class="field-input" type="email"/>
+                  <input v-model="form.email" class="field-input" type="text"/>
                   <span v-if="hasError('email')" class="error-message">{{ getFieldError('email') }}</span>
                 </div>
                 <div class="form-field" :class="{ 'has-error': hasError('password') }">

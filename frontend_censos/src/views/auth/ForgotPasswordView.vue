@@ -13,7 +13,7 @@
         <q-input
           v-model="email"
           label="Correo electrónico"
-          type="email"
+          type="text"
           outlined
         >
           <template v-slot:prepend>

@@ -145,7 +145,7 @@
               <q-input
                 v-model="president.email"
                 label="Correo Electrónico"
-                type="email"
+                type="text"
                 outlined
               >
                 <template v-slot:prepend>
