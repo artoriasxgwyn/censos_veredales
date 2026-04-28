@@ -123,14 +123,38 @@ const handleSubmit = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: form.value.isPublished ? 'Anuncio publicado exitosamente' : 'Borrador guardado exitosamente'
+      message: form.value.isPublished ? 'Anuncio publicado exitosamente' : 'Borrador guardado exitosamente',
+      caption: form.value.isPublished
+        ? 'El anuncio ya es visible para todos los residentes'
+        : 'Puedes publicarlo más tarde desde la lista de anuncios',
+      timeout: 4000
     })
     router.push('/admin/announcements')
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al crear anuncio'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para crear anuncios',
+        caption: 'Se requiere autorización de administrador',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('título') || errorMsg.toLowerCase().includes('encabezado') || errorMsg.toLowerCase().includes('contenido')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Campos incompletos',
+        caption: errorMsg,
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al crear anuncio',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

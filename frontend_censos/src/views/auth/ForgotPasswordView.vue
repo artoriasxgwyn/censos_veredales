@@ -58,13 +58,35 @@ const handleForgotPassword = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Se han enviado instrucciones a tu correo'
+      message: 'Se han enviado instrucciones a tu correo',
+      caption: 'Revisa tu bandeja de entrada y spam',
+      timeout: 5000
     })
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al solicitar recuperación'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('correo')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Correo no válido',
+        caption: 'Verifica el correo ingresado',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('servidor') || errorMsg.toLowerCase().includes('smtp')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Error temporal',
+        caption: 'No pudimos enviar el correo. Intenta más tarde',
+        timeout: 5000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al solicitar recuperación',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

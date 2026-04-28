@@ -218,14 +218,35 @@ const handleSubmit = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Vivienda actualizada exitosamente'
+      message: 'Vivienda actualizada exitosamente',
+      timeout: 3000
     })
     router.push(`/admin/dwellings/${dwellingId.value}`)
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al actualizar vivienda'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para editar',
+        caption: 'Se requiere autorización de administrador',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('no existe') || errorMsg.toLowerCase().includes('not found')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Vivienda no encontrada',
+        caption: 'La vivienda no existe o fue eliminada',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al actualizar vivienda',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

@@ -27,8 +27,14 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Si el error es 401 y no hemos intentado refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // NO intentar refresh para requests de autenticación (login, registro, etc.)
+    const isAuthRequest = originalRequest.url?.includes('/auth/login') ||
+                          originalRequest.url?.includes('/auth/register') ||
+                          originalRequest.url?.includes('/auth/forgot-password') ||
+                          originalRequest.url?.includes('/auth/reset-password')
+
+    // Si el error es 401 y no es un request de autenticación y no hemos intentado refresh
+    if (error.response?.status === 401 && !isAuthRequest && !originalRequest._retry) {
       originalRequest._retry = true
       const authStore = useAuthStore()
 

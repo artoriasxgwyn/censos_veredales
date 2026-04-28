@@ -132,14 +132,43 @@ const handleSubmit = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Residente creado exitosamente. Pendiente de aprobación.'
+      message: 'Residente creado exitosamente. Pendiente de aprobación.',
+      caption: 'Requiere aprobación del presidente, tesorero y secretario',
+      timeout: 5000
     })
     router.push('/admin/residents')
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al crear residente'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('ya existe') || errorMsg.toLowerCase().includes('duplicado')) {
+      $q.notify({
+        type: 'negative',
+        message: 'El usuario ya es residente de esta vivienda',
+        caption: 'No se puede registrar un residente duplicado',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para crear residentes',
+        caption: 'Se requiere autorización de administrador',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('vivienda')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Error con la vivienda seleccionada',
+        caption: errorMsg,
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al crear residente',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

@@ -82,7 +82,29 @@ const handleResetPassword = async () => {
   if (!token.value) {
     $q.notify({
       type: 'negative',
-      message: 'Token de recuperación no válido'
+      message: 'Token de recuperación no válido',
+      caption: 'El enlace ha expirado o es inválido',
+      timeout: 5000
+    })
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    $q.notify({
+      type: 'negative',
+      message: 'Las contraseñas no coinciden',
+      caption: 'Verifica que ambas contraseñas sean iguales',
+      timeout: 4000
+    })
+    return
+  }
+
+  if (password.value.length < 6) {
+    $q.notify({
+      type: 'negative',
+      message: 'Contraseña muy corta',
+      caption: 'Debe tener al menos 6 caracteres',
+      timeout: 4000
     })
     return
   }
@@ -92,14 +114,42 @@ const handleResetPassword = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Contraseña restablecida exitosamente'
+      message: 'Contraseña restablecida exitosamente',
+      timeout: 3000
     })
     router.push('/login')
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al restablecer contraseña'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('token') || errorMsg.toLowerCase().includes('expirado')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Token expirado o inválido',
+        caption: 'Solicita una nueva recuperación de contraseña',
+        timeout: 5000,
+        actions: [
+          {
+            label: 'Recuperar contraseña',
+            color: 'white',
+            handler: () => router.push('/forgot-password')
+          }
+        ]
+      })
+    } else if (errorMsg.toLowerCase().includes('contraseña') || errorMsg.toLowerCase().includes('password')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Error con la contraseña',
+        caption: 'Debe tener al menos 6 caracteres',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al restablecer contraseña',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

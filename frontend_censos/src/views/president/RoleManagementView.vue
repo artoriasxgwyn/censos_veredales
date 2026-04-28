@@ -431,21 +431,53 @@ const showRoleMenu = (role, event) => {
 const deactivateRole = async (role) => {
   $q.dialog({
     title: 'Confirmar',
-    message: `¿Está seguro de desactivar el rol "${role.customName}"? Esta acción no se puede deshacer.`,
+    message: `¿Está seguro de desactivar el rol "${role.customName}"? Los usuarios con este rol perderán sus permisos.`,
     cancel: true,
-    persistent: true
+    persistent: true,
+    ok: {
+      label: 'Desactivar',
+      color: 'negative',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'primary',
+      flat: true
+    }
   }).onOk(async () => {
     const result = await roleStore.deactivateRole(role._id)
     if (result.success) {
       $q.notify({
         type: 'positive',
-        message: 'Rol desactivado exitosamente'
+        message: 'Rol desactivado exitosamente',
+        caption: 'Los usuarios con este rol han perdido sus permisos',
+        timeout: 4000
       })
     } else {
-      $q.notify({
-        type: 'negative',
-        message: result.message || 'Error al desactivar rol'
-      })
+      const errorMsg = result.message || ''
+
+      if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+        $q.notify({
+          type: 'negative',
+          message: 'No tienes permisos para desactivar roles',
+          caption: 'Se requiere autorización de presidente',
+          timeout: 4000
+        })
+      } else if (errorMsg.toLowerCase().includes('último rol') || errorMsg.toLowerCase().includes('no se puede')) {
+        $q.notify({
+          type: 'negative',
+          message: 'No se puede desactivar este rol',
+          caption: errorMsg,
+          timeout: 5000
+        })
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error al desactivar rol',
+          caption: errorMsg,
+          timeout: 5000
+        })
+      }
     }
   })
 }
@@ -467,7 +499,9 @@ const saveRole = async () => {
   if (!editingRole.value?.isBaseRole && !newRoleName.value.trim()) {
     $q.notify({
       type: 'warning',
-      message: 'El nombre del rol es requerido'
+      message: 'El nombre del rol es requerido',
+      caption: 'Ingresa un nombre válido para el rol',
+      timeout: 4000
     })
     return
   }
@@ -481,7 +515,11 @@ const saveRole = async () => {
       if (result.success) {
         $q.notify({
           type: 'positive',
-          message: 'Permisos actualizados exitosamente'
+          message: 'Permisos actualizados exitosamente',
+          caption: editingRole.value.isBaseRole
+            ? 'Los permisos del rol base han sido modificados'
+            : 'El rol personalizado ha sido actualizado',
+          timeout: 4000
         })
         showCreateRole.value = false
         cancelEdit()
@@ -497,7 +535,9 @@ const saveRole = async () => {
       if (result.success) {
         $q.notify({
           type: 'positive',
-          message: 'Rol creado exitosamente'
+          message: 'Rol creado exitosamente',
+          caption: 'Ya puedes asignar este rol a los usuarios',
+          timeout: 4000
         })
         showCreateRole.value = false
         cancelEdit()
@@ -506,10 +546,30 @@ const saveRole = async () => {
       }
     }
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: error.message || 'Error al guardar rol'
-    })
+    const errorMsg = error.message || ''
+
+    if (errorMsg.toLowerCase().includes('ya existe') || errorMsg.toLowerCase().includes('duplicado')) {
+      $q.notify({
+        type: 'negative',
+        message: 'El rol ya existe',
+        caption: 'Usa un nombre diferente para el rol',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para gestionar roles',
+        caption: 'Se requiere autorización de presidente',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al guardar rol',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   } finally {
     saving.value = false
   }

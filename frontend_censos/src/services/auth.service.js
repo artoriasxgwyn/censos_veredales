@@ -2,8 +2,15 @@ import api from './api'
 
 export const authService = {
   async login(email, password) {
-    const response = await api.post('/auth/login', { email, password })
-    return response.data
+    console.log('[authService] Intentando login con email:', email)
+    try {
+      const response = await api.post('/auth/login', { email, password })
+      console.log('[authService] Login exitoso:', response.data)
+      return response.data
+    } catch (error) {
+      console.log('[authService] Error en login:', error.response?.status, error.response?.data)
+      throw error
+    }
   },
 
   async register(userData) {

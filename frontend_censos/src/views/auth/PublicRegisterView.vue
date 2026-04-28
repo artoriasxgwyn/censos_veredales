@@ -389,12 +389,59 @@ const handleRegister = async () => {
       })
       router.push('/login')
     } else {
-      $q.notify({
-        type: 'negative',
-        message: `${result.message}`,
-        html: true,
-        timeout: 5000
-      })
+      // Analizar el mensaje de error para mostrar notificación específica
+      const errorMsg = result.message || ''
+
+      if (errorMsg.toLowerCase().includes('código') || errorMsg.toLowerCase().includes('codigo') || errorMsg.toLowerCase().includes('comunidad')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Código de comunidad inválido',
+          caption: 'Verifica el código e intenta nuevamente',
+          timeout: 4000
+        })
+      } else if (errorMsg.toLowerCase().includes('correo') || errorMsg.toLowerCase().includes('email')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Correo electrónico ya registrado',
+          caption: 'Intenta con otro correo o inicia sesión',
+          timeout: 4000,
+          actions: [
+            {
+              label: 'Iniciar sesión',
+              color: 'white',
+              handler: () => router.push('/login')
+            }
+          ]
+        })
+      } else if (errorMsg.toLowerCase().includes('documento')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Documento ya registrado en esta comunidad',
+          caption: 'Si ya tienes cuenta, inicia sesión',
+          timeout: 4000,
+          actions: [
+            {
+              label: 'Iniciar sesión',
+              color: 'white',
+              handler: () => router.push('/login')
+            }
+          ]
+        })
+      } else if (errorMsg.toLowerCase().includes('contraseña') || errorMsg.toLowerCase().includes('password')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Error con la contraseña',
+          caption: 'Debe tener al menos 6 caracteres',
+          timeout: 4000
+        })
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error en el registro',
+          caption: errorMsg,
+          timeout: 5000
+        })
+      }
     }
   } catch (error) {
     console.error('Error en registro:', error)

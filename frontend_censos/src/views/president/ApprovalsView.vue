@@ -409,9 +409,12 @@ const handleApprove = async (type, item) => {
     }
 
     if (result?.success) {
+      const itemName = type === 'resident' ? 'Residente' : type === 'dwelling' ? 'Vivienda' : 'Carta'
       $q.notify({
         type: 'positive',
-        message: `${type === 'resident' ? 'Residente' : type === 'dwelling' ? 'Vivienda' : 'Carta'} aprobado exitosamente`
+        message: `${itemName} aprobado exitosamente`,
+        caption: 'Tu voto ha sido registrado. Aún se requieren las otras aprobaciones',
+        timeout: 4000
       })
       // Refresh data
       if (type === 'resident') await residentStore.fetchResidents()
@@ -421,10 +424,30 @@ const handleApprove = async (type, item) => {
       throw new Error(result?.message || 'Error al aprobar')
     }
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: error.message || 'Error al aprobar'
-    })
+    const errorMsg = error.message || ''
+
+    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada') || errorMsg.toLowerCase().includes('ya votado')) {
+      $q.notify({
+        type: 'warning',
+        message: 'Ya has votado esta aprobación',
+        caption: 'Solo puedes aprobar o rechazar una vez',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para aprobar',
+        caption: 'Se requiere rol de administrador',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al aprobar',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   } finally {
     item.loading = false
   }
@@ -443,9 +466,12 @@ const handleReject = async (type, item) => {
     }
 
     if (result?.success) {
+      const itemName = type === 'resident' ? 'Residente' : type === 'dwelling' ? 'Vivienda' : 'Carta'
       $q.notify({
         type: 'negative',
-        message: `${type === 'resident' ? 'Residente' : type === 'dwelling' ? 'Vivienda' : 'Carta'} rechazado`
+        message: `${itemName} rechazado`,
+        caption: 'La aprobación ha sido rechazada por tu rol',
+        timeout: 4000
       })
       // Refresh data
       if (type === 'resident') await residentStore.fetchResidents()
@@ -455,10 +481,30 @@ const handleReject = async (type, item) => {
       throw new Error(result?.message || 'Error al rechazar')
     }
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: error.message || 'Error al rechazar'
-    })
+    const errorMsg = error.message || ''
+
+    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada') || errorMsg.toLowerCase().includes('ya votado')) {
+      $q.notify({
+        type: 'warning',
+        message: 'Ya has votado esta aprobación',
+        caption: 'Solo puedes aprobar o rechazar una vez',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para rechazar',
+        caption: 'Se requiere rol de administrador',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al rechazar',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   } finally {
     item.loading = false
   }

@@ -134,14 +134,45 @@ const handleSubmit = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Carta solicitada exitosamente. Pendiente de aprobación.'
+      message: 'Carta solicitada exitosamente. Pendiente de aprobación.',
+      caption: form.value.type === 'juramentada'
+        ? 'La carta juramentada requiere verificación de antigüedad (≥1 año)'
+        : 'Requiere aprobación del presidente, tesorero y secretario',
+      timeout: 5000
     })
     router.push('/resident/letters')
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al solicitar carta'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('antigüedad') || errorMsg.toLowerCase().includes('antiguedad') || errorMsg.toLowerCase().includes('año') || errorMsg.toLowerCase().includes('anio')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No cumples con la antigüedad requerida',
+        caption: 'La carta juramentada requiere al menos 1 año como residente',
+        timeout: 5000
+      })
+    } else if (errorMsg.toLowerCase().includes('ya existe') || errorMsg.toLowerCase().includes('pendiente')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Ya tienes una carta pendiente',
+        caption: 'Espera a que tu carta anterior sea procesada',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para solicitar cartas',
+        caption: 'Debes estar registrado como residente',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al solicitar carta',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>

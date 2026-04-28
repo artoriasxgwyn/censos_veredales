@@ -247,36 +247,91 @@ const handleApprove = async (status) => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: `Vivienda ${status === 'approved' ? 'aprobada' : 'rechazada'} exitosamente`
+      message: `Vivienda ${status === 'approved' ? 'aprobada' : 'rechazada'} exitosamente`,
+      caption: status === 'approved'
+        ? 'La vivienda ha sido aprobada por tu rol'
+        : 'La vivienda ha sido rechazada',
+      timeout: 4000
     })
     await dwellingStore.fetchDwellingById(dwellingId.value)
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error en la aprobación'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada')) {
+      $q.notify({
+        type: 'warning',
+        message: 'Ya has aprobado o rechazado esta vivienda',
+        caption: 'Solo puedes votar una vez por vivienda',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para esta acción',
+        caption: 'Solo presidentes, tesoreros y secretarios pueden aprobar',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error en la aprobación',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 
 const handleDelete = async () => {
   $q.dialog({
     title: 'Eliminar Vivienda',
-    message: '¿Estás seguro de que deseas eliminar esta vivienda?',
+    message: '¿Estás seguro de que deseas eliminar esta vivienda? Esta acción no se puede deshacer.',
     cancel: true,
-    persistent: true
+    persistent: true,
+    ok: {
+      label: 'Eliminar',
+      color: 'negative',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'primary',
+      flat: true
+    }
   }).onOk(async () => {
     const result = await dwellingStore.deleteDwelling(dwellingId.value)
     if (result.success) {
       $q.notify({
         type: 'positive',
-        message: 'Vivienda eliminada exitosamente'
+        message: 'Vivienda eliminada exitosamente',
+        timeout: 3000
       })
       router.push('/admin/dwellings')
     } else {
-      $q.notify({
-        type: 'negative',
-        message: result.message || 'Error al eliminar vivienda'
-      })
+      const errorMsg = result.message || ''
+
+      if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+        $q.notify({
+          type: 'negative',
+          message: 'No tienes permisos para eliminar',
+          caption: 'Se requiere autorización de administrador',
+          timeout: 4000
+        })
+      } else if (errorMsg.toLowerCase().includes('no existe') || errorMsg.toLowerCase().includes('not found')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Vivienda no encontrada',
+          caption: 'La vivienda ya fue eliminada o no existe',
+          timeout: 4000
+        })
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error al eliminar vivienda',
+          caption: errorMsg,
+          timeout: 5000
+        })
+      }
     }
   })
 }

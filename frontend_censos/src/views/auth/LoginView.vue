@@ -161,12 +161,17 @@ const handleLogin = async () => {
       router.push('/resident/dashboard')
     }
   } else {
+    // Debug: ver qué mensaje llega del backend
+    console.log('[LoginView] Error del login:', result)
+    console.log('[LoginView] Mensaje:', result.message)
+
     // Analizar el mensaje de error para determinar qué campo falló
     const errorMsg = result.message || ''
 
     // Errores específicos según la respuesta del backend
     if (errorMsg.toLowerCase().includes('correo') || errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('usuario no encontrado')) {
       errors.value.email = ['El correo electrónico no está registrado']
+      console.log('[LoginView] Mostrando notificación: email no registrado')
       $q.notify({
         type: 'negative',
         message: 'El correo electrónico no está registrado',
@@ -175,6 +180,7 @@ const handleLogin = async () => {
     } else if (errorMsg.toLowerCase().includes('contraseña') || errorMsg.toLowerCase().includes('password') || errorMsg.toLowerCase().includes('clave')) {
       errors.value.password = ['La contraseña es incorrecta']
       form.value.password = '' // Limpiar password
+      console.log('[LoginView] Mostrando notificación: contraseña incorrecta')
       $q.notify({
         type: 'negative',
         message: 'La contraseña es incorrecta',
@@ -183,6 +189,7 @@ const handleLogin = async () => {
     } else if (errorMsg.toLowerCase().includes('comunidad') || errorMsg.toLowerCase().includes('asignada')) {
       // Usuario sin comunidad asignada
       errors.value.email = ['Usuario sin comunidad asignada']
+      console.log('[LoginView] Mostrando notificación: sin comunidad')
       $q.notify({
         type: 'negative',
         message: 'Usuario sin comunidad asignada',
@@ -194,6 +201,7 @@ const handleLogin = async () => {
       errors.value.email = [' ']
       errors.value.password = [' ']
       form.value.password = '' // Limpiar password por seguridad
+      console.log('[LoginView] Mostrando notificación: credenciales inválidas')
       $q.notify({
         type: 'negative',
         message: 'Credenciales inválidas',

@@ -255,14 +255,50 @@ const handleSubmit = async () => {
   if (result.success) {
     $q.notify({
       type: 'positive',
-      message: 'Comunidad creada exitosamente'
+      message: 'Comunidad creada exitosamente',
+      caption: 'El código de comunidad se ha generado automáticamente',
+      timeout: 4000
     })
     router.push('/admin/communities')
   } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al crear comunidad'
-    })
+    const errorMsg = result.message || ''
+
+    if (errorMsg.toLowerCase().includes('correo') || errorMsg.toLowerCase().includes('email')) {
+      $q.notify({
+        type: 'negative',
+        message: 'El correo del presidente ya está registrado',
+        caption: 'Usa otro correo o registra al presidente primero',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('documento')) {
+      $q.notify({
+        type: 'negative',
+        message: 'El documento del presidente ya está registrado',
+        caption: 'Verifica el número de documento',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('código') || errorMsg.toLowerCase().includes('codigo') || errorMsg.toLowerCase().includes('duplicado')) {
+      $q.notify({
+        type: 'negative',
+        message: 'Ya existe una comunidad con este código',
+        caption: 'Intenta con otro nombre de comunidad',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No tienes permisos para crear comunidades',
+        caption: 'Se requiere autorización de super administrador',
+        timeout: 4000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al crear comunidad',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
   }
 }
 </script>
