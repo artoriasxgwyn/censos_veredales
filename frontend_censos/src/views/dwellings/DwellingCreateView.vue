@@ -119,7 +119,7 @@
                 label="Cédula del Propietario"
                 outlined
                 hint="Si el propietario está registrado, se vinculará automáticamente"
-                mask="###.###.###"
+                mask="###.###.###-#"
                 fill-mask
                 :error="hasError('cedulaPropietario')"
                 :error-message="getFieldError('cedulaPropietario')"
