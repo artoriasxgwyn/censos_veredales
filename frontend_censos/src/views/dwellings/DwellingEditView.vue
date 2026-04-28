@@ -36,7 +36,6 @@
                 label="Instrucciones de Llegada"
                 type="textarea"
                 outlined
-                :rules="[val => !!val || 'Las instrucciones son requeridas']"
               >
                 <template v-slot:prepend>
                   <q-icon name="directions" />

@@ -37,22 +37,22 @@
             <div class="form-row">
               <div class="form-field">
                 <label class="field-label">Nombre completo</label>
-                <input v-model="form.fullName" required class="field-input" placeholder="Ej: Juan Pérez" type="text"/>
+                <input v-model="form.fullName" class="field-input" placeholder="Ej: Juan Pérez" type="text"/>
               </div>
               <div class="form-field">
                 <label class="field-label">Cédula</label>
-                <input v-model="form.documentNumber" required class="field-input" placeholder="12345678" type="text"/>
+                <input v-model="form.documentNumber" class="field-input" placeholder="12345678" type="text"/>
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-field">
                 <label class="field-label">Correo</label>
-                <input v-model="form.email" required class="field-input" placeholder="correo@ejemplo.com" type="email"/>
+                <input v-model="form.email" class="field-input" placeholder="correo@ejemplo.com" type="email"/>
               </div>
               <div class="form-field">
                 <label class="field-label">Teléfono</label>
-                <input v-model="form.phone" required class="field-input" placeholder="3001234567" type="tel"/>
+                <input v-model="form.phone" class="field-input" placeholder="3001234567" type="tel"/>
               </div>
             </div>
 
@@ -60,7 +60,7 @@
             <div class="form-field">
               <label class="field-label">Seleccionar comunidad</label>
               <div class="select-wrapper">
-                <select v-model="form.communityId" required class="field-select">
+                <select v-model="form.communityId" class="field-select">
                   <option disabled value="">Elige tu comunidad</option>
                   <option v-for="c in communityStore.communities" :key="c._id" :value="c._id">
                     {{ c.neighborhood }} - {{ c.city }}, {{ c.department }}
@@ -73,11 +73,11 @@
             <div class="form-row">
               <div class="form-field">
                 <label class="field-label">Contraseña</label>
-                <input v-model="form.password" required class="field-input" placeholder="••••••••" type="password"/>
+                <input v-model="form.password" class="field-input" placeholder="••••••••" type="password"/>
               </div>
               <div class="form-field">
                 <label class="field-label">Confirmar contraseña</label>
-                <input v-model="form.confirmPassword" required class="field-input" placeholder="••••••••" type="password"/>
+                <input v-model="form.confirmPassword" class="field-input" placeholder="••••••••" type="password"/>
               </div>
             </div>
 

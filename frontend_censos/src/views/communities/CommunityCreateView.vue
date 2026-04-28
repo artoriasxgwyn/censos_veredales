@@ -26,7 +26,6 @@
                 v-model="form.neighborhood"
                 label="Nombre del Barrio"
                 outlined
-                :rules="[val => !!val || 'El nombre del barrio es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="location_city" />
@@ -39,7 +38,6 @@
                 v-model="form.city"
                 label="Ciudad"
                 outlined
-                :rules="[val => !!val || 'La ciudad es requerida']"
               >
                 <template v-slot:prepend>
                   <q-icon name="public" />
@@ -53,7 +51,6 @@
                 label="Número Estimado de Residentes"
                 type="number"
                 outlined
-                :rules="[val => val > 0 || 'Debe ser mayor a 0']"
               >
                 <template v-slot:prepend>
                   <q-icon name="people" />
@@ -66,7 +63,6 @@
                 v-model="form.communityHallAddress"
                 label="Dirección del Salón Comunal"
                 outlined
-                :rules="[val => !!val || 'La dirección es requerida']"
               >
                 <template v-slot:prepend>
                   <q-icon name="location_on" />
@@ -101,7 +97,6 @@
                 v-model="president.fullName"
                 label="Nombre Completo"
                 outlined
-                :rules="[val => !!val || 'El nombre es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="person" />
@@ -114,7 +109,6 @@
                 v-model="president.documentNumber"
                 label="Número de Documento"
                 outlined
-                :rules="[val => !!val || 'El documento es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="badge" />
@@ -140,7 +134,6 @@
                 v-model="president.phone"
                 label="Teléfono"
                 outlined
-                :rules="[val => !!val || 'El teléfono es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="phone" />
@@ -154,7 +147,6 @@
                 label="Correo Electrónico"
                 type="email"
                 outlined
-                :rules="[val => !!val || 'El correo es requerido', val => /.+@.+\..+/.test(val) || 'Correo inválido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="email" />
@@ -168,7 +160,6 @@
                 label="Contraseña"
                 :type="isPwd ? 'password' : 'text'"
                 outlined
-                :rules="[val => !!val || 'La contraseña es requerida', val => val.length >= 6 || 'Mínimo 6 caracteres']"
               >
                 <template v-slot:prepend>
                   <q-icon name="lock" />

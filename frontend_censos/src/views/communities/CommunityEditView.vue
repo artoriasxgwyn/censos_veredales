@@ -23,7 +23,6 @@
                 v-model="form.neighborhood"
                 label="Nombre del Barrio"
                 outlined
-                :rules="[val => !!val || 'El nombre del barrio es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="location_city" />
@@ -36,7 +35,6 @@
                 v-model="form.city"
                 label="Ciudad"
                 outlined
-                :rules="[val => !!val || 'La ciudad es requerida']"
               >
                 <template v-slot:prepend>
                   <q-icon name="public" />
@@ -50,7 +48,6 @@
                 label="Número Estimado de Residentes"
                 type="number"
                 outlined
-                :rules="[val => val >= 0 || 'Debe ser 0 o mayor']"
               >
                 <template v-slot:prepend>
                   <q-icon name="people" />
@@ -63,7 +60,6 @@
                 v-model="form.communityHallAddress"
                 label="Dirección del Salón Comunal"
                 outlined
-                :rules="[val => !!val || 'La dirección es requerida']"
               >
                 <template v-slot:prepend>
                   <q-icon name="location_on" />

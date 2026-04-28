@@ -27,7 +27,6 @@
                 label="Título del Anuncio"
                 outlined
                 dense
-                :rules="[val => !!val || 'El título es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="title" />
@@ -41,7 +40,6 @@
                 label="Encabezado"
                 outlined
                 dense
-                :rules="[val => !!val || 'El encabezado es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="article" />
@@ -55,7 +53,6 @@
                 label="Cuerpo del mensaje"
                 outlined
                 min-height="200px"
-                :rules="[val => !!val || 'El contenido es requerido']"
               />
             </div>
 

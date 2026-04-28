@@ -15,7 +15,6 @@
           label="Correo electrónico"
           type="email"
           outlined
-          :rules="[val => !!val || 'El correo es requerido', val => /.+@.+\..+/.test(val) || 'Correo inválido']"
         >
           <template v-slot:prepend>
             <q-icon name="email" />

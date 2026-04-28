@@ -15,7 +15,6 @@
           label="Nueva contraseña"
           :type="isPwd ? 'password' : 'text'"
           outlined
-          :rules="[val => !!val || 'La contraseña es requerida', val => val.length >= 6 || 'Mínimo 6 caracteres']"
         >
           <template v-slot:prepend>
             <q-icon name="lock" />
@@ -34,7 +33,6 @@
           label="Confirmar contraseña"
           :type="isPwd ? 'password' : 'text'"
           outlined
-          :rules="[val => !!val || 'Confirma tu contraseña', val => val === password || 'Las contraseñas no coinciden']"
         >
           <template v-slot:prepend>
             <q-icon name="lock_outline" />

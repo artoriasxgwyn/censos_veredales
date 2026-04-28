@@ -66,7 +66,6 @@
                 outlined
                 emit-value
                 map-options
-                :rules="[val => !!val || 'El residente es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="person" />

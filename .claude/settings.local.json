@@ -11,7 +11,21 @@
       "Bash(curl -s http://localhost:5179)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"5173 5174 5175 5176\")",
+      "Bash(taskkill /F /PID 15964 /PID 12852 /PID 27276 /PID 23848)",
+      "mcp__ide__getDiagnostics",
+      "Bash(tasklist)",
+      "Bash(findstr node *)",
+      "Bash(taskkill *)",
+      "Bash(powershell \"Stop-Process -Name node -Force\")",
+      "Bash(powershell Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force *)",
+      "Bash(git rm *)",
+      "Bash(git restore *)",
+      "Bash(git checkout *)",
+      "Bash(git reset *)",
+      "Bash(curl *)"
     ]
   }
 }

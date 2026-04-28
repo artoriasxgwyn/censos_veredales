@@ -31,7 +31,6 @@
                 outlined
                 emit-value
                 map-options
-                :rules="[val => !!val || 'El usuario es requerido']"
               >
                 <template v-slot:prepend>
                   <q-icon name="person" />
@@ -49,7 +48,6 @@
                 outlined
                 emit-value
                 map-options
-                :rules="[val => !!val || 'La vivienda es requerida']"
               >
                 <template v-slot:prepend>
                   <q-icon name="home" />
