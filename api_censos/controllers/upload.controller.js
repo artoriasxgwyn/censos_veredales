@@ -15,7 +15,7 @@ export const uploadImage = async (req, res) => {
     const folder = req.body.type === 'signature' ? 'censos/firmas' : 'censos/fachadas';
 
     // Subir a Cloudinary
-    const imageUrl = await uploadToCloudinary(req.file.buffer, folder);
+    const imageUrl = await uploadToCloudinary(req.file.buffer, folder, req.file.mimetype);
 
     res.json({
       success: true,

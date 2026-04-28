@@ -32,13 +32,14 @@ export const upload = multer({
  * Sube un archivo a Cloudinary
  * @param {Buffer} fileBuffer - Buffer del archivo
  * @param {string} folder - Carpeta en Cloudinary
+ * @param {string} mimetype - Tipo MIME del archivo
  * @returns {Promise<string>} - URL segura de la imagen
  */
-export const uploadToCloudinary = async (fileBuffer, folder = 'censos') => {
+export const uploadToCloudinary = async (fileBuffer, folder = 'censos', mimetype = 'image/jpeg') => {
   return new Promise((resolve, reject) => {
     // Convertir buffer a base64
-    const b64 = Buffer.from(fileBuffer).toString('base64');
-    const dataURI = `data:image/jpeg;base64,${b64}`;
+    const b64 = fileBuffer.toString('base64');
+    const dataURI = `data:${mimetype};base64,${b64}`;
 
     cloudinary.uploader.upload(dataURI, {
       folder,
