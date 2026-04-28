@@ -44,14 +44,14 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
     if (!user) {
       return res.status(401).json({
-        message: 'Credenciales inválidas'
+        message: 'El correo electrónico no está registrado'
       });
     }
 
     // Verificar que tenga comunidad asignada
     if (!user.communityId) {
       return res.status(403).json({
-        message: 'Usuario sin comunidad asignada. Contacte al administrador.'
+        message: 'Usuario sin comunidad asignada. Contacta al administrador.'
       });
     }
 
@@ -59,7 +59,7 @@ export const login = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({
-        message: 'Credenciales inválidas'
+        message: 'La contraseña es incorrecta'
       });
     }
 
