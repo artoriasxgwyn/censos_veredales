@@ -12,11 +12,7 @@ export const uploadService = {
     formData.append('file', file)
     formData.append('type', type)
 
-    const response = await api.post('/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const response = await api.post('/upload', formData)
 
     return response.data.data.url
   }
