@@ -245,7 +245,7 @@ const handleDownload = () => {
 <style scoped>
 .verify-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--tertiary-fixed) 0%, var(--tertiary-fixed-dim) 100%);
+  background: linear-gradient(135deg, var(--success-container) 0%, var(--success-container) 100%);
   padding: 40px 20px;
 }
 
@@ -261,7 +261,7 @@ const handleDownload = () => {
 
 .logo-icon {
   font-size: 56px;
-  color: var(--tertiary);
+  color: var(--success);
   margin-bottom: 16px;
 }
 
@@ -406,7 +406,7 @@ const handleDownload = () => {
 }
 
 .search-input {
-  background: var(--surface);
+  background: var(--surface-container-lowest);
 }
 
 .footer {

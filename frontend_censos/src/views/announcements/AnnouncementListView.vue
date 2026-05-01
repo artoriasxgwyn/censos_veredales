@@ -164,7 +164,7 @@ const formatDate = (date) => {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: var(--surface);
+  background: var(--surface-container-low);
 }
 
 .page-content {
@@ -284,7 +284,7 @@ const formatDate = (date) => {
 }
 
 .filter-chip:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -316,7 +316,7 @@ const formatDate = (date) => {
 }
 
 .announcement-card {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border: 1px solid var(--surface-container-highest);
   border-radius: 12px;
   padding: 20px;
@@ -332,7 +332,7 @@ const formatDate = (date) => {
 }
 
 .announcement-card:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
   transform: translateY(-2px);
 }
@@ -350,8 +350,8 @@ const formatDate = (date) => {
 }
 
 .announcement-badge.published {
-  background: var(--tertiary);
-  color: var(--on-tertiary);
+  background: var(--success);
+  color: var(--on-success);
 }
 
 .announcement-badge.draft {
@@ -454,7 +454,7 @@ const formatDate = (date) => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

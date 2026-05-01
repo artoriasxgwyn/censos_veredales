@@ -119,28 +119,29 @@
                   <div class="approval-status">
                     <div class="approval-item" :class="resident.approvedByPresident">
                       <span class="material-symbols-outlined">
-                        {{ resident.approvedByPresident ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(resident.approvedByPresident) }}
                       </span>
                       <span>Presidente</span>
                     </div>
                     <div class="approval-item" :class="resident.approvedByTreasurer">
                       <span class="material-symbols-outlined">
-                        {{ resident.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(resident.approvedByTreasurer) }}
                       </span>
                       <span>Tesorero</span>
                     </div>
                     <div class="approval-item" :class="resident.approvedBySecretary">
                       <span class="material-symbols-outlined">
-                        {{ resident.approvedBySecretary ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(resident.approvedBySecretary) }}
                       </span>
                       <span>Secretario</span>
                     </div>
                   </div>
 
+                  <!-- Botones de aprobación -->
                   <div class="item-actions">
                     <q-btn
                       color="positive"
-                      label="Aprobar"
+                      :label="resident.approvedByPresident !== 'pending' ? 'Cambiar a Aprobado' : 'Aprobar'"
                       icon="check"
                       @click="handleApprove('resident', resident)"
                       :loading="resident.loading"
@@ -148,12 +149,17 @@
                     />
                     <q-btn
                       color="negative"
-                      label="Rechazar"
+                      :label="resident.approvedByPresident !== 'pending' ? 'Cambiar a Rechazado' : 'Rechazar'"
                       icon="close"
                       @click="handleReject('resident', resident)"
                       :loading="resident.loading"
                       flat
                     />
+                  </div>
+                  <div v-if="resident.approvedByPresident !== 'pending'" class="voted-badge">
+                    <q-badge color="warning">
+                      Voto actual: {{ resident.approvedByPresident === 'approved' ? 'Aprobado' : 'Rechazado' }}
+                    </q-badge>
                   </div>
                 </div>
               </q-card>
@@ -192,28 +198,29 @@
                   <div class="approval-status">
                     <div class="approval-item" :class="dwelling.approvedByPresident">
                       <span class="material-symbols-outlined">
-                        {{ dwelling.approvedByPresident ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(dwelling.approvedByPresident) }}
                       </span>
                       <span>Presidente</span>
                     </div>
                     <div class="approval-item" :class="dwelling.approvedByTreasurer">
                       <span class="material-symbols-outlined">
-                        {{ dwelling.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(dwelling.approvedByTreasurer) }}
                       </span>
                       <span>Tesorero</span>
                     </div>
                     <div class="approval-item" :class="dwelling.approvedBySecretary">
                       <span class="material-symbols-outlined">
-                        {{ dwelling.approvedBySecretary ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(dwelling.approvedBySecretary) }}
                       </span>
                       <span>Secretario</span>
                     </div>
                   </div>
 
+                  <!-- Botones de aprobación -->
                   <div class="item-actions">
                     <q-btn
                       color="positive"
-                      label="Aprobar"
+                      :label="dwelling.approvedByPresident !== 'pending' ? 'Cambiar a Aprobado' : 'Aprobar'"
                       icon="check"
                       @click="handleApprove('dwelling', dwelling)"
                       :loading="dwelling.loading"
@@ -221,12 +228,17 @@
                     />
                     <q-btn
                       color="negative"
-                      label="Rechazar"
+                      :label="dwelling.approvedByPresident !== 'pending' ? 'Cambiar a Rechazado' : 'Rechazar'"
                       icon="close"
                       @click="handleReject('dwelling', dwelling)"
                       :loading="dwelling.loading"
                       flat
                     />
+                  </div>
+                  <div v-if="dwelling.approvedByPresident !== 'pending'" class="voted-badge">
+                    <q-badge color="warning">
+                      Voto actual: {{ dwelling.approvedByPresident === 'approved' ? 'Aprobado' : 'Rechazado' }}
+                    </q-badge>
                   </div>
                 </div>
               </q-card>
@@ -265,28 +277,29 @@
                   <div class="approval-status">
                     <div class="approval-item" :class="letter.approvedByPresident">
                       <span class="material-symbols-outlined">
-                        {{ letter.approvedByPresident ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(letter.approvedByPresident) }}
                       </span>
                       <span>Presidente</span>
                     </div>
                     <div class="approval-item" :class="letter.approvedByTreasurer">
                       <span class="material-symbols-outlined">
-                        {{ letter.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(letter.approvedByTreasurer) }}
                       </span>
                       <span>Tesorero</span>
                     </div>
                     <div class="approval-item" :class="letter.approvedBySecretary">
                       <span class="material-symbols-outlined">
-                        {{ letter.approvedBySecretary ? 'check_circle' : 'pending' }}
+                        {{ getApprovalIcon(letter.approvedBySecretary) }}
                       </span>
                       <span>Secretario</span>
                     </div>
                   </div>
 
+                  <!-- Botones de aprobación -->
                   <div class="item-actions">
                     <q-btn
                       color="positive"
-                      label="Aprobar"
+                      :label="letter.approvedByPresident !== 'pending' ? 'Cambiar a Aprobado' : 'Aprobar'"
                       icon="check"
                       @click="handleApprove('letter', letter)"
                       :loading="letter.loading"
@@ -294,12 +307,17 @@
                     />
                     <q-btn
                       color="negative"
-                      label="Rechazar"
+                      :label="letter.approvedByPresident !== 'pending' ? 'Cambiar a Rechazado' : 'Rechazar'"
                       icon="close"
                       @click="handleReject('letter', letter)"
                       :loading="letter.loading"
                       flat
                     />
+                  </div>
+                  <div v-if="letter.approvedByPresident !== 'pending'" class="voted-badge">
+                    <q-badge color="warning">
+                      Voto actual: {{ letter.approvedByPresident === 'approved' ? 'Aprobado' : 'Rechazado' }}
+                    </q-badge>
                   </div>
                 </div>
               </q-card>
@@ -342,9 +360,10 @@ onMounted(() => {
 
 const activeTab = ref('residents')
 
-const pendingResidents = computed(() => residentStore.residents.filter(r => r.status === 'pending'))
-const pendingDwellings = computed(() => dwellingStore.dwellings.filter(d => d.status === 'pending'))
-const pendingLetters = computed(() => letterStore.letters.filter(l => l.status === 'pending'))
+// Filtrar elementos donde el presidente AÚN NO HA VOTADO (independiente del status general)
+const pendingResidents = computed(() => residentStore.residents.filter(r => r.approvedByPresident === 'pending'))
+const pendingDwellings = computed(() => dwellingStore.dwellings.filter(d => d.approvedByPresident === 'pending'))
+const pendingLetters = computed(() => letterStore.letters.filter(l => l.approvedByPresident === 'pending'))
 
 const pendingResidentsCount = computed(() => pendingResidents.value.length)
 const pendingDwellingsCount = computed(() => pendingDwellings.value.length)
@@ -396,7 +415,33 @@ const getStatusLabel = (status) => {
   return labels[status] || status
 }
 
+const getApprovalIcon = (status) => {
+  if (status === 'approved') return 'check_circle'
+  if (status === 'rejected') return 'cancel'
+  return 'pending'
+}
+
 const handleApprove = async (type, item) => {
+  const currentVote = getVoteForRole(item, authStore.userRole)
+
+  // Si ya votó, mostrar confirmación
+  if (currentVote !== 'pending') {
+    $q.dialog({
+      title: 'Cambiar voto',
+      message: `Tu voto actual es "${currentVote === 'approved' ? 'Aprobado' : 'Rechazado'}". ¿Estás seguro de que quieres aprobar este elemento?`,
+      cancel: true,
+      persistent: true,
+      ok: { label: 'Cambiar', color: 'warning', flat: true },
+      cancel: { label: 'Cancelar', color: 'primary', flat: true }
+    }).onOk(async () => {
+      await confirmarAprobacion(type, item)
+    })
+  } else {
+    await confirmarAprobacion(type, item)
+  }
+}
+
+const confirmarAprobacion = async (type, item) => {
   item.loading = true
   try {
     let result
@@ -424,36 +469,38 @@ const handleApprove = async (type, item) => {
       throw new Error(result?.message || 'Error al aprobar')
     }
   } catch (error) {
-    const errorMsg = error.message || ''
-
-    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada') || errorMsg.toLowerCase().includes('ya votado')) {
-      $q.notify({
-        type: 'warning',
-        message: 'Ya has votado esta aprobación',
-        caption: 'Solo puedes aprobar o rechazar una vez',
-        timeout: 4000
-      })
-    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
-      $q.notify({
-        type: 'negative',
-        message: 'No tienes permisos para aprobar',
-        caption: 'Se requiere rol de administrador',
-        timeout: 4000
-      })
-    } else {
-      $q.notify({
-        type: 'negative',
-        message: 'Error al aprobar',
-        caption: errorMsg,
-        timeout: 5000
-      })
-    }
+    $q.notify({
+      type: 'negative',
+      message: 'Error al aprobar',
+      caption: error.message,
+      timeout: 5000
+    })
   } finally {
     item.loading = false
   }
 }
 
 const handleReject = async (type, item) => {
+  const currentVote = getVoteForRole(item, authStore.userRole)
+
+  // Si ya votó, mostrar confirmación
+  if (currentVote !== 'pending') {
+    $q.dialog({
+      title: 'Cambiar voto',
+      message: `Tu voto actual es "${currentVote === 'approved' ? 'Aprobado' : 'Rechazado'}". ¿Estás seguro de que quieres rechazar este elemento?`,
+      cancel: true,
+      persistent: true,
+      ok: { label: 'Cambiar', color: 'negative', flat: true },
+      cancel: { label: 'Cancelar', color: 'primary', flat: true }
+    }).onOk(async () => {
+      await confirmarRechazo(type, item)
+    })
+  } else {
+    await confirmarRechazo(type, item)
+  }
+}
+
+const confirmarRechazo = async (type, item) => {
   item.loading = true
   try {
     let result
@@ -481,33 +528,22 @@ const handleReject = async (type, item) => {
       throw new Error(result?.message || 'Error al rechazar')
     }
   } catch (error) {
-    const errorMsg = error.message || ''
-
-    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada') || errorMsg.toLowerCase().includes('ya votado')) {
-      $q.notify({
-        type: 'warning',
-        message: 'Ya has votado esta aprobación',
-        caption: 'Solo puedes aprobar o rechazar una vez',
-        timeout: 4000
-      })
-    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
-      $q.notify({
-        type: 'negative',
-        message: 'No tienes permisos para rechazar',
-        caption: 'Se requiere rol de administrador',
-        timeout: 4000
-      })
-    } else {
-      $q.notify({
-        type: 'negative',
-        message: 'Error al rechazar',
-        caption: errorMsg,
-        timeout: 5000
-      })
-    }
+    $q.notify({
+      type: 'negative',
+      message: 'Error al rechazar',
+      caption: error.message,
+      timeout: 5000
+    })
   } finally {
     item.loading = false
   }
+}
+
+const getVoteForRole = (item, role) => {
+  if (role === 'president') return item.approvedByPresident
+  if (role === 'treasurer') return item.approvedByTreasurer
+  if (role === 'secretary') return item.approvedBySecretary
+  return 'pending'
 }
 </script>
 
@@ -608,6 +644,7 @@ const handleReject = async (type, item) => {
   gap: 16px;
   padding: 20px !important;
   border-radius: 12px !important;
+  background: var(--surface-container-lowest) !important;
   box-shadow: 0 4px 12px rgba(25, 28, 30, 0.04) !important;
 }
 
@@ -649,8 +686,8 @@ const handleReject = async (type, item) => {
 }
 
 .stat-icon.primary { background: var(--primary); }
-.stat-icon.secondary { background: var(--secondary); }
-.stat-icon.tertiary { background: var(--tertiary); }
+.stat-icon.secondary { background: var(--info); }
+.stat-icon.tertiary { background: var(--success); }
 .stat-icon.warning { background: var(--warning); }
 
 .stat-content {
@@ -672,7 +709,7 @@ const handleReject = async (type, item) => {
 
 /* Tabs */
 .tabs-container {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
   overflow: hidden;
@@ -709,12 +746,12 @@ const handleReject = async (type, item) => {
 }
 
 .tab:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
 }
 
 .tab.active {
   color: var(--primary);
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
 }
 
 .tab.active::after {
@@ -789,7 +826,7 @@ const handleReject = async (type, item) => {
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -809,7 +846,7 @@ const handleReject = async (type, item) => {
 
 .item-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
+  color: var(--on-success-container);
 }
 
 .item-info {
@@ -886,18 +923,28 @@ const handleReject = async (type, item) => {
   }
 }
 
-.approval-item.true {
-  color: var(--positive);
+.approval-item.approved {
+  color: var(--success);
 }
 
-.approval-item.false {
-  color: var(--negative);
+.approval-item.rejected {
+  color: var(--error);
+}
+
+.approval-item.pending {
+  color: var(--warning);
 }
 
 .item-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.voted-badge {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
 }
 
 /* Empty State */
@@ -912,7 +959,7 @@ const handleReject = async (type, item) => {
 
 .empty-state .material-symbols-outlined {
   font-size: 64px;
-  color: var(--tertiary);
+  color: var(--success);
   margin-bottom: 16px;
 }
 

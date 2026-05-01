@@ -427,7 +427,7 @@ const handleLogin = async () => {
 .forgot-link {
   font-size: 12px;
   font-weight: 600;
-  color: var(--secondary);
+  color: var(--info);
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -533,7 +533,7 @@ const handleLogin = async () => {
   font-size: 14px;
   font-weight: 700;
   color: var(--primary);
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   padding: 8px 20px;
   border-radius: var(--radius-full);
   text-decoration: none;
@@ -541,7 +541,7 @@ const handleLogin = async () => {
 }
 
 .create-account-btn:hover {
-  background: var(--secondary-container);
+  background: var(--info-container);
 }
 
 .auth-footer-legal {

@@ -9,7 +9,7 @@ export const loginSchema = z.object({
 // Schema para registro público (unirse a comunidad)
 export const publicRegisterSchema = z.object({
   fullName: z.string().min(3, 'El nombre completo debe tener al menos 3 caracteres'),
-  documentNumber: z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)'),
+  documentNumber: z.string().transform(val => val.replace(/[^0-9]/g, '')).pipe(z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)')),
   phone: z.string().regex(/^3\d{9}$/, 'El teléfono debe ser un número colombiano válido (ej: 3001234567)'),
   email: z.string().email('Correo electrónico inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
@@ -39,7 +39,7 @@ export const resetPasswordSchema = z.object({
 // Schema para actualizar usuario
 export const updateUserSchema = z.object({
   fullName: z.string().min(1, 'El nombre completo es requerido').optional(),
-  documentNumber: z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)').optional(),
+  documentNumber: z.string().transform(val => val ? val.replace(/[^0-9]/g, '') : val).pipe(z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)').optional()),
   birthDate: z.string().optional().or(z.literal('')),
   phone: z.string().regex(/^3\d{9}$/, 'El teléfono debe ser un número colombiano válido').optional(),
   email: z.string().email('Email inválido').optional(),

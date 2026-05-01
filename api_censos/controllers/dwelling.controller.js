@@ -193,14 +193,15 @@ export const deleteDwelling = async (req, res) => {
 export const approveByPresident = async (req, res) => {
   try {
     const { status } = req.validatedBody;
-    const dwelling = await Dwelling.findOneAndUpdate(
-      { _id: req.params.id, communityId: req.communityId },
-      { approvedByPresident: status },
-      { new: true }
-    );
+    const dwelling = await Dwelling.findOne({ _id: req.params.id, communityId: req.communityId });
+
     if (!dwelling) {
       return res.status(404).json({ success: false, message: 'Vivienda no encontrada en tu comunidad' });
     }
+
+    dwelling.approvedByPresident = status;
+    await dwelling.save(); // Trigger post-save hook para actualizar status
+
     const messages = {
       approved: 'Presidente aprobó la vivienda',
       rejected: 'Presidente rechazó la vivienda',
@@ -222,14 +223,15 @@ export const approveByPresident = async (req, res) => {
 export const approveByTreasurer = async (req, res) => {
   try {
     const { status } = req.validatedBody;
-    const dwelling = await Dwelling.findOneAndUpdate(
-      { _id: req.params.id, communityId: req.communityId },
-      { approvedByTreasurer: status },
-      { new: true }
-    );
+    const dwelling = await Dwelling.findOne({ _id: req.params.id, communityId: req.communityId });
+
     if (!dwelling) {
       return res.status(404).json({ success: false, message: 'Vivienda no encontrada en tu comunidad' });
     }
+
+    dwelling.approvedByTreasurer = status;
+    await dwelling.save(); // Trigger post-save hook para actualizar status
+
     const messages = {
       approved: 'Tesorero aprobó la vivienda',
       rejected: 'Tesorero rechazó la vivienda',
@@ -251,14 +253,15 @@ export const approveByTreasurer = async (req, res) => {
 export const approveBySecretary = async (req, res) => {
   try {
     const { status } = req.validatedBody;
-    const dwelling = await Dwelling.findOneAndUpdate(
-      { _id: req.params.id, communityId: req.communityId },
-      { approvedBySecretary: status },
-      { new: true }
-    );
+    const dwelling = await Dwelling.findOne({ _id: req.params.id, communityId: req.communityId });
+
     if (!dwelling) {
       return res.status(404).json({ success: false, message: 'Vivienda no encontrada en tu comunidad' });
     }
+
+    dwelling.approvedBySecretary = status;
+    await dwelling.save(); // Trigger post-save hook para actualizar status
+
     const messages = {
       approved: 'Secretario aprobó la vivienda',
       rejected: 'Secretario rechazó la vivienda',

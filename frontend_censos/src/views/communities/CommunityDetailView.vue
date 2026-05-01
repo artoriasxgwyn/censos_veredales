@@ -230,7 +230,7 @@ const handleDelete = async () => {
 .community-icon {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -240,7 +240,7 @@ const handleDelete = async () => {
 
 .community-icon .material-symbols-outlined {
   font-size: 32px;
-  color: var(--on-primary);
+  color: var(--on-success-container);
 }
 
 .community-name {
@@ -296,7 +296,7 @@ const handleDelete = async () => {
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: var(--tertiary);
+  color: var(--success);
   text-decoration: none;
 }
 
@@ -333,14 +333,22 @@ const handleDelete = async () => {
   flex-shrink: 0;
 }
 
+.leader-icon {
+  background: var(--surface-container-highest);
+}
 .leader-icon .material-symbols-outlined {
   font-size: 20px;
-  color: white;
+  color: var(--on-surface);
 }
 
-.bg-primary { background: var(--tertiary); }
-.bg-secondary { background: var(--tertiary-container); }
+.bg-primary { background: var(--success); }
+.bg-primary .material-symbols-outlined { color: var(--on-success); }
+
+.bg-secondary { background: var(--success-container); }
+.bg-secondary .material-symbols-outlined { color: var(--on-success-container); }
+
 .bg-accent { background: var(--primary); }
+.bg-accent .material-symbols-outlined { color: var(--on-primary); }
 
 .leader-info {
   display: flex;

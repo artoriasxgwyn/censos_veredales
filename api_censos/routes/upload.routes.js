@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { uploadImage } from '../controllers/upload.controller.js';
-import { upload } from '../middlewares/upload.js';
+import { upload, handleMulterError } from '../middlewares/upload.js';
 import { auth } from '../middlewares/auth.js';
 
 const router = Router();
@@ -53,6 +53,10 @@ const router = Router();
  */
 
 // POST /api/upload - Subir imagen (sin autenticacion para permitir registro rapido)
-router.post('/', upload.single('file'), uploadImage);
+router.post('/', (req, res, next) => {
+  console.log('>>> UPLOAD ROUTE HIT');
+  console.log('Content-Type:', req.get('Content-Type'));
+  next();
+}, upload.single('file'), handleMulterError, uploadImage);
 
 export default router;

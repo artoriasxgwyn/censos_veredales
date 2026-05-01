@@ -119,7 +119,7 @@
                 label="Cédula del Propietario"
                 outlined
                 hint="Si el propietario está registrado, se vinculará automáticamente"
-                mask="###.###.####"
+                mask="# ### ### ###"
                 fill-mask
                 :error="hasError('cedulaPropietario')"
                 :error-message="getFieldError('cedulaPropietario')"
@@ -222,7 +222,7 @@ const handleSubmit = async () => {
     arrivalInstructions: form.value.arrivalInstructions,
     mapLocation: form.value.mapLocation || undefined,
     constructionDate: form.value.constructionDate || undefined,
-    cedulaPropietario: form.value.cedulaPropietario.replace(/\./g, '')
+    cedulaPropietario: form.value.cedulaPropietario.replace(/[^0-9]/g, '')
   }
 
   // Validar con Zod

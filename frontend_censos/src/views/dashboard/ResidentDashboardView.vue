@@ -279,7 +279,7 @@ const viewAnnouncement = (announcement) => {
 
 .request-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 40, 142, 0.12) !important;
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.12) !important;
 }
 
 .request-icon {
@@ -298,8 +298,8 @@ const viewAnnouncement = (announcement) => {
 }
 
 .request-icon.primary { background: var(--primary); }
-.request-icon.secondary { background: var(--secondary); }
-.request-icon.tertiary { background: var(--tertiary); }
+.request-icon.secondary { background: var(--info); }
+.request-icon.tertiary { background: var(--success); }
 
 .request-content {
   flex: 1;
@@ -325,7 +325,7 @@ const viewAnnouncement = (announcement) => {
 
 .request-status-text {
   font-size: 13px;
-  color: var(--tertiary);
+  color: var(--success);
   font-weight: 500;
 }
 
@@ -350,7 +350,7 @@ const viewAnnouncement = (announcement) => {
 
 /* Main Card */
 .bento-main {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -402,7 +402,7 @@ const viewAnnouncement = (announcement) => {
 }
 
 .announcement-card:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
   transform: translateY(-2px);
 }
@@ -466,7 +466,7 @@ const viewAnnouncement = (announcement) => {
 .no-announcements .material-symbols-outlined {
   font-size: 48px;
   margin-bottom: 12px;
-  color: var(--tertiary);
+  color: var(--success);
 }
 
 .no-announcements p {
@@ -482,7 +482,7 @@ const viewAnnouncement = (announcement) => {
 }
 
 .actions-card {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -507,7 +507,7 @@ const viewAnnouncement = (announcement) => {
 }
 
 .quick-action-item:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
 }
 
 .action-icon-wrapper {
@@ -520,14 +520,14 @@ const viewAnnouncement = (announcement) => {
   flex-shrink: 0;
 }
 
-.action-icon-wrapper .material-symbols-outlined {
-  font-size: 22px;
-  color: var(--on-primary);
-}
-
 .action-icon-wrapper.primary { background: var(--primary); }
-.action-icon-wrapper.secondary { background: var(--secondary); }
-.action-icon-wrapper.tertiary { background: var(--tertiary); }
+.action-icon-wrapper.primary .material-symbols-outlined { color: var(--on-primary); }
+
+.action-icon-wrapper.secondary { background: var(--info); }
+.action-icon-wrapper.secondary .material-symbols-outlined { color: var(--on-info); }
+
+.action-icon-wrapper.tertiary { background: var(--success); }
+.action-icon-wrapper.tertiary .material-symbols-outlined { color: var(--on-success); }
 
 .action-label {
   font-size: 14px;
@@ -537,7 +537,7 @@ const viewAnnouncement = (announcement) => {
 
 /* Status Card */
 .status-card {
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -557,7 +557,7 @@ const viewAnnouncement = (announcement) => {
 
 .status-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
+  color: var(--on-success);
 }
 
 .status-content {
@@ -567,13 +567,13 @@ const viewAnnouncement = (announcement) => {
 .status-text {
   font-size: 14px;
   font-weight: 700;
-  color: var(--on-primary);
+  color: var(--on-success);
   margin: 0;
 }
 
 .status-subtext {
   font-size: 12px;
-  color: var(--on-tertiary-fixed-variant);
+  color: var(--on-success-container);
   margin: 2px 0 0 0;
 }
 </style>

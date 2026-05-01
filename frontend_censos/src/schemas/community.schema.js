@@ -9,7 +9,7 @@ export const createCommunitySchema = z.object({
   estimatedResidentCount: z.number().positive('Debe ser un número positivo').optional().or(z.literal(null)),
   president: z.object({
     fullName: z.string().min(1, 'El nombre completo es requerido'),
-    documentNumber: z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)'),
+    documentNumber: z.string().transform(val => val.replace(/[^0-9]/g, '')).pipe(z.string().regex(/^\d{6,10}$/, 'La cédula debe contener solo números (6-10 dígitos)')),
     birthDate: z.string().optional().or(z.literal('')),
     phone: z.string().regex(/^3\d{9}$/, 'El teléfono debe ser un número colombiano válido (ej: 3001234567)'),
     email: z.string().email('Email inválido'),

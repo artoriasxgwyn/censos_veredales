@@ -404,7 +404,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
   border-radius: 8px;
   font-size: 13px;
   color: var(--on-surface-variant);
@@ -468,7 +468,7 @@ onUnmounted(() => {
 }
 
 .result-header.success {
-  background: linear-gradient(135deg, var(--primary-fixed) 0%, var(--primary-fixed-dim) 100%);
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-container) 100%);
 }
 
 .result-header.error {

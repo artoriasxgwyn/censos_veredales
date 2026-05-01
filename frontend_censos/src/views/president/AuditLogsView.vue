@@ -465,7 +465,7 @@ const exportLogs = () => {
 .search-input {
   width: 100%;
   padding: 14px 44px 14px 48px;
-  background: var(--surface);
+  background: var(--surface-container-low);
   border: 1px solid var(--surface-container-highest);
   border-radius: 12px;
   font-size: 14px;
@@ -476,7 +476,7 @@ const exportLogs = () => {
 .search-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-fixed-dim);
+  box-shadow: 0 0 0 3px var(--primary-50);
 }
 
 .filter-row {
@@ -543,6 +543,7 @@ const exportLogs = () => {
 .table-card {
   border-radius: 12px !important;
   overflow: hidden;
+  background: var(--surface-container-lowest) !important;
 }
 
 .table-header {
@@ -590,7 +591,7 @@ const exportLogs = () => {
 }
 
 .log-row:hover {
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
 }
 
 .timestamp {
@@ -671,7 +672,7 @@ const exportLogs = () => {
   gap: 16px;
   padding: 16px 24px !important;
   border-radius: 12px !important;
-  background: var(--primary-fixed-dim) !important;
+  background: var(--primary-50) !important;
 }
 
 .info-banner .material-symbols-outlined {

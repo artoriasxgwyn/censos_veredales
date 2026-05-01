@@ -1,7 +1,15 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configurar Cloudinary
+// Configurar Cloudinary - verificar que las variables estén cargadas
+console.log('=== CLOUDINARY CONFIG ===');
+console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME || 'NO DEFINIDA');
+console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? '***' : 'NO DEFINIDA');
+console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? '***' : 'NO DEFINIDA');
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -13,11 +21,26 @@ const storage = multer.memoryStorage();
 
 // Filtro para validar que solo se suban imagenes
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Solo se permiten archivos de imagen'), false);
+  console.log('=== MULTER FILE FILTER ===');
+  console.log('Fieldname:', file.fieldname);
+  console.log('Original name:', file.originalname);
+  console.log('Mimetype:', file.mimetype);
+  console.log('Size:', file.size);
+
+  if (!file.mimetype) {
+    console.log('REJECTED: No mimetype');
+    cb(new Error('No se detectó el tipo de archivo'), false);
+    return;
   }
+
+  if (!file.mimetype.startsWith('image/')) {
+    console.log('REJECTED: Not an image:', file.mimetype);
+    cb(new Error('Solo se permiten archivos de imagen: ' + file.mimetype), false);
+    return;
+  }
+
+  console.log('ACCEPTED');
+  cb(null, true);
 };
 
 export const upload = multer({
@@ -28,6 +51,19 @@ export const upload = multer({
   }
 });
 
+// Manejador de errores de multer
+export const handleMulterError = (err, req, res, next) => {
+  console.error('=== MULTER ERROR ===');
+  console.error(err);
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'El archivo excede el tamaño máximo de 5MB'
+    });
+  }
+  next(err);
+};
+
 /**
  * Sube un archivo a Cloudinary
  * @param {Buffer} fileBuffer - Buffer del archivo
@@ -37,20 +73,19 @@ export const upload = multer({
  */
 export const uploadToCloudinary = async (fileBuffer, folder = 'censos', mimetype = 'image/jpeg') => {
   return new Promise((resolve, reject) => {
-    // Convertir buffer a base64
-    const b64 = fileBuffer.toString('base64');
-    const dataURI = `data:${mimetype};base64,${b64}`;
-
-    cloudinary.uploader.upload(dataURI, {
+    // Cloudinary acepta buffers directamente - no necesita dataURI
+    cloudinary.uploader.upload_stream({
       folder,
+      resource_type: 'image',
       use_filename: true,
       unique_filename: true
     }, (error, result) => {
       if (error) {
+        console.error('Cloudinary upload error:', error);
         reject(error);
       } else {
         resolve(result.secure_url);
       }
-    });
+    }).end(fileBuffer);
   });
 };

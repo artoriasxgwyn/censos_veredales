@@ -176,7 +176,7 @@ onMounted(() => {
 
 /* Recent Scans */
 .recent-scans {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -207,14 +207,14 @@ onMounted(() => {
 }
 
 .scan-item:hover {
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
 }
 
 .scan-icon {
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

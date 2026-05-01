@@ -247,7 +247,7 @@ const formatDate = (date) => {
 
 .filter-chip {
   padding: 8px 16px;
-  background: var(--surface);
+  background: var(--surface-container-lowest);
   border: 1px solid var(--surface-container-highest);
   border-radius: 9999px;
   font-size: 13px;
@@ -258,7 +258,7 @@ const formatDate = (date) => {
 }
 
 .filter-chip:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -321,10 +321,10 @@ const formatDate = (date) => {
   letter-spacing: 0.05em;
 }
 
-.letter-badge.pending { background: var(--warning); color: var(--on-primary); }
-.letter-badge.approved { background: var(--tertiary); color: var(--on-primary); }
+.letter-badge.pending { background: var(--warning); color: var(--on-warning); }
+.letter-badge.approved { background: var(--success); color: var(--on-success); }
 .letter-badge.issued { background: var(--primary); color: var(--on-primary); }
-.letter-badge.rejected { background: var(--error); color: var(--on-primary); }
+.letter-badge.rejected { background: var(--error); color: var(--on-error); }
 
 .letter-icon {
   width: 48px;
@@ -398,7 +398,7 @@ const formatDate = (date) => {
   font-size: 16px;
 }
 
-.approval-item.approved { color: var(--tertiary); }
+.approval-item.approved { color: var(--success); }
 .approval-item.rejected { color: var(--error); }
 .approval-item.pending { color: var(--warning); }
 
@@ -440,7 +440,7 @@ const formatDate = (date) => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

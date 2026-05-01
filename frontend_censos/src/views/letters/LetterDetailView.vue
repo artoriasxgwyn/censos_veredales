@@ -409,18 +409,18 @@ const handleDownload = () => {
 }
 
 .approval-card.approved {
-  border-color: var(--primary);
-  background: var(--primary-fixed);
+  border-color: var(--success);
+  background: var(--success-container);
 }
 
 .approval-card.rejected {
   border-color: var(--error);
-  background: var(--error-fixed);
+  background: var(--error-container);
 }
 
 .approval-card.pending {
   border-color: var(--warning);
-  background: var(--warning-fixed);
+  background: var(--warning-container);
 }
 
 .approval-icon {
@@ -433,18 +433,18 @@ const handleDownload = () => {
 }
 
 .approved .approval-icon {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--success);
+  color: var(--on-success);
 }
 
 .rejected .approval-icon {
   background: var(--error);
-  color: var(--on-primary);
+  color: var(--on-error);
 }
 
 .pending .approval-icon {
   background: var(--warning);
-  color: var(--on-primary);
+  color: var(--on-warning);
 }
 
 .approval-icon .material-symbols-outlined {
@@ -526,7 +526,7 @@ const handleDownload = () => {
 }
 
 .qr-url a {
-  color: var(--tertiary);
+  color: var(--success);
   word-break: break-all;
 }
 

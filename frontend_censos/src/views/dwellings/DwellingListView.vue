@@ -42,7 +42,7 @@
             v-for="dwelling in filteredDwellings"
             :key="dwelling._id"
             class="dwelling-card"
-            @click="router.push(`/admin/dwellings/${dwelling._id}`)"
+            @click="verDetalle(dwelling._id)"
           >
             <div class="dwelling-badge" :class="dwelling.status">
               {{ getStatusLabel(dwelling.status) }}
@@ -56,19 +56,19 @@
             <p class="dwelling-community">{{ dwelling.communityId?.neighborhood || 'Comunidad' }}</p>
 
             <div class="approval-status">
-              <div class="approval-item" :class="dwelling.approvedByPresident">
+              <div class="approval-item" :class="getApprovalClass(dwelling.approvedByPresident)">
                 <span class="material-symbols-outlined">
-                  {{ dwelling.approvedByPresident ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(dwelling.approvedByPresident) }}
                 </span>
               </div>
-              <div class="approval-item" :class="dwelling.approvedByTreasurer">
+              <div class="approval-item" :class="getApprovalClass(dwelling.approvedByTreasurer)">
                 <span class="material-symbols-outlined">
-                  {{ dwelling.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(dwelling.approvedByTreasurer) }}
                 </span>
               </div>
-              <div class="approval-item" :class="dwelling.approvedBySecretary">
+              <div class="approval-item" :class="getApprovalClass(dwelling.approvedBySecretary)">
                 <span class="material-symbols-outlined">
-                  {{ dwelling.approvedBySecretary ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(dwelling.approvedBySecretary) }}
                 </span>
               </div>
             </div>
@@ -145,6 +145,22 @@ const formatDate = (date) => {
     month: 'short',
     year: 'numeric'
   })
+}
+
+const getApprovalIcon = (status) => {
+  if (status === 'approved') return 'check_circle'
+  if (status === 'rejected') return 'cancel'
+  return 'pending'
+}
+
+const getApprovalClass = (status) => {
+  return status || 'pending'
+}
+
+const verDetalle = async (dwellingId) => {
+  // Asegurar que los datos estén cargados antes de navegar
+  await dwellingStore.fetchDwellingById(dwellingId)
+  router.push(`/admin/dwellings/${dwellingId}`)
 }
 </script>
 
@@ -260,7 +276,7 @@ const formatDate = (date) => {
 
 .filter-chip {
   padding: 8px 16px;
-  background: var(--surface);
+  background: var(--surface-container-low);
   border: 1px solid var(--surface-container-highest);
   border-radius: 9999px;
   font-size: 13px;
@@ -271,7 +287,7 @@ const formatDate = (date) => {
 }
 
 .filter-chip:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -283,7 +299,7 @@ const formatDate = (date) => {
 
 /* Dwellings Section */
 .dwellings-section {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -339,15 +355,15 @@ const formatDate = (date) => {
   letter-spacing: 0.05em;
 }
 
-.dwelling-badge.pending { background: var(--warning); color: var(--on-warning); }
-.dwelling-badge.approved { background: var(--tertiary); color: var(--on-tertiary); }
+.dwelling-badge.pending { background: var(--info); color: var(--on-info); }
+.dwelling-badge.approved { background: var(--success); color: var(--on-success); }
 .dwelling-badge.rejected { background: var(--error); color: var(--on-error); }
 
 .dwelling-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -368,7 +384,7 @@ const formatDate = (date) => {
 
 .dwelling-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
+  color: var(--white);
 }
 
 .dwelling-type {
@@ -415,7 +431,7 @@ const formatDate = (date) => {
   font-size: 16px;
 }
 
-.approval-item.approved { color: var(--tertiary); }
+.approval-item.approved { color: var(--success); }
 .approval-item.rejected { color: var(--error); }
 .approval-item.pending { color: var(--warning); }
 
@@ -457,7 +473,7 @@ const formatDate = (date) => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

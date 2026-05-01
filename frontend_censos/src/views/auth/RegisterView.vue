@@ -412,8 +412,8 @@ const handleRegister = async () => {
 }
 
 .tertiary-icon {
-  background: var(--tertiary);
-  color: var(--on-tertiary);
+  background: var(--success);
+  color: var(--on-success);
 }
 
 .section-icon .material-symbols-outlined {
@@ -599,10 +599,10 @@ const handleRegister = async () => {
 
 /* Impact Card */
 .impact-card {
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
   padding: 24px;
   border-radius: var(--radius-xl);
-  color: var(--on-primary-fixed);
+  color: var(--on-primary-container);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--primary);
 }

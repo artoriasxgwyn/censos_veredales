@@ -652,11 +652,11 @@ const saveRole = async () => {
 
 .stat-icon .material-symbols-outlined {
   font-size: 28px;
-  color: var(--on-primary);
+  color: var(--white);
 }
 
-.stat-icon.primary { background: var(--primary); }
-.stat-icon.secondary { background: var(--secondary); }
+.stat-icon.primary { background: var(--primary, #1E40AF); }
+.stat-icon.secondary { background: var(--info, #3B82F6); }
 
 .stat-content {
   flex: 1;
@@ -725,11 +725,15 @@ const saveRole = async () => {
 
 .role-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
+  color: var(--white) !important;
 }
 
-.role-icon.base { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%); }
-.role-icon.custom { background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-container) 100%); }
+.role-icon.base {
+  background: linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%);
+}
+.role-icon.custom {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563eb 100%);
+}
 
 .role-info {
   flex: 1;
@@ -738,9 +742,25 @@ const saveRole = async () => {
 
 .role-name {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--on-surface);
+  font-weight: 700;
+  color: var(--black) !important;
   margin: 0 0 8px 0;
+}
+
+/* Badge para nombres de roles */
+.role-info q-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+/* Badge para números en stat cards */
+.stat-value q-badge,
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--black);
+  letter-spacing: -0.02em;
 }
 
 .role-body {
@@ -789,6 +809,11 @@ const saveRole = async () => {
   border-radius: 16px !important;
   max-width: 600px;
   width: 100%;
+  background: var(--surface-container-lowest) !important;
+}
+
+.dialog-card .q-card__section {
+  background: var(--surface-container-lowest) !important;
 }
 
 .dialog-header {
@@ -839,6 +864,56 @@ const saveRole = async () => {
 .scope-select {
   width: 150px;
   margin-left: auto;
+}
+
+/* Input y Select styles - hardcoded colors para contraste */
+.dialog-card .q-input .q-field__label,
+.dialog-card .q-select .q-field__label {
+  color:white !important;
+  opacity: 1 !important;
+}
+
+/* Selector cerrado - texto blanco */
+.dialog-card .q-input .q-field__native,
+.dialog-card .q-select .q-field__native,
+.dialog-card .q-input .q-field__native span,
+.dialog-card .q-select .q-field__native span,
+.dialog-card .q-field__native .ellipsis {
+  color: white!important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: var(--white) !important;
+}
+
+.dialog-card .q-field--outlined .q-field__control,
+.dialog-card .q-field--outlined .q-field__control:before,
+.dialog-card .q-field--outlined .q-field__control:after {
+  background-color: var(--white) !important;
+  border-color: var(--surface-container-highest) !important;
+}
+
+.dialog-card .q-field--outlined .q-field__control:before {
+  border-color: var(--outline) !important;
+}
+
+.dialog-card .q-select__dropdown-icon,
+.dialog-card .q-field__append .q-icon {
+  color: var(--on-surface-variant) !important;
+}
+
+/* Menu dropdown del select - texto oscuro sobre fondo blanco */
+.q-menu .q-item,
+.q-menu .q-item__label,
+.q-menu .q-virtual-scroll__content,
+.q-menu .q-item__section--main {
+  color: var(--on-surface) !important;
+  background-color: var(--white) !important;
+}
+
+.q-menu .q-item--active,
+.q-menu .q-item:hover,
+.q-menu .q-item--selected {
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
 }
 
 /* Permissions List Dialog */

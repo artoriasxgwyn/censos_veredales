@@ -1,0 +1,101 @@
+/* Sidebar color overrides - MUST load after Quasar CSS */
+/* Using maximum specificity to override Quasar's compiled styles */
+
+/* Sidebar background - override Quasar's default */
+.q-drawer.q-dark,
+.q-drawer.sidebar,
+div.q-drawer.sidebar,
+.q-drawer.sidebar .sidebar-content,
+.q-drawer.sidebar .sidebar-content[data-v-3a823e2d] {
+  background-color: var(--surface) !important;
+  background: var(--surface) !important;
+}
+
+/* Navigation items - all states */
+.q-drawer.sidebar .q-item,
+.q-drawer.sidebar .q-item--clickable,
+.q-drawer.sidebar .q-item--dark {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Item text labels */
+.q-drawer.sidebar .q-item__label,
+.q-drawer.sidebar .q-item__label--single,
+.q-drawer.sidebar .q-item__label--multiline {
+  color: var(--on-surface) !important;
+}
+
+/* Item icons/avatar sections */
+.q-drawer.sidebar .q-item__section--avatar,
+.q-drawer.sidebar .q-item__section--main {
+  color: var(--on-surface) !important;
+}
+
+.q-drawer.sidebar .q-item__section--avatar .material-symbols-outlined,
+.q-drawer.sidebar .q-item__section--avatar .q-icon,
+.q-drawer.sidebar .q-item__section--avatar .q-icon--material {
+  color: var(--on-surface) !important;
+}
+
+/* Section headers */
+.q-drawer.sidebar .q-item__label--header,
+.q-drawer.sidebar .q-subheader {
+  color: var(--on-surface) !important;
+  font-weight: 700;
+}
+
+/* Logout button - red */
+.q-drawer.sidebar .logout-item .q-item__label,
+.q-drawer.sidebar .logout-item .q-item__label--single,
+.q-drawer.sidebar .logout-item .material-symbols-outlined,
+.q-drawer.sidebar .logout-item .q-icon,
+.q-drawer.sidebar .logout-item .q-icon--material {
+  color: var(--error) !important;
+}
+
+/* User profile section */
+.q-drawer.sidebar .user-profile {
+  background-color: var(--surface-container) !important;
+}
+
+.q-drawer.sidebar .user-name {
+  color: var(--on-surface) !important;
+  font-weight: 600;
+}
+
+.q-drawer.sidebar .user-role {
+  color: var(--on-surface-variant) !important;
+}
+
+/* Logo */
+.q-drawer.sidebar .logo-icon,
+.q-drawer.sidebar .logo-text {
+  color: var(--on-surface) !important;
+}
+
+/* Avatar icon in user profile */
+.q-drawer.sidebar .user-profile .q-avatar .q-icon,
+.q-drawer.sidebar .user-profile .q-avatar .material-symbols-outlined {
+  color: var(--on-surface) !important;
+}
+
+/* Active navigation items - primary color */
+.q-drawer.sidebar .q-router-link--active,
+.q-drawer.sidebar .q-item--active {
+  background-color: var(--primary-50) !important;
+}
+
+.q-drawer.sidebar .q-router-link--active .q-item__label,
+.q-drawer.sidebar .q-router-link--active .q-item__section--avatar,
+.q-drawer.sidebar .q-router-link--active .material-symbols-outlined,
+.q-drawer.sidebar .q-router-link--active .q-icon {
+  color: var(--primary) !important;
+}
+
+/* Drawer content */
+.q-drawer.sidebar .q-drawer__content,
+.q-drawer.sidebar .q-drawer__inner {
+  background-color: transparent !important;
+  background: transparent !important;
+}

@@ -42,7 +42,7 @@
             v-for="resident in filteredResidents"
             :key="resident._id"
             class="resident-card"
-            @click="router.push(`/admin/residents/${resident._id}`)"
+            @click="verDetalle(resident._id)"
           >
             <div class="resident-badge" :class="resident.status">
               {{ getStatusLabel(resident.status) }}
@@ -56,19 +56,19 @@
             <p class="resident-dwelling">{{ getDwellingName(resident.dwellingId) }}</p>
 
             <div class="approval-status">
-              <div class="approval-item" :class="resident.approvedByPresident">
+              <div class="approval-item" :class="getApprovalClass(resident.approvedByPresident)">
                 <span class="material-symbols-outlined">
-                  {{ resident.approvedByPresident ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(resident.approvedByPresident) }}
                 </span>
               </div>
-              <div class="approval-item" :class="resident.approvedByTreasurer">
+              <div class="approval-item" :class="getApprovalClass(resident.approvedByTreasurer)">
                 <span class="material-symbols-outlined">
-                  {{ resident.approvedByTreasurer ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(resident.approvedByTreasurer) }}
                 </span>
               </div>
-              <div class="approval-item" :class="resident.approvedBySecretary">
+              <div class="approval-item" :class="getApprovalClass(resident.approvedBySecretary)">
                 <span class="material-symbols-outlined">
-                  {{ resident.approvedBySecretary ? 'check_circle' : 'pending' }}
+                  {{ getApprovalIcon(resident.approvedBySecretary) }}
                 </span>
               </div>
             </div>
@@ -169,6 +169,21 @@ const formatDate = (date) => {
     month: 'short',
     year: 'numeric'
   })
+}
+
+const getApprovalIcon = (status) => {
+  if (status === 'approved') return 'check_circle'
+  if (status === 'rejected') return 'cancel'
+  return 'pending'
+}
+
+const getApprovalClass = (status) => {
+  return status || 'pending'
+}
+
+const verDetalle = async (residentId) => {
+  await residentStore.fetchResidentById(residentId)
+  router.push(`/admin/residents/${residentId}`)
 }
 </script>
 
@@ -284,7 +299,7 @@ const formatDate = (date) => {
 
 .filter-chip {
   padding: 8px 16px;
-  background: var(--surface);
+  background: var(--surface-container-low);
   border: 1px solid var(--surface-container-highest);
   border-radius: 9999px;
   font-size: 13px;
@@ -295,7 +310,7 @@ const formatDate = (date) => {
 }
 
 .filter-chip:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -307,7 +322,7 @@ const formatDate = (date) => {
 
 /* Residents Section */
 .residents-section {
-  background: var(--surface);
+  background: var(--surface-container-low);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -363,15 +378,15 @@ const formatDate = (date) => {
   letter-spacing: 0.05em;
 }
 
-.resident-badge.pending { background: var(--warning); color: var(--on-primary); }
-.resident-badge.approved { background: var(--tertiary); color: var(--on-primary); }
-.resident-badge.rejected { background: var(--error); color: var(--on-primary); }
+.resident-badge.pending { background: var(--info); color: var(--on-info); }
+.resident-badge.approved { background: var(--success); color: var(--on-success); }
+.resident-badge.rejected { background: var(--error); color: var(--on-error); }
 
 .resident-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -392,7 +407,7 @@ const formatDate = (date) => {
 
 .resident-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
+  color: var(--white);
 }
 
 .resident-name {
@@ -439,7 +454,7 @@ const formatDate = (date) => {
   font-size: 16px;
 }
 
-.approval-item.approved { color: var(--tertiary); }
+.approval-item.approved { color: var(--primary); }
 .approval-item.rejected { color: var(--error); }
 .approval-item.pending { color: var(--warning); }
 
@@ -481,7 +496,7 @@ const formatDate = (date) => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -235,12 +235,12 @@ const handleSubmit = async () => {
 }
 
 .type-card:hover {
-  border-color: var(--tertiary);
+  border-color: var(--success);
 }
 
 .type-card.selected {
-  border-color: var(--tertiary);
-  background: var(--tertiary-fixed);
+  border-color: var(--success);
+  background: var(--success-container);
 }
 
 .type-icon {

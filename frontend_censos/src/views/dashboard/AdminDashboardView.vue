@@ -65,8 +65,8 @@
             <router-link to="/president/approvals" class="action-card highlight">
               <span class="material-symbols-outlined">pending_actions</span>
               <span>Aprobaciones</span>
-              <q-badge v-if="stats.pendingApprovals > 0" color="warning" class="count-badge">
-                {{ stats.pendingApprovals }}
+              <q-badge v-if="pendingApprovalsForPresident > 0" color="warning" class="count-badge">
+                {{ pendingApprovalsForPresident }}
               </q-badge>
             </router-link>
 
@@ -224,10 +224,23 @@ const stats = ref({
   pendingApprovals: 0
 })
 
+// Calcular aprobaciones pendientes SOLO para el presidente (donde no ha votado)
+const pendingApprovalsForPresident = computed(() => {
+  const dwellingsToApprove = dwellingStore.dwellings.filter(d => d.approvedByPresident === 'pending').length
+  const residentsToApprove = residentStore.residents.filter(r => r.approvedByPresident === 'pending').length
+  const lettersToApprove = letterStore.letters.filter(l => l.approvedByPresident === 'pending').length
+  return dwellingsToApprove + residentsToApprove + lettersToApprove
+})
+
 const pendingItems = computed(() => {
   const items = []
 
-  dwellingStore.pendingDwellings.forEach(d => {
+  // Filtrar solo elementos donde el presidente AÚN NO HA VOTADO
+  const dwellingsToApprove = dwellingStore.dwellings.filter(d => d.approvedByPresident === 'pending')
+  const residentsToApprove = residentStore.residents.filter(r => r.approvedByPresident === 'pending')
+  const lettersToApprove = letterStore.letters.filter(l => l.approvedByPresident === 'pending')
+
+  dwellingsToApprove.forEach(d => {
     items.push({
       _id: d._id,
       type: 'dwelling',
@@ -241,7 +254,7 @@ const pendingItems = computed(() => {
     })
   })
 
-  residentStore.pendingResidents.forEach(r => {
+  residentsToApprove.forEach(r => {
     items.push({
       _id: r._id,
       type: 'resident',
@@ -255,7 +268,7 @@ const pendingItems = computed(() => {
     })
   })
 
-  letterStore.pendingLetters.forEach(l => {
+  lettersToApprove.forEach(l => {
     items.push({
       _id: l._id,
       type: 'letter',
@@ -303,8 +316,11 @@ onMounted(async () => {
       totalResidents: residentStore.residentCount || 0,
       totalDwellings: dwellingStore.dwellingCount || 0,
       pendingLetters: letterStore.pendingLetters?.length || 0,
-      pendingApprovals: pendingItems.value.length
+      pendingApprovals: pendingApprovalsForPresident.value.length || 0
     }
+  } else {
+    // Actualizar pendingApprovals incluso con datos del API
+    stats.value.pendingApprovals = pendingApprovalsForPresident.value
   }
 })
 
@@ -401,7 +417,7 @@ const handleReject = async (item) => {
 <style scoped>
 .dashboard-page {
   min-height: 100vh;
-  background: var(--surface);
+  background: var(--surface-container-low);
 }
 
 .dashboard-content {
@@ -489,6 +505,7 @@ const handleReject = async (item) => {
   gap: 16px;
   padding: 20px !important;
   border-radius: 12px !important;
+  background: var(--surface-container-lowest) !important;
   box-shadow: 0 4px 12px rgba(25, 28, 30, 0.04) !important;
 }
 
@@ -509,15 +526,17 @@ const handleReject = async (item) => {
   flex-shrink: 0;
 }
 
-.stat-icon .material-symbols-outlined {
-  font-size: 28px;
-  color: var(--on-primary);
-}
-
 .stat-icon.primary { background: var(--primary); }
-.stat-icon.secondary { background: var(--secondary); }
-.stat-icon.tertiary { background: var(--tertiary); }
+.stat-icon.primary .material-symbols-outlined { color: var(--on-primary); }
+
+.stat-icon.secondary { background: var(--info); }
+.stat-icon.secondary .material-symbols-outlined { color: var(--on-info); }
+
+.stat-icon.tertiary { background: var(--success); }
+.stat-icon.tertiary .material-symbols-outlined { color: var(--on-success); }
+
 .stat-icon.warning { background: var(--warning); }
+.stat-icon.warning .material-symbols-outlined { color: var(--on-warning); }
 
 .stat-content {
   flex: 1;
@@ -658,13 +677,13 @@ const handleReject = async (item) => {
 }
 
 .action-card:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
   transform: translateY(-2px);
 }
 
 .action-card.highlight {
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -710,7 +729,7 @@ const handleReject = async (item) => {
 }
 
 .impact-card {
-  background: linear-gradient(135deg, var(--primary-fixed) 0%, var(--secondary-fixed) 100%);
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--info-container) 100%);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -740,7 +759,7 @@ const handleReject = async (item) => {
 
 .impact-description {
   font-size: 13px;
-  color: var(--on-primary-fixed-variant);
+  color: var(--on-primary-container);
   line-height: 1.5;
   margin: 0 0 auto 0;
 }
@@ -762,7 +781,7 @@ const handleReject = async (item) => {
 .impact-label {
   font-size: 10px;
   font-weight: 700;
-  color: var(--on-primary-fixed-variant);
+  color: var(--on-primary-container);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -805,7 +824,7 @@ const handleReject = async (item) => {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: var(--tertiary);
+  background: var(--success);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -813,7 +832,7 @@ const handleReject = async (item) => {
 
 .status-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-tertiary);
+  color: var(--on-success);
 }
 
 .status-content {
@@ -896,7 +915,7 @@ const handleReject = async (item) => {
 
 .empty-state .material-symbols-outlined {
   font-size: 48px;
-  color: var(--tertiary);
+  color: var(--success);
   margin-bottom: 12px;
 }
 
@@ -922,7 +941,7 @@ const handleReject = async (item) => {
 }
 
 .pending-item:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
 }
 
 .pending-info {

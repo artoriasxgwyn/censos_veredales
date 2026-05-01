@@ -25,7 +25,16 @@
       "Bash(git restore *)",
       "Bash(git checkout *)",
       "Bash(git reset *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(npm list *)",
+      "Bash(findstr CLOUDINARY)",
+      "Bash(node --check app.js)",
+      "Bash(node *)",
+      "Bash(dir \"C:\\\\Users\\\\ryomen\\\\Documents\\\\back\\\\NodeJS\\\\Automaizacion pruebas\\\\MLC\" /s /b)",
+      "Bash(findstr /v \"node_modules\")",
+      "Bash(findstr /v \".git\")",
+      "Bash(pkill -f vite)",
+      "WebSearch"
     ]
   }
 }

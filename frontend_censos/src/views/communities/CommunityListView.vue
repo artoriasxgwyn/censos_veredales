@@ -104,7 +104,7 @@ onMounted(async () => {
 <style scoped>
 .page {
   min-height: 100vh;
-  background: var(--surface);
+  background: var(--surface-container-low);
 }
 
 .page-content {
@@ -238,7 +238,7 @@ onMounted(async () => {
 }
 
 .community-item:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   transform: translateX(4px);
 }
 
@@ -380,7 +380,7 @@ onMounted(async () => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

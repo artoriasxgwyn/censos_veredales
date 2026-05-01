@@ -413,13 +413,13 @@ const isLastAdmin = (role) => {
 .user-name {
   font-size: 20px;
   font-weight: 600;
-  color: var(--on-surface);
+  color: var(--black);
   margin: 0 0 4px 0;
 }
 
 .user-email {
   font-size: 14px;
-  color: var(--outline);
+  color: var(--on-surface-variant);
   margin: 0 0 8px 0;
 }
 
@@ -432,7 +432,7 @@ const isLastAdmin = (role) => {
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--on-surface);
+  color: var(--black);
   margin: 0 0 8px 0;
 }
 
@@ -487,14 +487,14 @@ const isLastAdmin = (role) => {
 
 .info-label {
   font-size: 12px;
-  font-weight: 500;
-  color: var(--outline);
+  font-weight: 600;
+  color: var(--on-surface-variant);
   text-transform: uppercase;
 }
 
 .info-value {
   font-size: 14px;
-  color: var(--on-surface);
+  color: var(--black);
 }
 
 .resident-info {
@@ -520,8 +520,8 @@ const isLastAdmin = (role) => {
 }
 
 .role-item.assigned {
-  border-color: var(--tertiary);
-  background: var(--tertiary-fixed);
+  border-color: var(--success);
+  background: var(--success-container);
 }
 
 .role-item.disabled {
@@ -538,12 +538,12 @@ const isLastAdmin = (role) => {
 .role-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--on-surface);
+  color: var(--black);
 }
 
 .role-description {
   font-size: 12px;
-  color: var(--outline);
+  color: var(--on-surface-variant);
 }
 
 .loading, .no-data {

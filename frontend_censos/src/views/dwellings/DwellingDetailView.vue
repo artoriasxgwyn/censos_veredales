@@ -80,6 +80,22 @@
 
         <q-card-section>
           <h3 class="section-title">Estado de Aprobaciones</h3>
+
+          <!-- Resumen de progreso -->
+          <div class="approval-summary">
+            <div class="progress-info">
+              <span class="progress-text">
+                {{ aprobacionProgreso.texto }}
+              </span>
+              <q-badge :color="getStatusColor(dwelling.status)">
+                {{ getStatusLabel(dwelling.status) }}
+              </q-badge>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: aprobacionProgreso.porcentaje + '%' }"></div>
+            </div>
+          </div>
+
           <div class="approval-grid">
             <div class="approval-card" :class="dwelling.approvedByPresident">
               <div class="approval-icon">
@@ -119,21 +135,25 @@
           </div>
 
           <!-- Acciones de aprobación -->
-          <div class="approval-actions" v-if="canApprove && dwelling.status === 'pending'">
+          <div class="approval-actions" v-if="canApprove || alreadyVoted">
             <q-btn
               color="positive"
-              label="Aprobar"
+              :label="alreadyVoted ? 'Cambiar a Aprobado' : 'Aprobar'"
               icon="check"
               @click="handleApprove('approved')"
-              :disable="alreadyApproved"
             />
             <q-btn
               color="negative"
-              label="Rechazar"
+              :label="alreadyVoted ? 'Cambiar a Rechazado' : 'Rechazar'"
               icon="close"
               @click="handleApprove('rejected')"
-              :disable="alreadyApproved"
             />
+          </div>
+          <div v-if="alreadyVoted" class="vote-warning">
+            <q-badge color="warning">
+              <span class="material-symbols-outlined">info</span>
+              Ya votaste. Puedes cambiar tu voto si lo necesitas.
+            </q-badge>
           </div>
         </q-card-section>
 
@@ -180,18 +200,41 @@ const authStore = useAuthStore()
 const dwellingId = computed(() => route.params.id)
 const dwelling = computed(() => dwellingStore.currentDwelling)
 
-const canApprove = computed(() => {
-  // Necesita tener rol de aprobador Y permiso para actualizar viviendas
-  const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
-  return isApprover && authStore.hasPermission('dwelling', 'update')
+const alreadyVoted = computed(() => {
+  // Verifica si el rol actual YA VOTÓ (aprobó o rechazó) esta vivienda
+  if (!dwelling.value) return false
+  if (authStore.isPresident && dwelling.value.approvedByPresident !== 'pending') return true
+  if (authStore.isTreasurer && dwelling.value.approvedByTreasurer !== 'pending') return true
+  if (authStore.isSecretary && dwelling.value.approvedBySecretary !== 'pending') return true
+  return false
 })
 
-const alreadyApproved = computed(() => {
-  if (!dwelling.value) return false
-  if (authStore.isPresident && dwelling.value.approvedByPresident === 'approved') return true
-  if (authStore.isTreasurer && dwelling.value.approvedByTreasurer === 'approved') return true
-  if (authStore.isSecretary && dwelling.value.approvedBySecretary === 'approved') return true
-  return false
+const canApprove = computed(() => {
+  // Necesita tener rol de aprobador Y permiso para actualizar viviendas Y no haber votado aún
+  const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
+  return isApprover && authStore.hasPermission('dwelling', 'update') && !alreadyVoted.value
+})
+
+const aprobacionProgreso = computed(() => {
+  if (!dwelling.value) return { texto: 'Sin datos', porcentaje: 0 }
+
+  const approvals = [
+    dwelling.value.approvedByPresident || 'pending',
+    dwelling.value.approvedByTreasurer || 'pending',
+    dwelling.value.approvedBySecretary || 'pending'
+  ]
+
+  const approvedCount = approvals.filter(a => a === 'approved').length
+  const rejectedCount = approvals.filter(a => a === 'rejected').length
+  const hasRejection = rejectedCount > 0
+
+  if (hasRejection) {
+    return { texto: `Rechazada por ${rejectedCount} rol(s)`, porcentaje: 0 }
+  }
+  if (approvedCount === 3) {
+    return { texto: 'Completamente aprobada', porcentaje: 100 }
+  }
+  return { texto: `${approvedCount} de 3 aprobaciones`, porcentaje: (approvedCount / 3) * 100 }
 })
 
 onMounted(async () => {
@@ -237,6 +280,40 @@ const formatDate = (date) => {
 }
 
 const handleApprove = async (status) => {
+  // Si ya votó, mostrar confirmación antes de cambiar el voto
+  if (alreadyVoted.value) {
+    const currentVote = authStore.isPresident
+      ? dwelling.value.approvedByPresident
+      : authStore.isTreasurer
+        ? dwelling.value.approvedByTreasurer
+        : dwelling.value.approvedBySecretary
+
+    const accion = status === 'approved' ? 'aprobar' : 'rechazar'
+
+    $q.dialog({
+      title: 'Cambiar voto',
+      message: `Tu voto actual es "${currentVote === 'approved' ? 'Aprobado' : 'Rechazado'}". ¿Estás seguro de que quieres ${accion} esta vivienda?`,
+      cancel: true,
+      persistent: true,
+      ok: {
+        label: 'Cambiar',
+        color: 'warning',
+        flat: true
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'primary',
+        flat: true
+      }
+    }).onOk(async () => {
+      await confirmarVoto(status)
+    })
+  } else {
+    await confirmarVoto(status)
+  }
+}
+
+const confirmarVoto = async (status) => {
   let role = ''
   if (authStore.isPresident) role = 'president'
   else if (authStore.isTreasurer) role = 'treasurer'
@@ -256,29 +333,12 @@ const handleApprove = async (status) => {
     await dwellingStore.fetchDwellingById(dwellingId.value)
   } else {
     const errorMsg = result.message || ''
-
-    if (errorMsg.toLowerCase().includes('ya aprobada') || errorMsg.toLowerCase().includes('ya rechazada')) {
-      $q.notify({
-        type: 'warning',
-        message: 'Ya has aprobado o rechazado esta vivienda',
-        caption: 'Solo puedes votar una vez por vivienda',
-        timeout: 4000
-      })
-    } else if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
-      $q.notify({
-        type: 'negative',
-        message: 'No tienes permisos para esta acción',
-        caption: 'Solo presidentes, tesoreros y secretarios pueden aprobar',
-        timeout: 4000
-      })
-    } else {
-      $q.notify({
-        type: 'negative',
-        message: 'Error en la aprobación',
-        caption: errorMsg,
-        timeout: 5000
-      })
-    }
+    $q.notify({
+      type: 'negative',
+      message: 'Error en la aprobación',
+      caption: errorMsg,
+      timeout: 5000
+    })
   }
 }
 
@@ -408,7 +468,7 @@ const handleDelete = async () => {
 .dwelling-icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -429,7 +489,7 @@ const handleDelete = async () => {
 
 .dwelling-icon .material-symbols-outlined {
   font-size: 28px;
-  color: var(--on-primary);
+  color: var(--on-success-container);
 }
 
 .dwelling-name {
@@ -509,7 +569,7 @@ const handleDelete = async () => {
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: var(--tertiary);
+  color: var(--success);
   text-decoration: none;
 }
 
@@ -521,6 +581,40 @@ const handleDelete = async () => {
   max-width: 100%;
   border-radius: 8px;
   margin-top: 8px;
+}
+
+.approval-summary {
+  background: var(--surface-container-lowest);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.progress-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--surface-container-highest);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-container) 100%);
+  transition: width 0.3s ease;
+  border-radius: 4px;
 }
 
 .approval-grid {
@@ -556,18 +650,18 @@ const handleDelete = async () => {
 }
 
 .approval-card.approved {
-  border-color: var(--primary);
-  background: var(--primary-fixed);
+  border-color: var(--success);
+  background: var(--success-container);
 }
 
 .approval-card.rejected {
   border-color: var(--error);
-  background: var(--error-fixed);
+  background: var(--error-container);
 }
 
 .approval-card.pending {
   border-color: var(--warning);
-  background: var(--warning-fixed);
+  background: var(--warning-container);
 }
 
 .approval-icon {
@@ -588,18 +682,18 @@ const handleDelete = async () => {
 }
 
 .approved .approval-icon {
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--success);
+  color: var(--on-success);
 }
 
 .rejected .approval-icon {
   background: var(--error);
-  color: var(--on-primary);
+  color: var(--on-error);
 }
 
 .pending .approval-icon {
   background: var(--warning);
-  color: var(--on-primary);
+  color: var(--on-warning);
 }
 
 .approval-icon .material-symbols-outlined {
@@ -642,13 +736,29 @@ const handleDelete = async () => {
   }
 }
 
-.approved .approval-status { color: var(--primary); }
+.approved .approval-status { color: var(--success); }
 .rejected .approval-status { color: var(--error); }
 .pending .approval-status { color: var(--warning); }
 
 .approval-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vote-warning {
+  margin-top: 8px;
+}
+
+.vote-warning .q-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+}
+
+.vote-warning .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .loading, .no-data {

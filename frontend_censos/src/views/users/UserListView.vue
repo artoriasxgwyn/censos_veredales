@@ -248,7 +248,7 @@ const getRoleLabel = (role) => {
 .search-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-fixed-dim);
+  box-shadow: 0 0 0 3px var(--primary-50);
 }
 
 .search-input::placeholder {
@@ -291,7 +291,7 @@ const getRoleLabel = (role) => {
 }
 
 .filter-chip:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   border-color: var(--primary);
 }
 
@@ -345,7 +345,7 @@ const getRoleLabel = (role) => {
 }
 
 .user-card:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   transform: translateX(4px);
 }
 
@@ -373,7 +373,7 @@ const getRoleLabel = (role) => {
 .user-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--on-surface);
+  color: var(--black);
   margin: 0 0 4px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -406,14 +406,14 @@ const getRoleLabel = (role) => {
   letter-spacing: 0.05em;
 }
 
-.role-badge.president { background: var(--primary-fixed); color: var(--primary); }
-.role-badge.treasurer { background: var(--secondary-fixed); color: var(--secondary); }
-.role-badge.secretary { background: var(--primary-fixed); color: var(--on-primary-fixed-variant); }
-.role-badge.residente { background: var(--tertiary-fixed); color: var(--tertiary); }
-.role-badge.censista { background: var(--warning-fixed); color: var(--on-warning-fixed-variant); }
+.role-badge.president { background: var(--primary-50); color: var(--primary); }
+.role-badge.treasurer { background: var(--info-container); color: var(--info); }
+.role-badge.secretary { background: var(--primary-50); color: var(--on-primary-container); }
+.role-badge.residente { background: var(--success-container); color: var(--success); }
+.role-badge.censista { background: var(--warning-container); color: var(--on-warning-container); }
 
 .chevron {
-  color: var(--outline);
+  color: var(--on-surface-variant);
   font-size: 24px;
   flex-shrink: 0;
 }
@@ -431,7 +431,7 @@ const getRoleLabel = (role) => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--primary-fixed);
+  background: var(--primary-50);
   display: flex;
   align-items: center;
   justify-content: center;

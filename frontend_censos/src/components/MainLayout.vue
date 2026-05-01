@@ -6,6 +6,7 @@
       show-if-above
       bordered
       class="sidebar"
+      :style="{ backgroundColor: '#fafafa' }"
     >
       <div class="sidebar-content">
         <!-- Logo -->
@@ -17,7 +18,7 @@
         <!-- User Profile -->
         <div class="user-profile">
           <div class="avatar-container">
-            <q-avatar size="40px" color="surface-container-highest" text-color="on-surface">
+            <q-avatar size="40px">
               <span class="material-symbols-outlined">person</span>
             </q-avatar>
           </div>
@@ -48,21 +49,6 @@
             <q-separator class="nav-separator" />
 
             <q-item-label header class="nav-header">Gestión</q-item-label>
-
-            <q-item
-              clickable
-              v-ripple
-              :to="{ name: 'CommunityList' }"
-              v-if="hasPermission('community', 'read')"
-              class="nav-item"
-            >
-              <q-item-section avatar>
-                <span class="material-symbols-outlined">location_city</span>
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>Comunidades</q-item-label>
-              </q-item-section>
-            </q-item>
 
             <q-item
               clickable
@@ -342,10 +328,6 @@ const pageTitle = computed(() => {
   const titles = {
     AdminDashboard: 'Dashboard',
     PresidentDashboard: 'Dashboard del Presidente',
-    CommunityList: 'Comunidades',
-    CommunityDetail: 'Detalle de Comunidad',
-    CommunityCreate: 'Nueva Comunidad',
-    CommunityEdit: 'Editar Comunidad',
     DwellingList: 'Viviendas',
     DwellingDetail: 'Detalle de Vivienda',
     DwellingCreate: 'Nueva Vivienda',
@@ -407,13 +389,16 @@ const handleLogout = async () => {
 
 <style scoped>
 .main-layout {
-  background: var(--surface);
+  background: var(--surface-container-low);
 }
 
-/* Sidebar */
+:deep(.sidebar),
+:deep(.q-drawer),
+:deep(.q-drawer__content),
+:deep(.q-drawer__inner),
 .sidebar {
-  background: var(--surface);
-  width: 280px;
+  background-color: var(--surface) !important;
+  background: var(--surface) !important;
 }
 
 @media (max-width: 1023px) {
@@ -427,6 +412,37 @@ const handleLogout = async () => {
   flex-direction: column;
   height: 100%;
   padding: 20px 16px;
+  background-color: var(--surface-container) !important;
+}
+
+.sidebar-content .logo-icon,
+.sidebar-content .logo-text {
+  color: var(--on-surface) !important;
+}
+
+.sidebar-content .material-symbols-outlined {
+  color: var(--on-surface) !important;
+}
+
+.sidebar-content .q-item__label {
+  color: var(--on-surface) !important;
+}
+
+.sidebar-content .q-item__label--header {
+  color: var(--on-surface-strong) !important;
+}
+
+.sidebar-content .user-name {
+  color: var(--on-surface) !important;
+}
+
+.sidebar-content .user-role {
+  color: var(--on-surface-variant) !important;
+}
+
+.sidebar-content .logout-item .material-symbols-outlined,
+.sidebar-content .logout-item .q-item__label {
+  color: var(--error) !important;
 }
 
 @media (max-width: 599px) {
@@ -443,15 +459,17 @@ const handleLogout = async () => {
   margin-bottom: 8px;
 }
 
+:deep(.sidebar .logo-icon),
 .logo-icon {
   font-size: 32px;
-  color: var(--primary);
+  color: var(--on-surface) !important;
 }
 
+:deep(.sidebar .logo-text),
 .logo-text {
   font-size: 18px;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--on-surface) !important;
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -478,9 +496,9 @@ const handleLogout = async () => {
   gap: 12px;
   padding: 16px;
   margin-bottom: 16px;
-  background: var(--surface-container-lowest);
+  background: var(--surface-container) !important;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--surface-container-highest);
 }
 
 .avatar-container {
@@ -495,7 +513,7 @@ const handleLogout = async () => {
 .user-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--on-surface) !important;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -504,10 +522,14 @@ const handleLogout = async () => {
 
 .user-role {
   font-size: 11px;
-  color: var(--outline);
+  color: var(--on-surface-variant) !important;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin: 2px 0 0 0;
+}
+
+:deep(.sidebar .user-profile .q-avatar .material-symbols-outlined) {
+  color: var(--on-surface) !important;
 }
 
 @media (max-width: 599px) {
@@ -528,14 +550,14 @@ const handleLogout = async () => {
 /* Navigation */
 .nav-list {
   flex: 1;
-  overflow-y: auto;
   padding: 8px 0;
 }
 
-.nav-header {
+.nav-header,
+.q-item__label--header {
   font-size: 11px;
   font-weight: 700;
-  color: var(--outline);
+  color: var(--on-surface-strong) !important;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 16px 12px 8px;
@@ -554,29 +576,58 @@ const handleLogout = async () => {
   transition: all 0.15s;
 }
 
+:deep(.sidebar .q-item:hover),
 .nav-item:hover {
-  background: var(--primary-fixed);
+  background: var(--primary-50);
 }
 
+:deep(.sidebar .q-item.q-router-link-exact-active),
+:deep(.sidebar .q-item--active),
 .nav-item--active {
-  background: var(--surface-container-lowest);
+  background: var(--surface-container-lowest) !important;
   box-shadow: 0 2px 8px rgba(0, 40, 142, 0.12);
 }
 
-.nav-item--active .material-symbols-outlined,
-.nav-item--active q-item-label {
-  color: var(--primary);
+:deep(.sidebar .q-item.q-router-link-exact-active .material-symbols-outlined),
+:deep(.sidebar .q-item--active .material-symbols-outlined),
+.nav-item--active .material-symbols-outlined {
+  color: var(--primary) !important;
 }
 
+:deep(.sidebar .q-item.q-router-link-exact-active .q-item__label),
+:deep(.sidebar .q-item--active .q-item__label),
+.nav-item--active .q-item__label {
+  color: var(--primary) !important;
+}
+
+/* Navigation items - override Quasar defaults with deep selectors */
+:deep(.sidebar .q-item .material-symbols-outlined),
 .nav-item .material-symbols-outlined {
-  color: var(--outline);
+  color: var(--on-surface) !important;
   font-size: 22px;
 }
 
-.nav-item q-item-label {
+:deep(.sidebar .q-item__label),
+.nav-item .q-item__label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--on-surface-variant);
+  color: var(--on-surface) !important;
+}
+
+:deep(.sidebar .q-item__section--avatar .material-symbols-outlined) {
+  color: var(--on-surface) !important;
+}
+
+:deep(.sidebar .q-item__label--header) {
+  color: var(--on-surface-strong) !important;
+}
+
+.nav-item--active .q-item__label {
+  color: var(--primary) !important;
+}
+
+.nav-item--active .material-symbols-outlined {
+  color: var(--primary) !important;
 }
 
 @media (max-width: 599px) {
@@ -603,18 +654,24 @@ const handleLogout = async () => {
   margin-top: auto;
 }
 
+:deep(.sidebar .logout-item .material-symbols-outlined),
 .logout-item .material-symbols-outlined {
-  color: var(--error);
+  color: var(--error) !important;
 }
 
-.logout-item q-item-label {
-  color: var(--error);
+:deep(.sidebar .logout-item .q-item__label),
+.logout-item .q-item__label {
+  color: var(--error) !important;
   font-weight: 600;
+}
+
+:deep(.sidebar .q-separator) {
+  background: var(--surface-container-highest) !important;
 }
 
 /* Header */
 .header {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface-container);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--surface-container-highest);
 }
@@ -658,10 +715,6 @@ const handleLogout = async () => {
   }
 }
 
-/* Deep styling for Quasar components */
-:deep(.q-drawer) {
-  border-right: none;
-}
 
 :deep(.q-header),
 :deep(.q-header .q-toolbar) {

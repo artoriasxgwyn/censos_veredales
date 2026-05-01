@@ -599,13 +599,13 @@ const handleRegister = async () => {
 }
 
 .secondary-icon {
-  background: var(--secondary);
-  color: var(--on-secondary);
+  background: var(--info);
+  color: var(--on-info);
 }
 
 .tertiary-icon {
-  background: var(--tertiary);
-  color: var(--on-tertiary);
+  background: var(--success);
+  color: var(--on-success);
 }
 
 .section-icon .material-symbols-outlined {
@@ -752,8 +752,8 @@ const handleRegister = async () => {
 }
 
 .community-item.selected {
-  background: var(--tertiary-fixed);
-  border-color: var(--tertiary);
+  background: var(--success-container);
+  border-color: var(--success);
 }
 
 .community-item-info {
@@ -825,15 +825,15 @@ const handleRegister = async () => {
   align-items: center;
   gap: 16px;
   padding: 16px;
-  background: var(--tertiary-fixed);
-  border: 1px solid var(--tertiary);
+  background: var(--success-container);
+  border: 1px solid var(--success);
   border-radius: var(--radius-md);
 }
 
 .community-icon {
   width: 40px;
   height: 40px;
-  background: var(--tertiary);
+  background: var(--success);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -842,7 +842,7 @@ const handleRegister = async () => {
 }
 
 .community-icon .material-symbols-outlined {
-  color: var(--on-tertiary);
+  color: var(--on-success);
   font-size: 24px;
 }
 
@@ -872,7 +872,7 @@ const handleRegister = async () => {
 .community-not-found {
   margin-top: 16px;
   padding: 12px 16px;
-  background: var(--error-fixed);
+  background: var(--error-container);
   border: 1px solid var(--error);
   border-radius: var(--radius-md);
   display: flex;
@@ -921,7 +921,7 @@ const handleRegister = async () => {
 
 /* Info Card */
 .info-card {
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
   padding: 20px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--primary);
@@ -939,7 +939,7 @@ const handleRegister = async () => {
 .info-title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--on-primary-fixed-variant);
+  color: var(--on-primary-container);
   margin: 0 0 4px 0;
 }
 
@@ -1018,17 +1018,17 @@ const handleRegister = async () => {
 
 /* Steps Card */
 .steps-card {
-  background: var(--tertiary-fixed-dim);
+  background: var(--success-container);
   padding: 24px;
   border-radius: var(--radius-xl);
-  color: var(--on-primary-fixed-variant);
+  color: var(--on-success-container);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--tertiary);
+  border: 1px solid var(--success);
 }
 
 .steps-icon {
   font-size: 32px;
-  color: var(--tertiary);
+  color: var(--success);
   display: block;
   margin-bottom: 16px;
 }
@@ -1059,8 +1059,8 @@ const handleRegister = async () => {
 .step-number {
   width: 24px;
   height: 24px;
-  background: var(--tertiary);
-  color: var(--on-tertiary);
+  background: var(--success);
+  color: var(--on-success);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;

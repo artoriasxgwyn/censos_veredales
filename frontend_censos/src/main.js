@@ -10,6 +10,7 @@ import 'quasar/src/css/index.sass'
 
 import App from './App.vue'
 import './style.css'
+import './sidebar-overrides.css'
 
 // Import router after Pinia to avoid circular dependency
 const pinia = createPinia()

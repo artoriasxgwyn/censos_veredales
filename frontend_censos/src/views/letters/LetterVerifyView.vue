@@ -397,13 +397,13 @@ const handleDownload = () => {
 }
 
 .approval-item.approved {
-  border-left-color: var(--primary);
-  background: var(--primary-fixed);
+  border-left-color: var(--success);
+  background: var(--success-container);
 }
 
 .approval-item.rejected {
   border-left-color: var(--error);
-  background: var(--error-fixed);
+  background: var(--error-container);
 }
 
 .approval-item .material-symbols-outlined {

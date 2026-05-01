@@ -158,7 +158,7 @@ const handleResetPassword = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   padding: 20px;
 }
 
@@ -180,7 +180,7 @@ const handleResetPassword = async () => {
   width: 80px;
   height: 80px;
   margin: 0 auto 16px;
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -189,7 +189,7 @@ const handleResetPassword = async () => {
 
 .logo-icon {
   font-size: 40px;
-  color: white;
+  color: var(--on-success);
 }
 
 .title {
@@ -221,7 +221,7 @@ const handleResetPassword = async () => {
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: var(--tertiary);
+  color: var(--success);
   text-decoration: none;
 }
 

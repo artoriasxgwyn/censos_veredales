@@ -69,27 +69,27 @@ const icon = computed(() => {
 }
 
 .alert-message.info {
-  background: var(--primary-fixed);
-  border: 1px solid var(--primary-fixed-dim);
-  color: var(--on-primary-fixed-variant);
+  background: var(--primary-50);
+  border: 1px solid var(--primary);
+  color: var(--on-surface);
 }
 
 .alert-message.success {
-  background: var(--tertiary-fixed);
-  border: 1px solid var(--tertiary-fixed-dim);
-  color: var(--on-tertiary-fixed-variant);
+  background: var(--success-container);
+  border: 1px solid var(--success);
+  color: var(--on-surface);
 }
 
 .alert-message.warning {
-  background: var(--warning-fixed);
-  border: 1px solid var(--warning-fixed-dim);
-  color: var(--on-warning-fixed-variant);
+  background: var(--warning-container);
+  border: 1px solid var(--warning);
+  color: var(--on-surface);
 }
 
 .alert-message.error {
-  background: var(--error-fixed);
-  border: 1px solid var(--error-container);
-  color: var(--error);
+  background: var(--error-container);
+  border: 1px solid var(--error);
+  color: var(--on-surface);
 }
 
 .alert-icon {

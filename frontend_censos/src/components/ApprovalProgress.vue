@@ -132,9 +132,16 @@ const getStepStatusLabel = (status) => {
   background: linear-gradient(135deg, var(--warning) 0%, var(--warning-container) 100%);
 }
 
-.step-indicator .material-symbols-outlined {
-  font-size: 20px;
-  color: white;
+.step.approved .step-indicator .material-symbols-outlined {
+  color: var(--on-primary);
+}
+
+.step.rejected .step-indicator .material-symbols-outlined {
+  color: var(--on-error);
+}
+
+.step.pending .step-indicator .material-symbols-outlined {
+  color: var(--on-warning);
 }
 
 .step-label {

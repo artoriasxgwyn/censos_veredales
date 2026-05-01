@@ -410,7 +410,7 @@ const handleChangePassword = async () => {
 
 .profile-avatar .material-symbols-outlined {
   font-size: 40px;
-  color: white;
+  color: var(--on-primary);
 }
 
 .profile-info {
@@ -503,21 +503,25 @@ const handleChangePassword = async () => {
   justify-content: center;
 }
 
-.stat-icon .material-symbols-outlined {
-  font-size: 28px;
-  color: var(--on-primary);
-}
-
 .stat-icon.primary {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
 }
+.stat-icon.primary .material-symbols-outlined {
+  color: var(--on-primary);
+}
 
 .stat-icon.tertiary {
-  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
+}
+.stat-icon.tertiary .material-symbols-outlined {
+  color: var(--on-success-container);
 }
 
 .stat-icon.warning {
   background: linear-gradient(135deg, var(--warning) 0%, var(--warning-container) 100%);
+}
+.stat-icon.warning .material-symbols-outlined {
+  color: var(--on-warning-container);
 }
 
 .stat-info {

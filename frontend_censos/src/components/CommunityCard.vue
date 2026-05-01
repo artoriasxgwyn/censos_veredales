@@ -203,7 +203,7 @@ const getStatusLabel = (status) => {
 .stat-value {
   font-size: 18px;
   font-weight: 700;
-  color: var(--on-surface);
+  color: var(--black);
 }
 
 .stat-label {

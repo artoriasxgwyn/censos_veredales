@@ -357,7 +357,7 @@ const handleRegister = async () => {
 
 /* Info Message */
 .info-message {
-  background: var(--warning-fixed);
+  background: var(--warning-container);
   border-left: 4px solid var(--warning);
   padding: 16px;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
@@ -373,7 +373,7 @@ const handleRegister = async () => {
 }
 
 .info-text {
-  color: var(--on-warning-fixed-variant);
+  color: var(--on-warning-container);
   font-size: 14px;
   line-height: 1.5;
   font-weight: 500;
@@ -531,7 +531,7 @@ const handleRegister = async () => {
 /* Impact Card */
 .impact-card {
   margin-top: 32px;
-  background: var(--primary-fixed-dim);
+  background: var(--primary-50);
   padding: 24px;
   border-radius: var(--radius-xl);
   box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
@@ -549,19 +549,19 @@ const handleRegister = async () => {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--on-primary-fixed);
+  color: var(--on-primary-container);
   margin: 0 0 4px 0;
 }
 
 .impact-description {
   font-size: 13px;
-  color: var(--on-primary-fixed);
+  color: var(--on-primary-container);
   opacity: 0.8;
   margin: 0;
 }
 
 .impact-icon-wrapper {
-  background: var(--tertiary-container);
+  background: var(--success-container);
   padding: 12px;
   border-radius: var(--radius-full);
   display: flex;
@@ -570,7 +570,7 @@ const handleRegister = async () => {
 }
 
 .impact-icon {
-  color: var(--tertiary-fixed);
+  color: var(--success);
   font-size: 24px;
   line-height: 1;
 }

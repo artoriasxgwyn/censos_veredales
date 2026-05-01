@@ -260,7 +260,7 @@ const handleDelete = async () => {
 
 .announcement-icon .material-symbols-outlined {
   font-size: 28px;
-  color: white;
+  color: var(--on-warning);
 }
 
 .announcement-info {
