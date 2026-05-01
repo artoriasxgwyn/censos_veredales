@@ -475,6 +475,9 @@ const handleDelete = async () => {
 
 .resident-card {
   border-radius: 12px;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-highest);
+  box-shadow: 0 4px 12px rgba(25, 28, 30, 0.04);
 }
 
 .resident-header {
