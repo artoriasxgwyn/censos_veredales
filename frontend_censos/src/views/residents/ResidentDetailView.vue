@@ -493,7 +493,7 @@ const handleDelete = async () => {
 .resident-icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -520,7 +520,7 @@ const handleDelete = async () => {
 .resident-name {
   font-size: 20px;
   font-weight: 600;
-  color: var(--black);
+  color: var(--on-surface);
   margin: 0 0 8px 0;
 }
 
@@ -533,7 +533,7 @@ const handleDelete = async () => {
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--black);
+  color: var(--on-surface);
   margin: 0 0 16px 0;
 }
 
@@ -569,7 +569,7 @@ const handleDelete = async () => {
 
 .info-value {
   font-size: 14px;
-  color: var(--black);
+  color: var(--on-surface);
 }
 
 .approval-summary {
@@ -589,7 +589,7 @@ const handleDelete = async () => {
 .progress-text {
   font-size: 14px;
   font-weight: 600;
-  color: var(--black);
+  color: var(--on-surface);
 }
 
 .progress-bar {
@@ -645,8 +645,8 @@ const handleDelete = async () => {
 }
 
 .approval-card.approved {
-  border-color: var(--success);
-  background: var(--success-container);
+  border-color: var(--primary);
+  background: var(--primary-50);
 }
 
 .approval-card.rejected {
@@ -669,8 +669,8 @@ const handleDelete = async () => {
 }
 
 .approved .approval-icon {
-  background: var(--success);
-  color: var(--on-success);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .rejected .approval-icon {
