@@ -397,8 +397,8 @@ const handleDownload = () => {
 }
 
 .approval-item.approved {
-  border-left-color: var(--success);
-  background: var(--success-container);
+  border-left-color: var(--primary);
+  background: var(--primary-50);
 }
 
 .approval-item.rejected {

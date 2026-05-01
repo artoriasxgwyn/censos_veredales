@@ -398,7 +398,7 @@ const formatDate = (date) => {
   font-size: 16px;
 }
 
-.approval-item.approved { color: var(--success); }
+.approval-item.approved { color: var(--primary); }
 .approval-item.rejected { color: var(--error); }
 .approval-item.pending { color: var(--warning); }
 

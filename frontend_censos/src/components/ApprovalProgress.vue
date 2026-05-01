@@ -133,7 +133,7 @@ const getStepStatusLabel = (status) => {
 }
 
 .step.approved .step-indicator .material-symbols-outlined {
-  color: var(--on-primary);
+  color: var(--success);
 }
 
 .step.rejected .step-indicator .material-symbols-outlined {

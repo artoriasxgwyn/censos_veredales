@@ -924,7 +924,7 @@ const getVoteForRole = (item, role) => {
 }
 
 .approval-item.approved {
-  color: var(--success);
+  color: var(--primary);
 }
 
 .approval-item.rejected {
