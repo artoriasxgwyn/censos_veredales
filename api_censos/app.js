@@ -11,6 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 import authRoutes from './routes/auth.routes.js';
 import usersRoutes from './routes/users.routes.js';
@@ -170,12 +171,27 @@ app.use('/api/dwelling-changes', pendingDwellingChangeRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, 'public')));
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
+app.use('/assets', express.static(path.join(publicPath, 'assets')));
 
-// SPA catch-all - return index.html for any non-API route
+// Debug: list built assets on startup
+const assetsPath = path.join(publicPath, 'assets');
+if (fs.existsSync(assetsPath)) {
+  const files = fs.readdirSync(assetsPath);
+  console.log(`Public assets (${files.length} files):`, files.slice(0, 20));
+} else {
+  console.warn('WARN: public/assets directory does not exist. Frontend build may have failed.');
+}
+
+// SPA catch-all - return index.html for any non-API / non-asset route
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/api-docs')) {
     return next();
+  }
+  // Do not serve index.html for missing static files (let them 404)
+  if (path.extname(req.path).length > 0) {
+    return res.status(404).send('Not found');
   }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

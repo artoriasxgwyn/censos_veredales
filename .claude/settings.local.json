@@ -62,7 +62,10 @@
       "Bash(findstr LISTENING)",
       "PowerShell(Start-Process -FilePath \"C:\\\\Users\\\\ryomen\\\\Documents\\\\censos_veredales\\\\cloudflared.exe\" -ArgumentList \"tunnel\",\"--url\",\"http://localhost:5173\" -WindowStyle Hidden -PassThru | Select-Object Id)",
       "Bash(./cloudflared.exe tunnel *)",
-      "PowerShell(Test-Path *)"
+      "PowerShell(Test-Path *)",
+      "WebFetch(domain:censos-veredales.onrender.com)",
+      "Bash(Sort-Object LastWriteTime -Descending)",
+      "Bash(Select-Object -First 5 Name)"
     ]
   }
 }
