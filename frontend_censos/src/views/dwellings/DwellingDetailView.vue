@@ -52,8 +52,8 @@
               <span class="info-value">{{ formatDate(dwelling.constructionDate) }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Comunidad</span>
-              <span class="info-value">{{ dwelling.communityId?.neighborhood || 'N/A' }}</span>
+              <span class="info-label">Código de Comunidad</span>
+              <span class="info-value">{{ getCommunityCode(dwelling.communityId) }}</span>
             </div>
           </div>
 
@@ -136,21 +136,40 @@
 
           <!-- Acciones de aprobación -->
           <div class="approval-actions" v-if="canApprove || alreadyVoted">
+            <!-- Si ya aprobó, muestra solo botón para cambiar a rechazado -->
             <q-btn
-              color="positive"
-              :label="alreadyVoted ? 'Cambiar a Aprobado' : 'Aprobar'"
-              icon="check"
-              @click="handleApprove('approved')"
-            />
-            <q-btn
+              v-if="userAlreadyApproved"
               color="negative"
-              :label="alreadyVoted ? 'Cambiar a Rechazado' : 'Rechazar'"
+              label="Cambiar a Rechazado"
               icon="close"
               @click="handleApprove('rejected')"
             />
+            <!-- Si ya rechazó, muestra solo botón para cambiar a aprobado -->
+            <q-btn
+              v-else-if="userAlreadyRejected"
+              color="positive"
+              label="Cambiar a Aprobado"
+              icon="check"
+              @click="handleApprove('approved')"
+            />
+            <!-- Si no ha votado, muestra ambos botones -->
+            <template v-else>
+              <q-btn
+                color="positive"
+                label="Aprobar"
+                icon="check"
+                @click="handleApprove('approved')"
+              />
+              <q-btn
+                color="negative"
+                label="Rechazar"
+                icon="close"
+                @click="handleApprove('rejected')"
+              />
+            </template>
           </div>
           <div v-if="alreadyVoted" class="vote-warning">
-            <q-badge color="warning">
+            <q-badge color="info">
               <span class="material-symbols-outlined">info</span>
               Ya votaste. Puedes cambiar tu voto si lo necesitas.
             </q-badge>
@@ -190,12 +209,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { useCommunityStore } from '@/stores/community.store'
 
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const dwellingStore = useDwellingStore()
 const authStore = useAuthStore()
+const communityStore = useCommunityStore()
 
 const dwellingId = computed(() => route.params.id)
 const dwelling = computed(() => dwellingStore.currentDwelling)
@@ -206,6 +227,24 @@ const alreadyVoted = computed(() => {
   if (authStore.isPresident && dwelling.value.approvedByPresident !== 'pending') return true
   if (authStore.isTreasurer && dwelling.value.approvedByTreasurer !== 'pending') return true
   if (authStore.isSecretary && dwelling.value.approvedBySecretary !== 'pending') return true
+  return false
+})
+
+const userAlreadyApproved = computed(() => {
+  // Verifica si el usuario actual YA APROBÓ esta vivienda
+  if (!dwelling.value) return false
+  if (authStore.isPresident && dwelling.value.approvedByPresident === 'approved') return true
+  if (authStore.isTreasurer && dwelling.value.approvedByTreasurer === 'approved') return true
+  if (authStore.isSecretary && dwelling.value.approvedBySecretary === 'approved') return true
+  return false
+})
+
+const userAlreadyRejected = computed(() => {
+  // Verifica si el usuario actual YA RECHAZÓ esta vivienda
+  if (!dwelling.value) return false
+  if (authStore.isPresident && dwelling.value.approvedByPresident === 'rejected') return true
+  if (authStore.isTreasurer && dwelling.value.approvedByTreasurer === 'rejected') return true
+  if (authStore.isSecretary && dwelling.value.approvedBySecretary === 'rejected') return true
   return false
 })
 
@@ -279,20 +318,24 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('es-ES')
 }
 
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
+  }
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
+}
+
 const handleApprove = async (status) => {
-  // Si ya votó, mostrar confirmación antes de cambiar el voto
-  if (alreadyVoted.value) {
-    const currentVote = authStore.isPresident
-      ? dwelling.value.approvedByPresident
-      : authStore.isTreasurer
-        ? dwelling.value.approvedByTreasurer
-        : dwelling.value.approvedBySecretary
-
-    const accion = status === 'approved' ? 'aprobar' : 'rechazar'
-
+  // Si ya aprobó, mostrar confirmación antes de cambiar a rechazado
+  if (userAlreadyApproved.value) {
     $q.dialog({
       title: 'Cambiar voto',
-      message: `Tu voto actual es "${currentVote === 'approved' ? 'Aprobado' : 'Rechazado'}". ¿Estás seguro de que quieres ${accion} esta vivienda?`,
+      message: 'Tu voto actual es "Aprobado". ¿Estás seguro de que quieres rechazar esta vivienda?',
       cancel: true,
       persistent: true,
       ok: {
@@ -306,7 +349,27 @@ const handleApprove = async (status) => {
         flat: true
       }
     }).onOk(async () => {
-      await confirmarVoto(status)
+      await confirmarVoto('rejected')
+    })
+  // Si ya rechazó, mostrar confirmación antes de cambiar a aprobado
+  } else if (userAlreadyRejected.value) {
+    $q.dialog({
+      title: 'Cambiar voto',
+      message: 'Tu voto actual es "Rechazado". ¿Estás seguro de que quieres aprobar esta vivienda?',
+      cancel: true,
+      persistent: true,
+      ok: {
+        label: 'Cambiar',
+        color: 'warning',
+        flat: true
+      },
+      cancel: {
+        label: 'Cancelar',
+        color: 'primary',
+        flat: true
+      }
+    }).onOk(async () => {
+      await confirmarVoto('approved')
     })
   } else {
     await confirmarVoto(status)
@@ -450,6 +513,9 @@ const handleDelete = async () => {
 
 .dwelling-card {
   border-radius: 12px;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-highest);
+  box-shadow: 0 4px 12px rgba(25, 28, 30, 0.04);
 }
 
 .dwelling-header {
@@ -468,7 +534,7 @@ const handleDelete = async () => {
 .dwelling-icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--success) 0%, var(--success-container) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -489,7 +555,7 @@ const handleDelete = async () => {
 
 .dwelling-icon .material-symbols-outlined {
   font-size: 28px;
-  color: var(--on-success-container);
+  color: var(--on-primary);
 }
 
 .dwelling-name {
@@ -569,7 +635,7 @@ const handleDelete = async () => {
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  color: var(--success);
+  color: var(--primary);
   text-decoration: none;
 }
 
@@ -650,8 +716,8 @@ const handleDelete = async () => {
 }
 
 .approval-card.approved {
-  border-color: var(--success);
-  background: var(--success-container);
+  border-color: var(--primary);
+  background: var(--primary-50);
 }
 
 .approval-card.rejected {
@@ -660,8 +726,8 @@ const handleDelete = async () => {
 }
 
 .approval-card.pending {
-  border-color: var(--warning);
-  background: var(--warning-container);
+  border-color: var(--outline);
+  background: var(--surface-container-highest);
 }
 
 .approval-icon {
@@ -682,8 +748,8 @@ const handleDelete = async () => {
 }
 
 .approved .approval-icon {
-  background: var(--success);
-  color: var(--on-success);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 .rejected .approval-icon {
@@ -692,8 +758,8 @@ const handleDelete = async () => {
 }
 
 .pending .approval-icon {
-  background: var(--warning);
-  color: var(--on-warning);
+  background: var(--outline);
+  color: var(--on-surface);
 }
 
 .approval-icon .material-symbols-outlined {
@@ -736,9 +802,9 @@ const handleDelete = async () => {
   }
 }
 
-.approved .approval-status { color: var(--success); }
+.approved .approval-status { color: var(--primary); }
 .rejected .approval-status { color: var(--error); }
-.pending .approval-status { color: var(--warning); }
+.pending .approval-status { color: var(--on-surface-variant); }
 
 .approval-actions {
   display: flex;

@@ -40,8 +40,8 @@
 
             <q-card
               class="type-card"
-              :class="{ selected: form.type === 'juramentada' }"
-              @click="form.type = 'juramentada'"
+              :class="{ selected: form.type === 'juramentada', disabled: !canRequestJuramentada }"
+              @click="canRequestJuramentada && (form.type = 'juramentada')"
             >
               <q-card-section>
                 <div class="type-icon">
@@ -51,6 +51,10 @@
                 <p class="type-description">
                   Carta juramentada para residentes con más de 1 año de antigüedad.
                 </p>
+                <q-badge v-if="!canRequestJuramentada" color="warning" class="mt-2">
+                  <span class="material-symbols-outlined" style="font-size: 14px; margin-right: 4px;">info</span>
+                  Requiere ≥1 año de antigüedad
+                </q-badge>
               </q-card-section>
             </q-card>
           </div>
@@ -100,11 +104,13 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useLetterStore } from '@/stores/letter.store'
 import { useResidentStore } from '@/stores/resident.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
 const $q = useQuasar()
 const letterStore = useLetterStore()
 const residentStore = useResidentStore()
+const authStore = useAuthStore()
 
 const form = ref({
   type: 'normal',
@@ -116,6 +122,17 @@ const residentOptions = computed(() => {
     _id: r._id,
     userId: typeof r.userId === 'object' ? r.userId.fullName : 'Residente'
   }))
+})
+
+// Verificar si puede solicitar carta juramentada (≥1 año de antigüedad)
+const canRequestJuramentada = computed(() => {
+  const myResident = residentStore.approvedResidents.find(r => r.userId === authStore.userId || typeof r.userId === 'object' && r.userId._id === authStore.userId)
+  if (!myResident) return false
+
+  const oneYearAgo = new Date()
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+
+  return new Date(myResident.createdAt) <= oneYearAgo
 })
 
 onMounted(async () => {
@@ -241,6 +258,20 @@ const handleSubmit = async () => {
 .type-card.selected {
   border-color: var(--success);
   background: var(--success-container);
+}
+
+.type-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: var(--surface-container-highest);
+}
+
+.type-card.disabled .type-icon {
+  background: var(--surface-container-highest);
+}
+
+.mt-2 {
+  margin-top: 8px;
 }
 
 .type-icon {

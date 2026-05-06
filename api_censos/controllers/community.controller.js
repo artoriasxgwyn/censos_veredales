@@ -12,32 +12,41 @@ const initializeBaseRoles = async (communityId) => {
       permissions: {
         resident: { create: true, read: true, update: true, delete: true },
         dwelling: { create: true, read: true, update: true, delete: true },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: true, manageRoles: true },
-        announcement: { create: true, read: true, update: true, delete: true }
+        user: { changePassword: true, manageRoles: true, update: true, create: true },
+        announcement: { create: true, read: true, update: true, delete: true },
+        community: { read: true, update: true, delete: true },
+        role: { create: true, read: true, update: true, delete: true },
+        export: { residents: true, dwellings: true, letters: true, all: true }
       }
     },
     {
       name: 'secretario',
       permissions: {
-        resident: { create: true, read: true, update: true, delete: false },
-        dwelling: { create: true, read: true, update: true, delete: false },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        resident: { create: true, read: true, update: false, delete: false }, // update: false porque solo puede editar los que él creó (se valida en controller)
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: false, manageRoles: false },
-        announcement: { create: true, read: true, update: true, delete: false }
+        user: { changePassword: false, manageRoles: false, update: false, create: false },
+        announcement: { create: true, read: true, update: false, delete: false }, // update: false porque solo puede editar los que él creó
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: true, update: false, delete: false },
+        export: { residents: true, dwellings: true, letters: true, all: false }
       }
     },
     {
       name: 'tesorero',
       permissions: {
-        resident: { create: true, read: true, update: true, delete: false },
-        dwelling: { create: true, read: true, update: true, delete: false },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        resident: { create: true, read: true, update: false, delete: false },
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: false, manageRoles: false },
-        announcement: { create: true, read: true, update: true, delete: false }
+        user: { changePassword: false, manageRoles: false, update: false, create: false },
+        announcement: { create: true, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: true, update: false, delete: false },
+        export: { residents: true, dwellings: true, letters: true, all: false }
       }
     },
     {
@@ -45,10 +54,27 @@ const initializeBaseRoles = async (communityId) => {
       permissions: {
         resident: { create: false, read: false, update: false, delete: false },
         dwelling: { create: false, read: false, update: false, delete: false },
-        letter: { generateNormal: true, generateSworn: false, qrScan: true },
+        letter: { generateNormal: true, generateJuramentada: false, confirmJuramentada: false, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'limited' },
-        user: { changePassword: true, manageRoles: false },
-        announcement: { create: false, read: true, update: false, delete: false }
+        user: { changePassword: true, manageRoles: false, update: true, create: false },
+        announcement: { create: false, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: false, update: false, delete: false },
+        export: { residents: false, dwellings: false, letters: false, all: false }
+      }
+    },
+    {
+      name: 'censista',
+      permissions: {
+        resident: { create: true, read: true, update: false, delete: false },
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: true },
+        dashboard: { access: true, scope: 'limited' },
+        user: { changePassword: true, manageRoles: false, update: false, create: false },
+        announcement: { create: false, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: false, update: false, delete: false },
+        export: { residents: false, dwellings: false, letters: false, all: false }
       }
     }
   ];
@@ -152,7 +178,8 @@ export const createCommunity = async (req, res) => {
           _id: community._id,
           code: community.code,
           neighborhood: community.neighborhood,
-          city: community.city
+          city: community.city,
+          department: community.department
         },
         president: {
           _id: presidentUser._id,
@@ -168,15 +195,31 @@ export const createCommunity = async (req, res) => {
 
 export const updateCommunity = async (req, res) => {
   try {
-    const community = await Community.findByIdAndUpdate(
+    // Verificar que la comunidad pertenezca al usuario
+    const community = await Community.findOne({
+      _id: req.params.id,
+      isActive: true
+    });
+
+    if (!community) {
+      return res.status(404).json({ success: false, message: 'Comunidad no encontrada' });
+    }
+
+    // Solo presidente puede actualizar la comunidad
+    if (req.userRole !== 'president') {
+      return res.status(403).json({
+        success: false,
+        message: 'Solo el presidente puede actualizar los datos de la comunidad'
+      });
+    }
+
+    const updatedCommunity = await Community.findByIdAndUpdate(
       req.params.id,
       req.validatedBody,
       { new: true, runValidators: true }
     );
-    if (!community) {
-      return res.status(404).json({ success: false, message: 'Comunidad no encontrada' });
-    }
-    res.json({ success: true, data: community });
+
+    res.json({ success: true, data: updatedCommunity });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -184,14 +227,30 @@ export const updateCommunity = async (req, res) => {
 
 export const deleteCommunity = async (req, res) => {
   try {
-    const community = await Community.findByIdAndUpdate(
+    // Verificar que la comunidad pertenezca al usuario
+    const community = await Community.findOne({
+      _id: req.params.id,
+      isActive: true
+    });
+
+    if (!community) {
+      return res.status(404).json({ success: false, message: 'Comunidad no encontrada' });
+    }
+
+    // Solo presidente puede eliminar la comunidad
+    if (req.userRole !== 'president') {
+      return res.status(403).json({
+        success: false,
+        message: 'Solo el presidente puede eliminar la comunidad'
+      });
+    }
+
+    const deletedCommunity = await Community.findByIdAndUpdate(
       req.params.id,
       { isActive: false },
       { new: true }
     );
-    if (!community) {
-      return res.status(404).json({ success: false, message: 'Comunidad no encontrada' });
-    }
+
     res.json({ success: true, message: 'Comunidad eliminada correctamente' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

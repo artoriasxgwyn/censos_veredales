@@ -12,10 +12,11 @@ const baseRoles = [
     permissions: {
       resident: { create: true, read: true, update: true, delete: true },
       dwelling: { create: true, read: true, update: true, delete: true },
-      letter: { generateNormal: true, generateSworn: true, qrScan: true },
+      letter: { generateNormal: true, generateJuramentada: true, download: true, verifyQr: true },
       dashboard: { access: true, scope: 'full' },
-      user: { changePassword: true, manageRoles: true },
-      announcement: { create: true, read: true, update: true, delete: true }
+      user: { changePassword: true, manageRoles: true, update: true },
+      announcement: { create: true, read: true, update: true, delete: true },
+      community: { read: true, update: true, delete: true }
     }
   },
   {
@@ -23,10 +24,11 @@ const baseRoles = [
     permissions: {
       resident: { create: true, read: true, update: true, delete: false },
       dwelling: { create: true, read: true, update: true, delete: false },
-      letter: { generateNormal: true, generateSworn: true, qrScan: true },
+      letter: { generateNormal: true, generateJuramentada: true, download: true, verifyQr: true },
       dashboard: { access: true, scope: 'full' },
-      user: { changePassword: false, manageRoles: false },
-      announcement: { create: true, read: true, update: true, delete: false }
+      user: { changePassword: false, manageRoles: false, update: true },
+      announcement: { create: true, read: true, update: true, delete: false },
+      community: { read: true, update: false, delete: false }
     }
   },
   {
@@ -34,10 +36,11 @@ const baseRoles = [
     permissions: {
       resident: { create: true, read: true, update: true, delete: false },
       dwelling: { create: true, read: true, update: true, delete: false },
-      letter: { generateNormal: true, generateSworn: true, qrScan: true },
+      letter: { generateNormal: true, generateJuramentada: true, download: true, verifyQr: true },
       dashboard: { access: true, scope: 'full' },
-      user: { changePassword: false, manageRoles: false },
-      announcement: { create: true, read: true, update: true, delete: false }
+      user: { changePassword: false, manageRoles: false, update: true },
+      announcement: { create: true, read: true, update: true, delete: false },
+      community: { read: true, update: false, delete: false }
     }
   },
   {
@@ -45,10 +48,11 @@ const baseRoles = [
     permissions: {
       resident: { create: false, read: false, update: false, delete: false },
       dwelling: { create: false, read: false, update: false, delete: false },
-      letter: { generateNormal: true, generateSworn: false, qrScan: true },
+      letter: { generateNormal: true, generateJuramentada: false, download: true, verifyQr: true },
       dashboard: { access: true, scope: 'limited' },
-      user: { changePassword: true, manageRoles: false },
-      announcement: { create: false, read: true, update: false, delete: false }
+      user: { changePassword: true, manageRoles: false, update: false },
+      announcement: { create: false, read: true, update: false, delete: false },
+      community: { read: true, update: false, delete: false }
     }
   },
   {
@@ -56,10 +60,11 @@ const baseRoles = [
     permissions: {
       resident: { create: true, read: true, update: false, delete: false },
       dwelling: { create: false, read: true, update: false, delete: false },
-      letter: { generateNormal: false, generateSworn: false, qrScan: true },
+      letter: { generateNormal: false, generateJuramentada: false, download: false, verifyQr: true },
       dashboard: { access: true, scope: 'limited' },
-      user: { changePassword: true, manageRoles: false },
-      announcement: { create: false, read: true, update: false, delete: false }
+      user: { changePassword: true, manageRoles: false, update: false },
+      announcement: { create: false, read: true, update: false, delete: false },
+      community: { read: true, update: false, delete: false }
     }
   }
 ];

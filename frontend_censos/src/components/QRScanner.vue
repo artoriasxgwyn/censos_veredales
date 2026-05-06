@@ -111,8 +111,8 @@
             <span class="result-value">{{ scannedData.resident.fullName || 'N/A' }}</span>
           </div>
           <div class="result-row" v-if="scannedData.community">
-            <span class="result-label">Comunidad:</span>
-            <span class="result-value">{{ scannedData.community.neighborhood }}</span>
+            <span class="result-label">Código de Comunidad:</span>
+            <span class="result-value">{{ scannedData.community.code || 'N/A' }}</span>
           </div>
         </q-card-section>
 

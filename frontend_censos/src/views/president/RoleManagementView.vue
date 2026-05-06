@@ -47,7 +47,7 @@
             v-for="role in roleStore.baseRoles"
             :key="role._id"
             class="role-card"
-            @click="editRole(role)"
+            @click="role.name !== 'presidente' ? editRole(role) : null"
           >
             <div class="role-header">
               <div class="role-icon base">
@@ -129,12 +129,13 @@
 
             <q-input
               v-model="newRoleName"
-              label="Nombre del Rol"
+              :label="editingRole?.isBaseRole ? '' : 'Nombre del Rol'"
               placeholder="Ej: Coordinador"
               outlined
+              stack-label
               :readonly="!!editingRole?.isBaseRole"
-              :disable="!!editingRole?.isBaseRole"
-              class="q-mb-md"
+              :disable="!!editingRole?.isBaseRole || editingRole?.name === 'president'"
+              class="q-mb-md dark-input"
             >
               <template v-slot:prepend>
                 <span class="material-symbols-outlined">badge</span>
@@ -152,10 +153,10 @@
                 <strong>Residentes</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.resident.create" label="Crear" />
-                <q-checkbox v-model="newRolePermissions.resident.read" label="Leer" />
-                <q-checkbox v-model="newRolePermissions.resident.update" label="Actualizar" />
-                <q-checkbox v-model="newRolePermissions.resident.delete" label="Eliminar" />
+                <q-checkbox v-model="newRolePermissions.resident.create" label="Crear" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.resident.read" label="Leer" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.resident.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.resident.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
 
@@ -166,10 +167,10 @@
                 <strong>Viviendas</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.dwelling.create" label="Crear" />
-                <q-checkbox v-model="newRolePermissions.dwelling.read" label="Leer" />
-                <q-checkbox v-model="newRolePermissions.dwelling.update" label="Actualizar" />
-                <q-checkbox v-model="newRolePermissions.dwelling.delete" label="Eliminar" />
+                <q-checkbox v-model="newRolePermissions.dwelling.create" label="Crear" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.dwelling.read" label="Leer" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.dwelling.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.dwelling.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
 
@@ -180,9 +181,9 @@
                 <strong>Cartas</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.letter.generateNormal" label="Normal" />
-                <q-checkbox v-model="newRolePermissions.letter.generateSworn" label="Juramentada" />
-                <q-checkbox v-model="newRolePermissions.letter.qrScan" label="Escanear QR" />
+                <q-checkbox v-model="newRolePermissions.letter.generateNormal" label="Normal" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.generateSworn" label="Juramentada" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.qrScan" label="Escanear QR" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
 
@@ -193,7 +194,7 @@
                 <strong>Dashboard</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.dashboard.access" label="Acceder" />
+                <q-checkbox v-model="newRolePermissions.dashboard.access" label="Acceder" :disable="editingRole?.name === 'president'" />
                 <q-select
                   v-model="newRolePermissions.dashboard.scope"
                   :options="['full', 'limited']"
@@ -201,6 +202,7 @@
                   outlined
                   dense
                   class="scope-select"
+                  :menu-props="{ contentClass: 'scope-dropdown' }"
                 />
               </div>
             </div>
@@ -212,8 +214,8 @@
                 <strong>Usuario</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.user.changePassword" label="Cambiar Contraseña" />
-                <q-checkbox v-model="newRolePermissions.user.manageRoles" label="Gestionar Roles" />
+                <q-checkbox v-model="newRolePermissions.user.changePassword" label="Cambiar Contraseña" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.user.manageRoles" label="Gestionar Roles" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
 
@@ -224,10 +226,10 @@
                 <strong>Anuncios</strong>
               </div>
               <div class="permission-row">
-                <q-checkbox v-model="newRolePermissions.announcement.create" label="Crear" />
-                <q-checkbox v-model="newRolePermissions.announcement.read" label="Leer" />
-                <q-checkbox v-model="newRolePermissions.announcement.update" label="Actualizar" />
-                <q-checkbox v-model="newRolePermissions.announcement.delete" label="Eliminar" />
+                <q-checkbox v-model="newRolePermissions.announcement.create" label="Crear" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.announcement.read" label="Leer" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.announcement.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.announcement.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
           </q-card-section>
@@ -244,7 +246,7 @@
               :label="editingRole ? 'Guardar Cambios' : 'Crear Rol'"
               @click="saveRole"
               :loading="saving"
-            />
+                          />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -393,6 +395,10 @@ const countPermissions = (permissions) => {
 }
 
 const editRole = (role) => {
+  // Block editing president role - silently
+  if (role.name === 'president') {
+    return
+  }
   // Edit both base and custom roles
   editingRole.value = role
   newRoleName.value = role.customName || formatRoleName(role.name)
@@ -496,6 +502,11 @@ const cancelEdit = () => {
 }
 
 const saveRole = async () => {
+  // Block saving changes to president role - silently
+  if (editingRole.value?.name === 'president') {
+    return
+  }
+
   if (!editingRole.value?.isBaseRole && !newRoleName.value.trim()) {
     $q.notify({
       type: 'warning',
@@ -652,7 +663,7 @@ const saveRole = async () => {
 
 .stat-icon .material-symbols-outlined {
   font-size: 28px;
-  color: var(--white);
+  color: var(--on-primary);
 }
 
 .stat-icon.primary { background: var(--primary, #1E40AF); }
@@ -725,7 +736,7 @@ const saveRole = async () => {
 
 .role-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--white) !important;
+  color: var(--on-primary) !important;
 }
 
 .role-icon.base {
@@ -743,7 +754,7 @@ const saveRole = async () => {
 .role-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--black) !important;
+  color: var(--on-surface) !important;
   margin: 0 0 8px 0;
 }
 
@@ -759,7 +770,7 @@ const saveRole = async () => {
 .stat-value {
   font-size: 28px;
   font-weight: 800;
-  color: var(--black);
+  color: var(--on-surface);
   letter-spacing: -0.02em;
 }
 
@@ -816,6 +827,7 @@ const saveRole = async () => {
   background: var(--surface-container-lowest) !important;
 }
 
+
 .dialog-header {
   display: flex;
   justify-content: space-between;
@@ -866,33 +878,109 @@ const saveRole = async () => {
   margin-left: auto;
 }
 
-/* Input y Select styles - hardcoded colors para contraste */
-.dialog-card .q-input .q-field__label,
-.dialog-card .q-select .q-field__label {
-  color:white !important;
+/* Select styles - texto blanco y bordes blancos (fondo azul por defecto) */
+.scope-select :deep(.q-field__native) {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+}
+
+.scope-select :deep(.q-field__label) {
+  color: white !important;
+}
+
+.scope-select :deep(.q-field__control) {
+  border: 1px solid white !important;
+}
+
+.scope-select :deep(.q-field__control:before) {
+  border: none !important;
+}
+
+.scope-select :deep(.q-field__control::after) {
+  border: none !important;
+}
+
+.scope-select :deep(.q-select__dropdown-icon) {
+  color: white !important;
+}
+
+/* Dropdown menu styles */
+.scope-dropdown {
+  background: var(--surface-container-high) !important;
+}
+
+.scope-dropdown .q-item {
+  color: var(--on-surface) !important;
+}
+
+.scope-dropdown .q-item:hover {
+  background: var(--surface-container) !important;
+}
+
+.scope-dropdown .q-item--active {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+/* Dark input styles */
+.dark-input :deep(.q-field__control) {
+  background-color: var(--surface-container-high) !important;
+  box-shadow: none !important;
+  height: 48px !important;
+  align-items: center !important;
+}
+
+.dark-input :deep(.q-field__native) {
+  color: var(--on-surface) !important;
+  -webkit-text-fill-color: var(--on-surface) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.dark-input :deep(.q-field__native:focus) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.dark-input :deep(.q-field__label) {
+  color: var(--on-surface-variant) !important;
+}
+
+/* Quitar bordes - :before es el borde base, ::after es el borde de focus */
+.dark-input :deep(.q-field__control:before) {
+  border: none !important;
+}
+
+.dark-input :deep(.q-field__control::after) {
+  border: none !important;
+}
+
+/* Fix padding for labeled inputs - Quasar aplica 24px padding-top por defecto */
+.dark-input.q-field--labeled :deep(.q-field__native),
+.dark-input.q-field--labeled :deep(.q-field__prefix),
+.dark-input.q-field--labeled :deep(.q-field__suffix) {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.dark-input.q-field--disabled :deep(.q-field__control),
+.dark-input.q-field--readonly :deep(.q-field__control) {
+  background-color: var(--surface-container-high) !important;
   opacity: 1 !important;
 }
 
-/* Selector cerrado - texto blanco */
-.dialog-card .q-input .q-field__native,
-.dialog-card .q-select .q-field__native,
-.dialog-card .q-input .q-field__native span,
-.dialog-card .q-select .q-field__native span,
-.dialog-card .q-field__native .ellipsis {
-  color: white!important;
+.dark-input.q-field--disabled :deep(.q-field__native),
+.dark-input.q-field--readonly :deep(.q-field__native) {
+  color: var(--on-surface) !important;
+  -webkit-text-fill-color: var(--on-surface) !important;
   opacity: 1 !important;
-  -webkit-text-fill-color: var(--white) !important;
 }
 
-.dialog-card .q-field--outlined .q-field__control,
-.dialog-card .q-field--outlined .q-field__control:before,
-.dialog-card .q-field--outlined .q-field__control:after {
-  background-color: var(--white) !important;
-  border-color: var(--surface-container-highest) !important;
-}
-
-.dialog-card .q-field--outlined .q-field__control:before {
-  border-color: var(--outline) !important;
+.dark-input.q-field--disabled :deep(.q-field__label),
+.dark-input.q-field--readonly :deep(.q-field__label) {
+  color: var(--on-surface-variant) !important;
+  opacity: 1 !important;
 }
 
 .dialog-card .q-select__dropdown-icon,
@@ -900,20 +988,20 @@ const saveRole = async () => {
   color: var(--on-surface-variant) !important;
 }
 
-/* Menu dropdown del select - texto oscuro sobre fondo blanco */
+/* Menu dropdown del select */
 .q-menu .q-item,
 .q-menu .q-item__label,
 .q-menu .q-virtual-scroll__content,
 .q-menu .q-item__section--main {
   color: var(--on-surface) !important;
-  background-color: var(--white) !important;
+  background-color: var(--surface-container) !important;
 }
 
 .q-menu .q-item--active,
 .q-menu .q-item:hover,
 .q-menu .q-item--selected {
   background-color: var(--primary) !important;
-  color: var(--white) !important;
+  color: var(--on-primary) !important;
 }
 
 /* Permissions List Dialog */

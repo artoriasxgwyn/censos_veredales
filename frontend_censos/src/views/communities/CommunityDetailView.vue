@@ -29,6 +29,7 @@
             <div>
               <h2 class="community-name">{{ community.neighborhood }}</h2>
               <p class="community-city">{{ community.city }}</p>
+              <p class="community-department" v-if="community.department">{{ community.department }}</p>
               <q-badge :color="community.isActive ? 'positive' : 'negative'">
                 {{ community.isActive ? 'Activa' : 'Inactiva' }}
               </q-badge>
@@ -48,6 +49,10 @@
             <div class="info-item">
               <span class="info-label">Dirección del Salón Comunal</span>
               <span class="info-value">{{ community.communityHallAddress || 'N/A' }}</span>
+            </div>
+            <div class="info-item" v-if="community.department">
+              <span class="info-label">Departamento</span>
+              <span class="info-value">{{ community.department }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Residentes Estimados</span>
@@ -251,6 +256,12 @@ const handleDelete = async () => {
 }
 
 .community-city {
+  font-size: 14px;
+  color: var(--outline);
+  margin: 0 0 8px 0;
+}
+
+.community-department {
   font-size: 14px;
   color: var(--outline);
   margin: 0 0 8px 0;

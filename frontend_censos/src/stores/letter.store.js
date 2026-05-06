@@ -81,9 +81,9 @@ export const useLetterStore = defineStore('letter', {
         let response
         if (role === 'president') {
           response = await letterService.approveByPresident(id, status)
-        } else if (role === 'treasurer') {
+        } else if (role === 'tesorero') {
           response = await letterService.approveByTreasurer(id, status)
-        } else if (role === 'secretary') {
+        } else if (role === 'secretario') {
           response = await letterService.approveBySecretary(id, status)
         }
 

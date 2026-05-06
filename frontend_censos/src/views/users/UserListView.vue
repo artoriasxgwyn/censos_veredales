@@ -122,7 +122,7 @@ const filteredUsers = computed(() => {
 })
 
 onMounted(async () => {
-  await userStore.fetchAllUsersPublic()
+  await userStore.fetchUsers()
 })
 
 const getRoleLabel = (role) => {
@@ -303,10 +303,11 @@ const getRoleLabel = (role) => {
 
 /* Users Section */
 .users-section {
-  background: var(--surface);
+  background: #1e293b;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #475569;
 }
 
 .users-grid {
@@ -327,10 +328,11 @@ const getRoleLabel = (role) => {
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: var(--surface-container-lowest);
+  background: #0f172a;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  border: 1px solid #475569;
 }
 
 @media (max-width: 599px) {
@@ -345,7 +347,8 @@ const getRoleLabel = (role) => {
 }
 
 .user-card:hover {
-  background: var(--primary-50);
+  background: #334155;
+  border-color: #3b82f6;
   transform: translateX(4px);
 }
 
@@ -373,7 +376,7 @@ const getRoleLabel = (role) => {
 .user-name {
   font-size: 16px;
   font-weight: 700;
-  color: var(--black);
+  color: #e2e8f0;
   margin: 0 0 4px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -382,7 +385,7 @@ const getRoleLabel = (role) => {
 
 .user-email {
   font-size: 13px;
-  color: var(--on-surface-variant);
+  color: #94a3b8;
   margin: 0 0 10px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -397,23 +400,23 @@ const getRoleLabel = (role) => {
 
 .role-badge {
   padding: 4px 10px;
-  background: var(--surface-container-highest);
+  background: #475569;
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--on-surface-variant);
+  color: #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.role-badge.president { background: var(--primary-50); color: var(--primary); }
-.role-badge.treasurer { background: var(--info-container); color: var(--info); }
-.role-badge.secretary { background: var(--primary-50); color: var(--on-primary-container); }
-.role-badge.residente { background: var(--success-container); color: var(--success); }
-.role-badge.censista { background: var(--warning-container); color: var(--on-warning-container); }
+.role-badge.president { background: #3b82f6; color: #ffffff; }
+.role-badge.treasurer { background: #60a5fa; color: #0f172a; }
+.role-badge.secretary { background: #34d399; color: #064e3b; }
+.role-badge.residente { background: #10b981; color: #ffffff; }
+.role-badge.censista { background: #f59e0b; color: #78350f; }
 
 .chevron {
-  color: var(--on-surface-variant);
+  color: #94a3b8;
   font-size: 24px;
   flex-shrink: 0;
 }

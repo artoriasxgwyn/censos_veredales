@@ -50,8 +50,8 @@
             <span class="detail-value">{{ getResidentName(letter.residentId) }}</span>
           </div>
           <div class="detail-row" v-if="letter.communityId">
-            <span class="detail-label">Comunidad:</span>
-            <span class="detail-value">{{ getCommunityName(letter.communityId) }}</span>
+            <span class="detail-label">Código de Comunidad:</span>
+            <span class="detail-value">{{ getCommunityCode(letter.communityId) }}</span>
           </div>
         </q-card-section>
 
@@ -202,12 +202,16 @@ const getResidentName = (residentId) => {
   return user?.fullName || 'Residente'
 }
 
-const getCommunityName = (communityId) => {
-  if (typeof communityId === 'object' && communityId?.name) {
-    return communityId.name
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
   }
-  const community = communityStore.communities.find(c => c._id === communityId)
-  return community?.name || 'Comunidad'
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
 }
 
 const getStatusColor = (status) => {

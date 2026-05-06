@@ -36,15 +36,21 @@
                   <input v-model="community.neighborhood" class="field-input" placeholder="Ej. Los Almendros" type="text"/>
                   <span v-if="hasError('neighborhood')" class="error-message">{{ getFieldError('neighborhood') }}</span>
                 </div>
-                <div class="form-field" :class="{ 'has-error': hasError('city') }">
-                  <label class="field-label">Ciudad</label>
-                  <input v-model="community.city" class="field-input" placeholder="Ej. Medellín" type="text"/>
-                  <span v-if="hasError('city')" class="error-message">{{ getFieldError('city') }}</span>
-                </div>
                 <div class="form-field" :class="{ 'has-error': hasError('department') }">
                   <label class="field-label">Departamento</label>
-                  <input v-model="community.department" class="field-input" placeholder="Ej. Antioquia" type="text"/>
+                  <select v-model="community.department" class="field-input" @change="onDepartmentChange">
+                    <option value="" disabled>Selecciona un departamento</option>
+                    <option v-for="dept in departamentos" :key="dept" :value="dept">{{ dept }}</option>
+                  </select>
                   <span v-if="hasError('department')" class="error-message">{{ getFieldError('department') }}</span>
+                </div>
+                <div class="form-field" :class="{ 'has-error': hasError('city') }">
+                  <label class="field-label">Ciudad / Municipio</label>
+                  <select v-model="community.city" class="field-input" :disabled="!community.department">
+                    <option value="" disabled>{{ community.department ? 'Selecciona un municipio' : 'Primero elige un departamento' }}</option>
+                    <option v-for="mun in municipiosOptions" :key="mun" :value="mun">{{ mun }}</option>
+                  </select>
+                  <span v-if="hasError('city')" class="error-message">{{ getFieldError('city') }}</span>
                 </div>
                 <div class="form-field" :class="{ 'has-error': hasError('estimatedResidentCount') }">
                   <label class="field-label">Residentes estimados</label>
@@ -55,6 +61,16 @@
                   <label class="field-label">Dirección Exacta (Salón Comunal)</label>
                   <input v-model="community.communityHallAddress" class="field-input" placeholder="Carrera 45 # 12-34" type="text"/>
                   <span v-if="hasError('communityHallAddress')" class="error-message">{{ getFieldError('communityHallAddress') }}</span>
+                </div>
+                <div class="form-field full-width" :class="{ 'has-error': hasError('mapLocation') }">
+                  <label class="field-label">Ubicación en Mapa (Google Maps)</label>
+                  <MapLocationPicker
+                    v-model="community.mapLocation"
+                    label="Seleccionar ubicación del salón comunal"
+                    hint="Haz clic en el mapa para seleccionar la ubicación exacta"
+                    :error="hasError('mapLocation')"
+                    :errorMessage="getFieldError('mapLocation')"
+                  />
                 </div>
               </div>
             </section>
@@ -145,11 +161,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useCommunityStore } from '@/stores/community.store'
 import { createCommunitySchema } from '@/schemas/community.schema'
+import { departamentos, getMunicipios } from '@/data/colombia'
+import MapLocationPicker from '@/components/MapLocationPicker.vue'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -167,6 +185,14 @@ const community = ref({
   communityHallAddress: '',
   mapLocation: ''
 })
+
+const municipiosOptions = computed(() => {
+  return community.value.department ? getMunicipios(community.value.department) : []
+})
+
+const onDepartmentChange = () => {
+  community.value.city = ''
+}
 
 const president = ref({
   fullName: '',
@@ -476,6 +502,21 @@ const handleRegister = async () => {
   color: var(--outline-variant);
 }
 
+select.field-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+select.field-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .field-input:hover {
   background: var(--surface-container-high);
 }
@@ -648,5 +689,53 @@ const handleRegister = async () => {
   background: var(--on-primary-fixed);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
+}
+
+/* MapLocationPicker styles */
+.form-field.full-width :deep(.map-location-picker) {
+  width: 100%;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field__label) {
+  color: var(--on-surface-variant) !important;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-left: 4px;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field__native) {
+  color: var(--on-surface) !important;
+  -webkit-text-fill-color: var(--on-surface) !important;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field__hint) {
+  color: var(--on-surface-variant) !important;
+  font-size: 12px;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-icon) {
+  color: var(--primary) !important;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field--outlined .q-field__control) {
+  border: none !important;
+  background: var(--surface-container-low) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 4px 8px !important;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field--outlined .q-field__control:hover) {
+  background: var(--surface-container-high) !important;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-field--outlined .q-field__control:before),
+.form-field.full-width :deep(.map-location-picker .q-field--outlined .q-field__control:after) {
+  border: none !important;
+}
+
+.form-field.full-width :deep(.map-location-picker .q-btn) {
+  color: var(--primary) !important;
 }
 </style>

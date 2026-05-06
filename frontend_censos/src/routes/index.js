@@ -15,18 +15,21 @@ const ResidentRegisterView = () => import('@/views/auth/ResidentRegisterView.vue
 // Dashboard views
 const AdminDashboardView = () => import('@/views/dashboard/AdminDashboardView.vue')
 const ResidentDashboardView = () => import('@/views/dashboard/ResidentDashboardView.vue')
+const CensistaDashboardView = () => import('@/views/dashboard/CensistaDashboardView.vue')
 
 // Community views
 const CommunityListView = () => import('@/views/communities/CommunityListView.vue')
 const CommunityDetailView = () => import('@/views/communities/CommunityDetailView.vue')
 const CommunityCreateView = () => import('@/views/communities/CommunityCreateView.vue')
 const CommunityEditView = () => import('@/views/communities/CommunityEditView.vue')
+const MyCommunityView = () => import('@/views/communities/MyCommunityView.vue')
 
 // Dwelling views
 const DwellingListView = () => import('@/views/dwellings/DwellingListView.vue')
 const DwellingDetailView = () => import('@/views/dwellings/DwellingDetailView.vue')
 const DwellingCreateView = () => import('@/views/dwellings/DwellingCreateView.vue')
 const DwellingEditView = () => import('@/views/dwellings/DwellingEditView.vue')
+const MyDwellingView = () => import('@/views/dwellings/MyDwellingView.vue')
 
 // Resident views
 const ResidentListView = () => import('@/views/residents/ResidentListView.vue')
@@ -62,7 +65,8 @@ const QRScannerView = () => import('@/views/president/QRScannerView.vue')
 const LetterVerifyPublicView = () => import('@/views/letters/LetterVerifyPublicView.vue')
 
 const adminRoles = ['president', 'tesorero', 'secretario']
-const residentRoles = ['residente', 'censista']
+const residentRoles = ['residente']
+const censistaRoles = ['censista']
 
 const routes = [
   // Public routes
@@ -101,7 +105,7 @@ const routes = [
     meta: { requiresGuest: true }
   },
   {
-    path: '/reset-password',
+    path: '/reset-password/:token?',
     name: 'ResetPassword',
     component: ResetPasswordView,
     meta: { requiresGuest: true }
@@ -148,6 +152,12 @@ const routes = [
         name: 'CommunityEdit',
         component: CommunityEditView,
         meta: { requiresPermission: { module: 'community', action: 'update' } }
+      },
+      {
+        path: 'my-community',
+        name: 'MyCommunity',
+        component: MyCommunityView,
+        meta: { requiresPermission: { module: 'community', action: 'read' } }
       },
       // Dwellings
       {
@@ -258,6 +268,20 @@ const routes = [
       }
     ]
   },
+  // Profile route - accessible to ALL authenticated users
+  {
+    path: '/profile',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'UserProfileUniversal',
+        component: UserProfileView
+      }
+    ]
+  },
+
   // President-only routes (tambien accesible por roles con permisos)
   {
     path: '/president',
@@ -319,6 +343,11 @@ const routes = [
         component: LetterRequestView
       },
       {
+        path: 'my-dwelling',
+        name: 'MyDwelling',
+        component: MyDwellingView
+      },
+      {
         path: 'letters/:id',
         name: 'ResidentLetterDetail',
         component: LetterDetailView
@@ -339,6 +368,43 @@ const routes = [
         path: 'profile',
         name: 'UserProfile',
         component: UserProfileView
+      },
+      // QR Scanner
+      {
+        path: 'qr-scanner',
+        name: 'ResidentQRScanner',
+        component: QRScannerView
+      }
+    ]
+  },
+  // Protected routes with MainLayout - Censista
+  {
+    path: '/censista',
+    component: MainLayout,
+    meta: { requiresAuth: true, roles: censistaRoles },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'CensistaDashboard',
+        component: CensistaDashboardView
+      },
+      {
+        path: 'dwellings/new',
+        name: 'CensistaDwellingCreate',
+        component: DwellingCreateView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'create' } }
+      },
+      {
+        path: 'residents/new',
+        name: 'CensistaResidentCreate',
+        component: ResidentCreateView,
+        meta: { requiresPermission: { module: 'resident', action: 'create' } }
+      },
+      {
+        path: 'qr-scanner',
+        name: 'CensistaQRScanner',
+        component: QRScannerView,
+        meta: { requiresPermission: { module: 'letter', action: 'qrScan' } }
       }
     ]
   },
@@ -386,11 +452,14 @@ router.beforeEach(async (to, from) => {
   const userRole = authStore.userRole
 
   // If route requires guest but user is authenticated
-  if (to.meta.requiresGuest) {
+  // Allow reset-password even if authenticated (user might want to change password)
+  if (to.meta.requiresGuest && to.name !== 'ResetPassword') {
     if (userRole === 'president') {
       return '/president/dashboard'
     } else if (userRole === 'tesorero' || userRole === 'secretario') {
       return '/admin/dashboard'
+    } else if (userRole === 'censista') {
+      return '/censista/dashboard'
     } else {
       return '/resident/dashboard'
     }
@@ -403,6 +472,8 @@ router.beforeEach(async (to, from) => {
       return '/president/dashboard'
     } else if (userRole === 'tesorero' || userRole === 'secretario') {
       return '/admin/dashboard'
+    } else if (userRole === 'censista') {
+      return '/censista/dashboard'
     } else {
       return '/resident/dashboard'
     }
@@ -420,6 +491,8 @@ router.beforeEach(async (to, from) => {
         // Redirigir al dashboard apropiado si no tiene permisos
         if (userRole === 'tesorero' || userRole === 'secretario') {
           return '/admin/dashboard'
+        } else if (userRole === 'censista') {
+          return '/censista/dashboard'
         } else {
           return '/resident/dashboard'
         }

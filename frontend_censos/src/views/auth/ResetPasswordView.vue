@@ -74,7 +74,7 @@ const isPwd = ref(true)
 const password = ref('')
 const confirmPassword = ref('')
 
-const token = computed(() => route.query.token)
+const token = computed(() => route.params.token || route.query.token)
 
 const handleResetPassword = async () => {
   if (!token.value) {
@@ -163,7 +163,7 @@ const handleResetPassword = async () => {
 }
 
 .reset-card {
-  background: white;
+  background: var(--surface-container-lowest);
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   padding: 40px;

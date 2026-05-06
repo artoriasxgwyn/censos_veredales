@@ -18,8 +18,10 @@ const permissionsSchema = new mongoose.Schema({
   // Cartas
   letter: {
     generateNormal: { type: Boolean, default: false },
-    generateSworn: { type: Boolean, default: false },
-    qrScan: { type: Boolean, default: false }
+    generateJuramentada: { type: Boolean, default: false },
+    confirmJuramentada: { type: Boolean, default: false }, // Voto para aprobar carta juramentada
+    download: { type: Boolean, default: false },
+    verifyQr: { type: Boolean, default: false }
   },
   // Dashboard
   dashboard: {
@@ -33,7 +35,14 @@ const permissionsSchema = new mongoose.Schema({
   // Gestión de usuarios
   user: {
     changePassword: { type: Boolean, default: false },
-    manageRoles: { type: Boolean, default: false }
+    manageRoles: { type: Boolean, default: false },
+    update: { type: Boolean, default: false }
+  },
+  // Comunidad
+  community: {
+    read: { type: Boolean, default: false },
+    update: { type: Boolean, default: false },
+    delete: { type: Boolean, default: false }
   },
   // Avisos/Noticias
   announcement: {
@@ -74,10 +83,13 @@ const roleSchema = new mongoose.Schema({
     default: () => ({
       resident: { create: false, read: false, update: false, delete: false },
       dwelling: { create: false, read: false, update: false, delete: false },
-      letter: { generateNormal: false, generateSworn: false, qrScan: false },
+      letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: false },
       dashboard: { access: false, scope: 'limited' },
-      user: { changePassword: false, manageRoles: false },
-      announcement: { create: false, read: false, update: false, delete: false }
+      user: { changePassword: false, manageRoles: false, update: false, create: false },
+      announcement: { create: false, read: false, update: false, delete: false },
+      community: { read: false, update: false, delete: false },
+      role: { create: false, read: false, update: false, delete: false },
+      export: { residents: false, dwellings: false, letters: false, all: false }
     })
   }
 }, {

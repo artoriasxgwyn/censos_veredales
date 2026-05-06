@@ -104,14 +104,24 @@ export const useDwellingStore = defineStore('dwelling', {
     async approveDwelling(id, role, status) {
       this.loading = true
       try {
+        console.log('=== DWELLING STORE DEBUG ===');
+        console.log('id:', id);
+        console.log('role:', role);
+        console.log('status:', status);
+
         let response
         if (role === 'president') {
+          console.log('Calling approveByPresident...');
           response = await dwellingService.approveByPresident(id, status)
-        } else if (role === 'treasurer') {
+        } else if (role === 'tesorero') {
+          console.log('Calling approveByTreasurer...');
           response = await dwellingService.approveByTreasurer(id, status)
-        } else if (role === 'secretary') {
+        } else if (role === 'secretario') {
+          console.log('Calling approveBySecretary...');
           response = await dwellingService.approveBySecretary(id, status)
         }
+
+        console.log('Response received:', response);
 
         // Actualizar dwelling en la lista
         const index = this.dwellings.findIndex(d => d._id === id)
@@ -121,9 +131,15 @@ export const useDwellingStore = defineStore('dwelling', {
 
         return { success: true, data: response.data }
       } catch (error) {
+        console.error('=== DWELLING STORE ERROR ===');
+        console.error('error:', error);
+        console.error('error.response:', error.response);
+        console.error('error.response?.data:', error.response?.data);
+        console.error('error.response?.data?.message:', error.response?.data?.message);
+
         return {
           success: false,
-          message: error.response?.data?.message || 'Error al aprobar vivienda'
+          message: error.response?.data?.message || error.message || 'Error al aprobar vivienda'
         }
       } finally {
         this.loading = false

@@ -35,5 +35,15 @@ export const userService = {
     // El backend quita el rol actual del usuario, no necesita que se especifique cuál
     const response = await api.delete(`/users/${id}/role`)
     return response.data
+  },
+
+  async requestProfileChange(data) {
+    const response = await api.post('/profile-changes/request', data)
+    return response.data
+  },
+
+  async getMyPendingChanges() {
+    const response = await api.get('/profile-changes/my-pending')
+    return response.data
   }
 }

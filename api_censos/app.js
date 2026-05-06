@@ -9,6 +9,8 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/auth.routes.js';
 import usersRoutes from './routes/users.routes.js';
@@ -20,9 +22,17 @@ import lettersRoutes from './routes/letter.routes.js';
 import announcementsRoutes from './routes/announcement.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import approvalRoutes from './routes/approval.routes.js';
+import exportRoutes from './routes/export.routes.js';
+import pendingProfileChangeRoutes from './routes/pendingProfileChange.routes.js';
+import pendingDwellingChangeRoutes from './routes/pendingDwellingChange.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const swaggerOptions = {
   definition: {
@@ -39,12 +49,18 @@ const swaggerOptions = {
       { name: 'Auth', description: 'Autenticación y gestión de sesiones' },
       { name: 'Users', description: 'Gestión de usuarios' },
       { name: 'Roles', description: 'Gestión de roles y permisos' },
-      { name: 'Dwellings', description: 'Gestión de viviendas' },
-      { name: 'Communities', description: 'Gestión de comunidades' },
-      { name: 'Residents', description: 'Gestión de residentes' },
-      { name: 'Letters', description: 'Gestión de cartas (normal y juramentada)' },
-      { name: 'Announcements', description: 'Gestión de anuncios/comunicados' },
-      { name: 'Dashboard', description: 'Dashboards de administrador y residente' }
+      { name: 'Viviendas', description: 'Gestión de viviendas' },
+      { name: 'Comunidades', description: 'Gestión de comunidades' },
+      { name: 'Residentes', description: 'Gestión de residentes' },
+      { name: 'Cartas', description: 'Gestión de cartas (normal y juramentada)' },
+      { name: 'Anuncios', description: 'Gestión de anuncios/comunicados' },
+      { name: 'Dashboard', description: 'Dashboards de administrador y residente' },
+      { name: 'Upload', description: 'Subida de imágenes a Cloudinary' },
+      { name: 'Aprobaciones', description: 'Aprobaciones de residentes, viviendas y cartas' },
+      { name: 'Exportar', description: 'Exportación de datos a CSV/Excel' },
+      { name: 'CambiosPerfil', description: 'Solicitudes de cambio de perfil (pendientes de aprobación)' },
+      { name: 'CambiosVivienda', description: 'Solicitudes de modificación de vivienda (triple aprobación)' },
+      { name: 'Notificaciones', description: 'Notificaciones del sistema' }
     ],
     components: {
       securitySchemes: {
@@ -147,12 +163,18 @@ app.use('/api/letters', lettersRoutes);
 app.use('/api/announcements', announcementsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/approvals', approvalRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/profile-changes', pendingProfileChangeRoutes);
+app.use('/api/dwelling-changes', pendingDwellingChangeRoutes);
+app.use('/api/notifications', notificationRoutes);
 
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'API Censos Veredales - Documentación en /api-docs'
-  });
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// SPA catch-all - return index.html for any non-API route
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Error handler

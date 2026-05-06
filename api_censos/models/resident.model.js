@@ -15,6 +15,11 @@ const residentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Community'
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
     trim: true,
@@ -64,26 +69,14 @@ residentSchema.pre('save', async function(next) {
   next();
 });
 
-// Hook: actualizar estado según las aprobaciones
+// Hook: actualizar rol de usuario cuando los 3 admins aprueban
 residentSchema.post('save', async function(doc) {
   const approvals = [doc.approvedByPresident, doc.approvedByTreasurer, doc.approvedBySecretary];
-  const hasRejection = approvals.some(a => a === 'rejected');
   const allApproved = approvals.every(a => a === 'approved');
 
-  let newStatus;
-  if (hasRejection) {
-    newStatus = 'rejected';
-  } else if (allApproved) {
-    newStatus = 'approved';
-    // Cuando los 3 aprueban, asignar rol 'residente' al usuario
+  if (allApproved && doc.status === 'approved') {
     const User = mongoose.model('User');
     await User.findByIdAndUpdate(doc.userId, { role: 'residente' });
-  } else {
-    newStatus = 'pending';
-  }
-
-  if (doc.status !== newStatus) {
-    await this.constructor.findByIdAndUpdate(doc._id, { status: newStatus });
   }
 });
 

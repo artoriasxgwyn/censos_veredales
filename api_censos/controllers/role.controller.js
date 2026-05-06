@@ -128,14 +128,15 @@ export const updateRolePermissions = async (req, res) => {
   }
 };
 
-// Desactivar un rol (solo roles personalizados)
-export const deactivateRole = async (req, res) => {
+// Eliminar rol personalizado (solo si no tiene usuarios asignados)
+export const deleteRole = async (req, res) => {
   try {
     const { id } = req.params;
 
     const role = await Role.findOne({
       _id: id,
-      communityId: req.communityId
+      communityId: req.communityId,
+      isActive: true
     });
 
     if (!role) {
@@ -148,7 +149,7 @@ export const deactivateRole = async (req, res) => {
     if (role.isBaseRole) {
       return res.status(403).json({
         success: false,
-        message: 'Los roles base no se pueden desactivar'
+        message: 'Los roles base no se pueden eliminar'
       });
     }
 
@@ -162,10 +163,11 @@ export const deactivateRole = async (req, res) => {
     if (usersWithRole > 0) {
       return res.status(400).json({
         success: false,
-        message: `Hay ${usersWithRole} usuario(s) con este rol. Reasigna o elimina estos usuarios primero.`
+        message: `No se puede eliminar el rol porque hay ${usersWithRole} usuario(s) asignado(s). Reasigna esos usuarios a otro rol primero.`
       });
     }
 
+    // Soft delete del rol
     role.isActive = false;
     await role.save();
 
@@ -173,7 +175,7 @@ export const deactivateRole = async (req, res) => {
       success: true,
       data: {
         role,
-        message: 'Rol desactivado exitosamente'
+        message: 'Rol eliminado exitosamente'
       }
     });
   } catch (error) {
@@ -230,32 +232,41 @@ export const initializeBaseRoles = async (communityId) => {
       permissions: {
         resident: { create: true, read: true, update: true, delete: true },
         dwelling: { create: true, read: true, update: true, delete: true },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: true, manageRoles: true },
-        announcement: { create: true, read: true, update: true, delete: true }
+        user: { changePassword: true, manageRoles: true, update: true, create: true },
+        announcement: { create: true, read: true, update: true, delete: true },
+        community: { read: true, update: true, delete: true },
+        role: { create: true, read: true, update: true, delete: true },
+        export: { residents: true, dwellings: true, letters: true, all: true }
       }
     },
     {
       name: 'secretario',
       permissions: {
-        resident: { create: true, read: true, update: true, delete: false },
-        dwelling: { create: true, read: true, update: true, delete: false },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        resident: { create: true, read: true, update: false, delete: false },
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: false, manageRoles: false },
-        announcement: { create: true, read: true, update: true, delete: false }
+        user: { changePassword: false, manageRoles: false, update: false, create: false },
+        announcement: { create: true, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: true, update: false, delete: false },
+        export: { residents: true, dwellings: true, letters: true, all: false }
       }
     },
     {
       name: 'tesorero',
       permissions: {
-        resident: { create: true, read: true, update: true, delete: false },
-        dwelling: { create: true, read: true, update: true, delete: false },
-        letter: { generateNormal: true, generateSworn: true, qrScan: true },
+        resident: { create: true, read: true, update: false, delete: false },
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
-        user: { changePassword: false, manageRoles: false },
-        announcement: { create: true, read: true, update: true, delete: false }
+        user: { changePassword: false, manageRoles: false, update: false, create: false },
+        announcement: { create: true, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: true, update: false, delete: false },
+        export: { residents: true, dwellings: true, letters: true, all: false }
       }
     },
     {
@@ -263,21 +274,27 @@ export const initializeBaseRoles = async (communityId) => {
       permissions: {
         resident: { create: false, read: false, update: false, delete: false },
         dwelling: { create: false, read: false, update: false, delete: false },
-        letter: { generateNormal: true, generateSworn: false, qrScan: true },
+        letter: { generateNormal: true, generateJuramentada: false, confirmJuramentada: false, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'limited' },
-        user: { changePassword: true, manageRoles: false },
-        announcement: { create: false, read: true, update: false, delete: false }
+        user: { changePassword: true, manageRoles: false, update: true, create: false },
+        announcement: { create: false, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: false, update: false, delete: false },
+        export: { residents: false, dwellings: false, letters: false, all: false }
       }
     },
     {
       name: 'censista',
       permissions: {
         resident: { create: true, read: true, update: false, delete: false },
-        dwelling: { create: false, read: true, update: false, delete: false },
-        letter: { generateNormal: false, generateSworn: false, qrScan: true },
+        dwelling: { create: true, read: true, update: false, delete: false },
+        letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: true },
         dashboard: { access: true, scope: 'limited' },
-        user: { changePassword: true, manageRoles: false },
-        announcement: { create: false, read: true, update: false, delete: false }
+        user: { changePassword: true, manageRoles: false, update: false, create: false },
+        announcement: { create: false, read: true, update: false, delete: false },
+        community: { read: true, update: false, delete: false },
+        role: { create: false, read: false, update: false, delete: false },
+        export: { residents: false, dwellings: false, letters: false, all: false }
       }
     }
   ];

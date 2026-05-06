@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAdminDashboard, getResidentDashboard } from '../controllers/dashboard.controller.js';
+import { getAdminDashboard, getResidentDashboard, getCensusTakerDashboard } from '../controllers/dashboard.controller.js';
 import { auth, checkPermission } from '../middlewares/auth.js';
 
 const router = Router();
@@ -57,6 +57,20 @@ router.get('/admin', auth, checkPermission('dashboard', 'access'), getAdminDashb
  *       200:
  *         description: Información personal y estado de trámites del residente
  */
-router.get('/resident', auth, getResidentDashboard);
+router.get('/resident', auth, checkPermission('dashboard', 'access'), getResidentDashboard);
+
+/**
+ * @swagger
+ * /api/dashboard/census-taker:
+ *   get:
+ *     summary: Dashboard para censista
+ *     tags: [Dashboard]
+ *     security:
+ *       - xToken: []
+ *     responses:
+ *       200:
+ *         description: Métricas de registros del censista
+ */
+router.get('/census-taker', auth, checkPermission('dashboard', 'access'), getCensusTakerDashboard);
 
 export default router;

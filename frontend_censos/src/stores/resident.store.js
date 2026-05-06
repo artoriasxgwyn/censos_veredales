@@ -103,15 +103,28 @@ export const useResidentStore = defineStore('resident', {
 
     async approveResident(id, role, status) {
       this.loading = true
+      console.log('=== RESIDENT STORE - approveResident ===');
+      console.log('id:', id);
+      console.log('role:', role);
+      console.log('status:', status);
+
       try {
         let response
         if (role === 'president') {
+          console.log('Calling approveByPresident...');
           response = await residentService.approveByPresident(id, status)
-        } else if (role === 'treasurer') {
+        } else if (role === 'tesorero') {
+          console.log('Calling approveByTreasurer...');
           response = await residentService.approveByTreasurer(id, status)
-        } else if (role === 'secretary') {
+        } else if (role === 'secretario') {
+          console.log('Calling approveBySecretary...');
           response = await residentService.approveBySecretary(id, status)
+        } else {
+          console.error('Role no reconocido:', role);
+          return { success: false, message: `Rol no reconocido: ${role}` }
         }
+
+        console.log('Response received:', response);
 
         const index = this.residents.findIndex(r => r._id === id)
         if (index !== -1) {
@@ -120,9 +133,12 @@ export const useResidentStore = defineStore('resident', {
 
         return { success: true, data: response.data }
       } catch (error) {
+        console.error('=== RESIDENT STORE ERROR ===');
+        console.error('error:', error);
+        console.error('error.response?.data:', error.response?.data);
         return {
           success: false,
-          message: error.response?.data?.message || 'Error al aprobar residente'
+          message: error.response?.data?.message || error.message || 'Error al aprobar residente'
         }
       } finally {
         this.loading = false

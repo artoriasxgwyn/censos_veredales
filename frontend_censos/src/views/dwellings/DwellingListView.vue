@@ -53,7 +53,7 @@
             </div>
 
             <h3 class="dwelling-type">{{ dwelling.houseNomenclature || 'Sin nomenclatura' }}</h3>
-            <p class="dwelling-community">{{ dwelling.communityId?.neighborhood || 'Comunidad' }}</p>
+            <p class="dwelling-community">Código: {{ getCommunityCode(dwelling.communityId) }}</p>
 
             <div class="approval-status">
               <div class="approval-item" :class="getApprovalClass(dwelling.approvedByPresident)">
@@ -106,9 +106,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDwellingStore } from '@/stores/dwelling.store'
+import { useCommunityStore } from '@/stores/community.store'
 
 const router = useRouter()
 const dwellingStore = useDwellingStore()
+const communityStore = useCommunityStore()
 
 const statusFilter = ref('all')
 const statusOptions = [
@@ -155,6 +157,18 @@ const getApprovalIcon = (status) => {
 
 const getApprovalClass = (status) => {
   return status || 'pending'
+}
+
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
+  }
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
 }
 
 const verDetalle = async (dwellingId) => {

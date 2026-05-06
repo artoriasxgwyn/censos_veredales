@@ -13,5 +13,7 @@ export const updateResidentSchema = z.object({
 });
 
 export const approveResidentSchema = z.object({
-  status: z.enum(['pending', 'approved', 'rejected'])
+  status: z.enum(['approved', 'rejected'], {
+    errorMap: () => ({ message: 'El estado debe ser "approved" o "rejected"' })
+  })
 });

@@ -5,12 +5,14 @@ export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
     adminStats: null,
     residentStats: null,
+    censusTakerStats: null,
     loading: false
   }),
 
   getters: {
     adminDashboard: (state) => state.adminStats,
-    residentDashboard: (state) => state.residentStats
+    residentDashboard: (state) => state.residentStats,
+    censusTakerDashboard: (state) => state.censusTakerStats
   },
 
   actions: {
@@ -36,6 +38,20 @@ export const useDashboardStore = defineStore('dashboard', {
         return response.data
       } catch (error) {
         console.error('Error al obtener dashboard de residente:', error)
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchCensusTakerDashboard() {
+      this.loading = true
+      try {
+        const response = await dashboardService.getCensusTakerDashboard()
+        this.censusTakerStats = response.data || null
+        return response.data
+      } catch (error) {
+        console.error('Error al obtener dashboard de censista:', error)
         return null
       } finally {
         this.loading = false

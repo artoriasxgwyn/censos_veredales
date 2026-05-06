@@ -68,13 +68,20 @@ export const isPresident = (req, res, next) => {
 export const checkPermission = (resource, action) => {
   return async (req, res, next) => {
     try {
+      console.log('=== CHECK PERMISSION DEBUG ===');
+      console.log('req.userRole:', req.userRole);
+      console.log('req.communityId:', req.communityId);
+      console.log('resource:', resource, 'action:', action);
+
       // El presidente tiene todos los permisos por defecto
       if (req.userRole === 'president') {
+        console.log('Usuario es presidente - acceso concedido');
         return next();
       }
 
       // Si no hay communityId, no hay permisos
       if (!req.communityId) {
+        console.log('No hay communityId');
         return res.status(403).json({
           success: false,
           message: 'No tienes una comunidad asignada'
@@ -88,6 +95,12 @@ export const checkPermission = (resource, action) => {
         isActive: true
       });
 
+      console.log('role encontrado:', role ? 'SI' : 'NO');
+      if (role) {
+        console.log('role.permissions:', JSON.stringify(role.permissions, null, 2));
+        console.log('role.permissions[resource]:', role.permissions[resource]);
+      }
+
       if (!role) {
         return res.status(403).json({
           success: false,
@@ -98,16 +111,19 @@ export const checkPermission = (resource, action) => {
       // Verificar si el rol tiene el permiso solicitado
       const resourcePermissions = role.permissions[resource];
       if (!resourcePermissions || !resourcePermissions[action]) {
+        console.log('Permiso denegado - resourcePermissions:', resourcePermissions);
         return res.status(403).json({
           success: false,
           message: `Permiso denegado: ${resource}.${action}`
         });
       }
 
+      console.log('Permiso concedido');
       // Guardar el rol encontrado para uso posterior
       req.userRoleDoc = role;
       next();
     } catch (error) {
+      console.error('Error en checkPermission:', error);
       res.status(500).json({
         success: false,
         message: error.message

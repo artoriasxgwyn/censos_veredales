@@ -4,7 +4,7 @@ import {
   getRoleById,
   createRole,
   updateRolePermissions,
-  deactivateRole,
+  deleteRole,
   getMyPermissions
 } from '../controllers/role.controller.js';
 import { auth, isPresident } from '../middlewares/auth.js';
@@ -185,9 +185,9 @@ router.put('/:id/permissions', auth, isPresident, updateRolePermissions);
 
 /**
  * @swagger
- * /api/roles/{id}/deactivate:
- *   post:
- *     summary: Desactivar rol personalizado (solo presidente)
+ * /api/roles/{id}:
+ *   delete:
+ *     summary: Eliminar rol personalizado (solo si no tiene usuarios, solo presidente)
  *     tags: [Roles]
  *     security:
  *       - xToken: []
@@ -199,12 +199,14 @@ router.put('/:id/permissions', auth, isPresident, updateRolePermissions);
  *           type: string
  *     responses:
  *       200:
- *         description: Rol desactivado
+ *         description: Rol eliminado
+ *       400:
+ *         description: No se puede eliminar porque hay usuarios con este rol
  *       403:
- *         description: Solo el presidente puede desactivar roles / Los roles base no se pueden desactivar
+ *         description: Solo el presidente puede eliminar roles / Los roles base no se pueden eliminar
  *       404:
  *         description: Rol no encontrado
  */
-router.post('/:id/deactivate', auth, isPresident, deactivateRole);
+router.delete('/:id', auth, isPresident, deleteRole);
 
 export default router;

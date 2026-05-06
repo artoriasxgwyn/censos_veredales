@@ -10,6 +10,14 @@
       />
     </div>
 
+    <!-- Banner de solicitud pendiente -->
+    <q-banner v-if="hasPendingChange" class="pending-banner" dense rounded>
+      <template v-slot:avatar>
+        <span class="material-symbols-outlined">hourglass_top</span>
+      </template>
+      Tienes una solicitud de cambio de perfil en revisión. La junta directiva debe aprobarla.
+    </q-banner>
+
     <div v-if="!authStore.loading && authStore.user" class="content">
       <q-card class="profile-card">
         <q-card-section class="profile-header">
@@ -33,7 +41,7 @@
 
         <q-separator />
 
-        <q-card-section>
+        <q-card-section id="personal-info">
           <h3 class="section-title">Información Personal</h3>
           <div class="info-grid">
             <div class="info-item">
@@ -96,7 +104,7 @@
 
       <!-- Stats cards -->
       <div class="stats-grid" v-if="dashboardStats">
-        <q-card class="stat-card">
+        <q-card class="stat-card dark-card">
           <q-card-section class="stat-header">
             <div class="stat-icon tertiary">
               <span class="material-symbols-outlined">home</span>
@@ -108,7 +116,7 @@
           </q-card-section>
         </q-card>
 
-        <q-card class="stat-card">
+        <q-card class="stat-card dark-card">
           <q-card-section class="stat-header">
             <div class="stat-icon warning">
               <span class="material-symbols-outlined">people</span>
@@ -120,7 +128,7 @@
           </q-card-section>
         </q-card>
 
-        <q-card class="stat-card">
+        <q-card class="stat-card dark-card">
           <q-card-section class="stat-header">
             <div class="stat-icon primary">
               <span class="material-symbols-outlined">description</span>
@@ -141,9 +149,9 @@
 
     <!-- Dialog para editar perfil -->
     <q-dialog v-model="showEditProfile">
-      <q-card style="min-width: 400px">
+      <q-card class="dark-dialog" style="min-width: 400px">
         <q-card-section>
-          <div class="text-h6">Editar Perfil</div>
+          <div class="dialog-title">Editar Perfil</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -155,8 +163,31 @@
             class="q-mb-md"
           />
           <q-input
+            v-model="editForm.documentNumber"
+            label="Número de Documento"
+            outlined
+            dense
+            class="q-mb-md"
+          />
+          <q-input
+            v-model="editForm.birthDate"
+            label="Fecha de Nacimiento"
+            type="date"
+            outlined
+            dense
+            class="q-mb-md"
+          />
+          <q-input
             v-model="editForm.phone"
             label="Teléfono"
+            outlined
+            dense
+            class="q-mb-md"
+          />
+          <q-input
+            v-model="editForm.email"
+            label="Correo Electrónico"
+            type="email"
             outlined
             dense
           />
@@ -171,9 +202,9 @@
 
     <!-- Dialog para cambiar contraseña -->
     <q-dialog v-model="showChangePassword">
-      <q-card style="min-width: 400px">
+      <q-card class="dark-dialog" style="min-width: 400px">
         <q-card-section>
-          <div class="text-h6">Cambiar Contraseña</div>
+          <div class="dialog-title">Cambiar Contraseña</div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -212,6 +243,7 @@ import { useResidentStore } from '@/stores/resident.store'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useCommunityStore } from '@/stores/community.store'
 import { useDashboardStore } from '@/stores/dashboard.store'
+import { userService } from '@/services/user.service'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -237,13 +269,19 @@ const showChangePassword = ref(false)
 
 const editForm = ref({
   fullName: '',
-  phone: ''
+  phone: '',
+  documentNumber: '',
+  birthDate: '',
+  email: ''
 })
 
 const passwordForm = ref({
   currentPassword: '',
   newPassword: ''
 })
+
+const pendingChanges = ref([])
+const hasPendingChange = computed(() => pendingChanges.value.some(c => c.status === 'pending'))
 
 onMounted(async () => {
   await authStore.fetchUser()
@@ -268,12 +306,36 @@ onMounted(async () => {
     }
   }
 
+  // Cargar solicitudes de cambio de perfil pendientes
+  try {
+    const pendingRes = await userService.getMyPendingChanges()
+    if (pendingRes.success) {
+      pendingChanges.value = pendingRes.data || []
+    }
+  } catch (e) {
+    // Silenciar error si el endpoint no está disponible
+  }
+
   if (user.value) {
     editForm.value = {
       fullName: user.value.fullName || '',
-      phone: user.value.phone || ''
+      phone: user.value.phone || '',
+      documentNumber: user.value.documentNumber || '',
+      birthDate: user.value.birthDate ? user.value.birthDate.split('T')[0] : '',
+      email: user.value.email || ''
     }
   }
+
+  // Scroll automático si viene con hash
+  setTimeout(() => {
+    const hash = window.location.hash
+    if (hash) {
+      const el = document.querySelector(hash)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }, 300)
 })
 
 const getRoleColor = (role) => {
@@ -331,12 +393,50 @@ const getCommunityName = (communityId) => {
 }
 
 const handleUpdateProfile = async () => {
-  // Nota: Esto requeriría un endpoint de actualización de perfil en el backend
-  $q.notify({
-    type: 'info',
-    message: 'La actualización de perfil estará disponible próximamente'
-  })
-  showEditProfile.value = false
+  try {
+    // Filtrar solo campos con valor
+    const payload = {};
+    if (editForm.value.fullName) payload.fullName = editForm.value.fullName;
+    if (editForm.value.phone) payload.phone = editForm.value.phone;
+    if (editForm.value.documentNumber) payload.documentNumber = editForm.value.documentNumber;
+    if (editForm.value.birthDate) payload.birthDate = editForm.value.birthDate;
+    if (editForm.value.email) payload.email = editForm.value.email;
+
+    if (Object.keys(payload).length === 0) {
+      $q.notify({ type: 'warning', message: 'No has realizado ningún cambio' })
+      return
+    }
+
+    if (authStore.isPresident) {
+      // Presidente: cambio inmediato
+      const res = await userService.updateUser(authStore.user._id || authStore.user.id, payload)
+      if (res.success) {
+        $q.notify({ type: 'positive', message: 'Perfil actualizado exitosamente' })
+        await authStore.fetchUser()
+        showEditProfile.value = false
+      } else {
+        throw new Error(res.message || 'Error al actualizar')
+      }
+    } else {
+      // Otros roles: solicitud con triple aprobación
+      const res = await userService.requestProfileChange(payload)
+      if (res.success) {
+        $q.notify({
+          type: 'positive',
+          message: 'Solicitud enviada. La junta directiva debe aprobar el cambio.'
+        })
+        pendingChanges.value.unshift(res.data)
+        showEditProfile.value = false
+      } else {
+        throw new Error(res.message || 'Error al enviar solicitud')
+      }
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.message || 'Error al procesar la solicitud'
+    })
+  }
 }
 
 const handleChangePassword = async () => {
@@ -390,6 +490,16 @@ const handleChangePassword = async () => {
 
 .profile-card {
   border-radius: 12px;
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.profile-card :deep(.q-card__section) {
+  background: transparent !important;
+}
+
+.profile-card :deep(.q-separator) {
+  background: var(--surface-container-highest) !important;
 }
 
 .profile-header {
@@ -547,5 +657,73 @@ const handleChangePassword = async () => {
   justify-content: center;
   padding: 60px 20px;
   color: var(--outline);
+}
+
+.pending-banner {
+  background: var(--warning-container) !important;
+  color: var(--on-warning-container) !important;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.pending-banner .material-symbols-outlined {
+  color: var(--warning) !important;
+}
+
+/* ============================================================
+   ESTILOS OSCUROS - DIALOGS, CARDS, INPUTS
+   ============================================================ */
+
+/* Dialogs oscuros */
+.dark-dialog {
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 12px;
+}
+
+.dark-dialog :deep(.q-card__section) {
+  background: transparent !important;
+}
+
+.dark-dialog .dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+/* Inputs dentro de dialogs oscuros */
+.dark-dialog :deep(.q-field--outlined .q-field__control) {
+  background: var(--surface-container-high) !important;
+  border-color: var(--surface-container-highest) !important;
+}
+
+.dark-dialog :deep(.q-field--outlined .q-field__label) {
+  color: var(--on-surface-variant) !important;
+}
+
+.dark-dialog :deep(.q-field--outlined .q-field__native) {
+  color: var(--on-surface) !important;
+}
+
+.dark-dialog :deep(.q-field__messages) {
+  color: var(--on-surface-variant) !important;
+}
+
+.dark-dialog :deep(.q-btn--flat) {
+  color: var(--on-surface) !important;
+}
+
+.dark-dialog :deep(.q-btn--flat:hover) {
+  background: var(--surface-container-high) !important;
+}
+
+/* Stat cards oscuras */
+.dark-card {
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.dark-card :deep(.q-card__section) {
+  background: transparent !important;
 }
 </style>

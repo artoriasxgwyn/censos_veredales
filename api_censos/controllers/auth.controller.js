@@ -296,43 +296,73 @@ export const forgotPassword = async (req, res) => {
       expiresAt
     });
 
-    // Configurar transporter de email
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-    });
-
     // URL de recuperación
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    // Enviar email
-    await transporter.sendMail({
-      from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_FROM_EMAIL}>`,
-      to: user.email,
-      subject: 'Recuperación de contraseña - Censos Veredales',
-      html: `
-        <h1>Recuperación de contraseña</h1>
-        <p>Hola ${user.fullName},</p>
-        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
-        <p><a href="${resetUrl}">${resetUrl}</a></p>
-        <p>Este enlace expirará en 1 hora.</p>
-        <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
-      `
-    });
+    // Verificar si SMTP está configurado
+    const isSmtpConfigured = process.env.SMTP_USER &&
+                              process.env.SMTP_PASS &&
+                              process.env.SMTP_USER !== 'tuemail@gmail.com';
 
-    res.json({
-      success: true,
-      message: 'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña'
-    });
+    if (isSmtpConfigured) {
+      // Configurar transporter de email
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+
+      // Enviar email
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_FROM_EMAIL}>`,
+        to: user.email,
+        subject: 'Recuperación de contraseña - Censos Veredales',
+        html: `
+          <h1>Recuperación de contraseña</h1>
+          <p>Hola ${user.fullName},</p>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar:</p>
+          <p><a href="${resetUrl}">${resetUrl}</a></p>
+          <p>Este enlace expirará en 1 hora.</p>
+          <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+        `
+      });
+
+      res.json({
+        success: true,
+        message: 'Si el email está registrado, recibirás instrucciones para restablecer tu contraseña'
+      });
+    } else {
+      // Modo desarrollo: mostrar token en consola
+      console.log('===========================================');
+      console.log('🔑 TOKEN DE RECUPERACIÓN (Desarrollo)');
+      console.log('===========================================');
+      console.log(`Email: ${user.email}`);
+      console.log(`Token: ${token}`);
+      console.log(`URL: ${resetUrl}`);
+      console.log('===========================================');
+
+      res.json({
+        success: true,
+        message: 'Modo desarrollo: Token mostrado en consola del servidor',
+        debug: { resetUrl, token }
+      });
+    }
   } catch (error) {
-    console.error('Error al solicitar recuperación de contraseña:', error);
+    console.error('=== ERROR EN forgotPassword ===');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
+    console.error('SMTP config:', {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER
+    });
     res.status(500).json({
-      message: 'Error al procesar la solicitud'
+      message: 'Error al procesar la solicitud',
+      error: error.message
     });
   }
 };

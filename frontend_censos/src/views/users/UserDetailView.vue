@@ -11,7 +11,7 @@
     </div>
 
     <div v-if="!userStore.loading && user" class="content">
-      <q-card class="user-card">
+      <q-card class="user-detail-card">
         <q-card-section class="user-header">
           <div class="user-avatar">
             <span class="material-symbols-outlined">person</span>
@@ -84,6 +84,15 @@
             Cada usuario solo puede tener un rol a la vez. Para cambiar el rol, primero remueve el actual.
           </p>
 
+          <!-- Roles de junta directiva ya ocupados -->
+          <div v-if="occupiedBoardRoles.length > 0" class="occupied-roles-hint">
+            <span class="material-symbols-outlined">block</span>
+            <span>
+              Los siguientes roles ya estan asignados a otro usuario:
+              <strong>{{ occupiedBoardRoles.map(getRoleLabel).join(', ') }}</strong>.
+            </span>
+          </div>
+
           <!-- Usuario ya tiene un rol -->
           <div v-if="user.role" class="current-role">
             <div class="current-role-badge">
@@ -114,12 +123,20 @@
                 @click="handleAssignRole(role)"
               />
               <q-btn
-                v-else-if="user.role === role"
+                v-else-if="user.role === role && user._id !== authStore.user?._id"
                 color="negative"
                 label="Remover"
                 size="sm"
                 @click="handleRemoveRole()"
               />
+              <q-badge
+                v-else-if="user.role === role && user._id === authStore.user?._id"
+                color="positive"
+                outline
+              >
+                <span class="material-symbols-outlined" style="font-size: 14px;">verified_user</span>
+                Tu rol
+              </q-badge>
               <q-badge
                 v-else
                 color="grey"
@@ -171,10 +188,9 @@ const userId = computed(() => route.params.id)
 const user = computed(() => userStore.currentUser)
 
 const canManageRoles = computed(() => {
-  // President, tesorero y secretario pueden gestionar roles
+  // Solo el presidente puede gestionar roles de junta directiva
   const userRole = authStore.user?.role || authStore.userRole
-  const result = userRole === 'president' || userRole === 'tesorero' || userRole === 'secretario'
-  console.log('canManageRoles:', { userRole, result, authStoreUser: authStore.user })
+  const result = userRole === 'president'
   return result
 })
 
@@ -182,12 +198,26 @@ const userResident = computed(() => {
   return residentStore.residents.find(r => r.userId?._id === userId.value || r.userId === userId.value)
 })
 
-// Roles asignables desde el store (excluye president por seguridad)
+// Roles de junta directiva ya ocupados por otro usuario en la comunidad
+const occupiedBoardRoles = computed(() => {
+  const boardRoles = ['president', 'tesorero', 'secretario']
+  return boardRoles.filter(role => {
+    const occupant = userStore.users.find(
+      u => u.role === role && u._id !== userId.value && u.isActive !== false
+    )
+    return !!occupant
+  })
+})
+
+// Roles asignables desde el store (filtra ocupados y residente por defecto)
 const availableRoles = computed(() => {
   const roles = roleStore.roles
-    .filter(r => r.isActive && r.name !== 'president' && r.name !== 'residente') // residente es el rol por defecto
+    .filter(r => r.isActive && r.name !== 'residente')
     .map(r => r.customName || r.name)
-  return roles
+
+  // Ocultar roles de junta directiva ya ocupados por otro usuario
+  const occupied = occupiedBoardRoles.value
+  return roles.filter(role => !occupied.includes(role))
 })
 
 const getRoleColor = (role) => {
@@ -221,6 +251,7 @@ const getRoleLabel = (role) => {
 onMounted(async () => {
   await Promise.all([
     userStore.fetchUserById(userId.value),
+    userStore.fetchUsers(),
     residentStore.fetchResidents(),
     dwellingStore.fetchDwellings(),
     communityStore.fetchCommunities(),
@@ -381,8 +412,19 @@ const isLastAdmin = (role) => {
   gap: 16px;
 }
 
-.user-card {
-  border-radius: 12px;
+.user-detail-card {
+  border-radius: 16px;
+  background: var(--surface-container-lowest) !important;
+  border: 1px solid var(--surface-container-highest);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-detail-card :deep(.q-card__section) {
+  background: transparent !important;
+}
+
+.user-detail-card :deep(.q-separator) {
+  background: var(--surface-container-highest) !important;
 }
 
 .user-header {
@@ -399,6 +441,7 @@ const isLastAdmin = (role) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 40, 142, 0.2);
 }
 
 .user-avatar .material-symbols-outlined {
@@ -412,8 +455,8 @@ const isLastAdmin = (role) => {
 
 .user-name {
   font-size: 20px;
-  font-weight: 600;
-  color: var(--black);
+  font-weight: 700;
+  color: var(--on-surface);
   margin: 0 0 4px 0;
 }
 
@@ -432,8 +475,10 @@ const isLastAdmin = (role) => {
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--black);
-  margin: 0 0 8px 0;
+  color: var(--on-surface);
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary);
 }
 
 .roles-hint {
@@ -446,11 +491,30 @@ const isLastAdmin = (role) => {
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 16px;
+  border: 1px solid var(--surface-container-highest);
 }
 
 .roles-hint .material-symbols-outlined {
   font-size: 18px;
   color: var(--primary);
+}
+
+.occupied-roles-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--on-error-container);
+  background: var(--error-container);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid var(--error);
+}
+
+.occupied-roles-hint .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--error);
 }
 
 .current-role {
@@ -462,11 +526,12 @@ const isLastAdmin = (role) => {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: var(--primary-container);
-  color: var(--on-primary-container);
+  background: var(--primary-50);
+  color: var(--primary);
+  border: 1px solid var(--primary);
   border-radius: 20px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .current-role-badge .material-symbols-outlined {
@@ -486,15 +551,16 @@ const isLastAdmin = (role) => {
 }
 
 .info-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--on-surface-variant);
+  color: var(--outline);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .info-value {
   font-size: 14px;
-  color: var(--black);
+  color: var(--on-surface);
 }
 
 .resident-info {
@@ -514,9 +580,10 @@ const isLastAdmin = (role) => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: var(--surface-container-lowest);
-  border-radius: 8px;
-  border: 2px solid transparent;
+  background: var(--surface-container);
+  border-radius: 12px;
+  border: 1px solid var(--surface-container-highest);
+  transition: all 0.2s;
 }
 
 .role-item.assigned {
@@ -538,7 +605,7 @@ const isLastAdmin = (role) => {
 .role-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--black);
+  color: var(--on-surface);
 }
 
 .role-description {
@@ -552,10 +619,22 @@ const isLastAdmin = (role) => {
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  color: var(--on-surface-variant);
 }
 
 .loading {
-  color: var(--outline);
+  color: var(--on-surface-variant);
+}
+
+.no-data .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--error);
+  margin-bottom: 16px;
+}
+
+.no-data p {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0;
 }
 </style>
+

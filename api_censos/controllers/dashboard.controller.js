@@ -143,6 +143,8 @@ export const getResidentDashboard = async (req, res) => {
       ]
     });
 
+    const myDwelling = dwellings[0] || null;
+
     // Anuncios recientes de la comunidad
     const recentAnnouncements = await Announcement.find({
       communityId,
@@ -152,6 +154,19 @@ export const getResidentDashboard = async (req, res) => {
       .sort({ publishedAt: -1 })
       .limit(10)
       .populate('createdBy', 'fullName');
+
+    // Contacto del presidente (phone desde User, no community.presidentWhatsApp)
+    const community = await Community.findById(communityId).populate('presidentId', 'phone');
+    const presidentContact = community?.presidentId?.phone || null;
+
+    // Últimas 5 cartas del usuario
+    const recentLetters = await Letter.find({
+      userId,
+      communityId,
+      isActive: true
+    })
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     // Permisos del usuario
     const permissions = {
@@ -167,12 +182,82 @@ export const getResidentDashboard = async (req, res) => {
         residents,
         letters,
         dwellings,
+        myDwelling,
+        presidentContact,
+        recentLetters,
         recentAnnouncements,
         permissions
       }
     });
   } catch (error) {
     console.error('Error al obtener dashboard de residente:', error);
+    res.status(500).json({
+      message: 'Error al obtener el dashboard'
+    });
+  }
+};
+
+/**
+ * Dashboard para censista
+ * Muestra métricas de los registros realizados por el censista
+ */
+export const getCensusTakerDashboard = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const communityId = req.communityId;
+
+    // Total viviendas registradas por el censista
+    const myDwellings = await Dwelling.find({
+      communityId: new mongoose.Types.ObjectId(communityId),
+      createdBy: new mongoose.Types.ObjectId(userId),
+      isActive: true
+    });
+
+    // Total residentes registrados por el censista
+    const myResidents = await Resident.find({
+      communityId: new mongoose.Types.ObjectId(communityId),
+      createdBy: new mongoose.Types.ObjectId(userId),
+      isActive: true
+    }).populate('userId', 'fullName');
+
+    // Pendientes de aprobación (de los registros del censista)
+    const pendingDwellings = myDwellings.filter(d => d.status === 'pending').length;
+    const pendingResidents = myResidents.filter(r => r.status === 'pending').length;
+
+    // Últimos 5 registros (viviendas + residentes)
+    const dwellingItems = myDwellings.map(d => ({
+      _id: d._id,
+      type: 'dwelling',
+      name: d.houseNomenclature || 'Sin nomenclatura',
+      status: d.status,
+      createdAt: d.createdAt
+    }));
+
+    const residentItems = myResidents.map(r => ({
+      _id: r._id,
+      type: 'resident',
+      name: r.userId?.fullName || 'Residente',
+      status: r.status,
+      createdAt: r.createdAt
+    }));
+
+    const recentRegistrations = [...dwellingItems, ...residentItems]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 5);
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          myDwellings: myDwellings.length,
+          myResidents: myResidents.length,
+          pendingApprovals: pendingDwellings + pendingResidents
+        },
+        recentRegistrations
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener dashboard de censista:', error);
     res.status(500).json({
       message: 'Error al obtener el dashboard'
     });

@@ -6,9 +6,8 @@ export const createUserSchema = z.object({
   birthDate: z.string().optional(),
   phone: z.string().regex(/^3\d{9}$/, 'El teléfono debe ser un número colombiano válido (ej: 3001234567)'),
   email: z.string().email('Email inválido'),
-  signature: z.string().optional(),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  communityId: z.string().min(1, 'El ID de la comunidad es requerido')
+  role: z.string().min(1, 'El rol es requerido')
 });
 
 export const loginSchema = z.object({

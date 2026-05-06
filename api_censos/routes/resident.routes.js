@@ -13,6 +13,7 @@ import {
 import { validate } from '../middlewares/validate.js';
 import { createResidentSchema, updateResidentSchema, approveResidentSchema } from '../schemas/resident.schema.js';
 import { auth, checkPermission } from '../middlewares/auth.js';
+import { auditLog } from '../middlewares/audit.js';
 
 const router = Router();
 
@@ -81,7 +82,7 @@ router.get('/:id', auth, checkPermission('resident', 'read'), getResidentById);
  *         description: Datos inválidos
  */
 // POST /api/residents - Crear residente (requiere resident:create)
-router.post('/', auth, checkPermission('resident', 'create'), validate(createResidentSchema), createResident);
+router.post('/', auth, checkPermission('resident', 'create'), validate(createResidentSchema), auditLog('resident', 'create'), createResident);
 
 /**
  * @swagger
@@ -117,7 +118,7 @@ router.post('/', auth, checkPermission('resident', 'create'), validate(createRes
  *         description: Residente no encontrado
  */
 // PUT /api/residents/:id - Actualizar residente (requiere resident:update)
-router.put('/:id', auth, checkPermission('resident', 'update'), validate(updateResidentSchema), updateResident);
+router.put('/:id', auth, checkPermission('resident', 'update'), validate(updateResidentSchema), auditLog('resident', 'update'), updateResident);
 
 /**
  * @swagger
@@ -136,7 +137,7 @@ router.put('/:id', auth, checkPermission('resident', 'update'), validate(updateR
  *         description: Residente eliminado
  */
 // DELETE /api/residents/:id - Eliminar residente (requiere resident:delete)
-router.delete('/:id', auth, checkPermission('resident', 'delete'), deleteResident);
+router.delete('/:id', auth, checkPermission('resident', 'delete'), auditLog('resident', 'delete'), deleteResident);
 
 /**
  * @swagger
@@ -167,7 +168,7 @@ router.delete('/:id', auth, checkPermission('resident', 'delete'), deleteResiden
  *       404:
  *         description: Residente no encontrado
  */
-router.post('/:id/approve/president', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), approveByPresident);
+router.post('/:id/approve/president', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), auditLog('resident', 'approve'), approveByPresident);
 
 /**
  * @swagger
@@ -198,7 +199,7 @@ router.post('/:id/approve/president', auth, checkPermission('resident', 'update'
  *       404:
  *         description: Residente no encontrado
  */
-router.post('/:id/approve/treasurer', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), approveByTreasurer);
+router.post('/:id/approve/treasurer', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), auditLog('resident', 'approve'), approveByTreasurer);
 
 /**
  * @swagger
@@ -229,7 +230,7 @@ router.post('/:id/approve/treasurer', auth, checkPermission('resident', 'update'
  *       404:
  *         description: Residente no encontrado
  */
-router.post('/:id/approve/secretary', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), approveBySecretary);
+router.post('/:id/approve/secretary', auth, checkPermission('resident', 'update'), validate(approveResidentSchema), auditLog('resident', 'approve'), approveBySecretary);
 
 /**
  * @swagger

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { useAuthStore } from '@/stores/auth.store'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  baseURL: import.meta.env.VITE_API_URL || '/api'
 })
 
 // Request interceptor - agregar token
@@ -22,6 +22,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.log('=== AXIOS ERROR INTERCEPTOR ===');
+    console.log('status:', error.response?.status);
+    console.log('url:', error.config?.url);
+    console.log('method:', error.config?.method);
+    console.log('data:', error.response?.data);
+
     const originalRequest = error.config
 
     // NO intentar refresh para requests de autenticación (login, registro, etc.)
@@ -32,6 +38,7 @@ api.interceptors.response.use(
 
     // Si el error es 401 y no es un request de autenticación y no hemos intentado refresh
     if (error.response?.status === 401 && !isAuthRequest && !originalRequest._retry) {
+      console.log('Intentando refresh token...');
       originalRequest._retry = true
       const authStore = useAuthStore()
 
@@ -46,6 +53,7 @@ api.interceptors.response.use(
         originalRequest.headers['x-token'] = accessToken
         return api(originalRequest)
       } catch (refreshError) {
+        console.log('Refresh fallido, cerrando sesión');
         // Refresh fallido - cerrar sesión
         authStore.logout()
         window.location.href = '/login'

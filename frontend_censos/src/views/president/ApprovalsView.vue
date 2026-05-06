@@ -185,7 +185,7 @@
                   </div>
                   <div class="item-info">
                     <h3 class="item-title">{{ dwelling.houseNomenclature || 'Sin nomenclatura' }}</h3>
-                    <p class="item-subtitle">{{ dwelling.communityId?.neighborhood || 'Comunidad' }}</p>
+                    <p class="item-subtitle">Código: {{ getCommunityCode(dwelling.communityId) }}</p>
                   </div>
                   <q-badge :color="getStatusColor(dwelling.status)">
                     {{ getStatusLabel(dwelling.status) }}
@@ -338,6 +338,7 @@ import { useDwellingStore } from '@/stores/dwelling.store'
 import { useLetterStore } from '@/stores/letter.store'
 import { useUserStore } from '@/stores/user.store'
 import { useAuthStore } from '@/stores/auth.store'
+import { useCommunityStore } from '@/stores/community.store'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -346,6 +347,7 @@ const dwellingStore = useDwellingStore()
 const letterStore = useLetterStore()
 const userStore = useUserStore()
 const authStore = useAuthStore()
+const communityStore = useCommunityStore()
 
 // Security check: Only presidents can access this view
 onMounted(() => {
@@ -419,6 +421,18 @@ const getApprovalIcon = (status) => {
   if (status === 'approved') return 'check_circle'
   if (status === 'rejected') return 'cancel'
   return 'pending'
+}
+
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
+  }
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
 }
 
 const handleApprove = async (type, item) => {
@@ -792,6 +806,8 @@ const getVoteForRole = (item, role) => {
 }
 
 .item-card {
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
   border-radius: 12px !important;
   overflow: hidden;
   transition: all 0.2s;

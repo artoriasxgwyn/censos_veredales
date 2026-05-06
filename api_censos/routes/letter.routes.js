@@ -13,6 +13,7 @@ import {
   verifyByQr
 } from '../controllers/letter.controller.js';
 import { auth, checkPermission } from '../middlewares/auth.js';
+import { auditLog } from '../middlewares/audit.js';
 
 const router = Router();
 
@@ -52,7 +53,9 @@ const router = Router();
  *       404:
  *         description: Residente no encontrado
  */
-router.post('/', auth, checkPermission('letter', 'generateNormal'), requestLetter);
+// POST /api/letters - Solicitar carta (normal o juramentada)
+// El controller verifica el permiso según el tipo (generateNormal o generateJuramentada)
+router.post('/', auth, auditLog('letter', 'create'), requestLetter);
 
 /**
  * @swagger
@@ -136,7 +139,7 @@ router.get('/:id', auth, getLetterById);
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/president', auth, checkPermission('letter', 'generateNormal'), approveByPresident);
+router.post('/:id/approve/president', auth, auditLog('letter', 'approve'), approveByPresident);
 
 /**
  * @swagger
@@ -168,7 +171,7 @@ router.post('/:id/approve/president', auth, checkPermission('letter', 'generateN
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/treasurer', auth, checkPermission('letter', 'generateNormal'), approveByTreasurer);
+router.post('/:id/approve/treasurer', auth, auditLog('letter', 'approve'), approveByTreasurer);
 
 /**
  * @swagger
@@ -200,7 +203,7 @@ router.post('/:id/approve/treasurer', auth, checkPermission('letter', 'generateN
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/secretary', auth, checkPermission('letter', 'generateNormal'), approveBySecretary);
+router.post('/:id/approve/secretary', auth, auditLog('letter', 'approve'), approveBySecretary);
 
 /**
  * @swagger

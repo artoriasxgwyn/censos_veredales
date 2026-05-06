@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import Community from '../models/community.model.js';
 import { getCommunities, getCommunityById, getCommunityByCode, createCommunity, updateCommunity, deleteCommunity } from '../controllers/community.controller.js';
 import { validate } from '../middlewares/validate.js';
 import { createCommunitySchema, updateCommunitySchema } from '../schemas/community.schema.js';
-import { auth, isPresident } from '../middlewares/auth.js';
+import { auth, isPresident, checkPermission } from '../middlewares/auth.js';
+import { auditLog } from '../middlewares/audit.js';
 
 const router = Router();
 
@@ -43,6 +45,35 @@ router.get('/code/:code', getCommunityByCode);
 
 /**
  * @swagger
+ * /api/communities/my-community:
+ *   get:
+ *     summary: Obtener comunidad del usuario autenticado
+ *     tags: [Comunidades]
+ *     description: Retorna la comunidad a la que pertenece el usuario autenticado, incluyendo el código de 6 dígitos
+ *     responses:
+ *       200:
+ *         description: Comunidad encontrada
+ *       404:
+ *         description: Usuario sin comunidad asignada
+ */
+// GET /api/communities/my-community - Obtener comunidad del usuario (sin permisos especiales)
+router.get('/my-community', auth, async (req, res) => {
+  try {
+    const community = await Community.findOne({ _id: req.communityId, isActive: true })
+      .populate('presidentId', 'fullName email phone')
+      .populate('treasurerId', 'fullName email phone')
+      .populate('secretaryId', 'fullName email phone');
+    if (!community) {
+      return res.status(404).json({ success: false, message: 'Usuario sin comunidad asignada' });
+    }
+    res.json({ success: true, data: community });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/communities/{id}:
  *   get:
  *     summary: Obtener comunidad por ID
@@ -59,7 +90,8 @@ router.get('/code/:code', getCommunityByCode);
  *       404:
  *         description: Comunidad no encontrada
  */
-router.get('/:id', auth, getCommunityById);
+// GET /api/communities/:id - Obtener comunidad por ID (requiere community:read)
+router.get('/:id', auth, checkPermission('community', 'read'), getCommunityById);
 
 /**
  * @swagger
@@ -216,8 +248,8 @@ router.post('/', validate(createCommunitySchema), createCommunity);
  *       404:
  *         description: Comunidad no encontrada
  */
-// PUT /api/communities/:id - Actualizar comunidad (solo presidente)
-router.put('/:id', auth, isPresident, validate(updateCommunitySchema), updateCommunity);
+// PUT /api/communities/:id - Actualizar comunidad (requiere presidente)
+router.put('/:id', auth, isPresident, validate(updateCommunitySchema), auditLog('community', 'update'), updateCommunity);
 
 /**
  * @swagger
@@ -235,7 +267,7 @@ router.put('/:id', auth, isPresident, validate(updateCommunitySchema), updateCom
  *       200:
  *         description: Comunidad eliminada
  */
-// DELETE /api/communities/:id - Eliminar comunidad (solo presidente)
-router.delete('/:id', auth, isPresident, deleteCommunity);
+// DELETE /api/communities/:id - Eliminar comunidad (requiere community:delete + presidente)
+router.delete('/:id', auth, checkPermission('community', 'delete'), isPresident, auditLog('community', 'delete'), deleteCommunity);
 
 export default router;

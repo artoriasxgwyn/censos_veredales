@@ -3,6 +3,7 @@ import { getDwellings, getDwellingById, createDwelling, updateDwelling, deleteDw
 import { validate } from '../middlewares/validate.js';
 import { createDwellingSchema, updateDwellingSchema, approveDwellingSchema } from '../schemas/dwelling.schema.js';
 import { auth, checkPermission } from '../middlewares/auth.js';
+import { auditLog } from '../middlewares/audit.js';
 
 const router = Router();
 
@@ -37,6 +38,145 @@ router.get('/', auth, checkPermission('dwelling', 'read'), getDwellings);
  *       404:
  *         description: Vivienda no encontrada
  */
+// Rutas específicas primero (antes de la ruta genérica /:id)
+
+/**
+ * @swagger
+ * /api/dwellings/{id}/approval-status:
+ *   get:
+ *     summary: Obtener estado de aprobación de una vivienda
+ *     tags: [Viviendas]
+ *     security:
+ *       - xToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Estado de aprobación (president, treasurer, secretary)
+ *       404:
+ *         description: Vivienda no encontrada
+ */
+router.get('/:id/approval-status', auth, checkPermission('dwelling', 'read'), getApprovalStatus);
+
+/**
+ * @swagger
+ * /api/dwellings/{id}/approve/president:
+ *   post:
+ *     summary: Aprobar vivienda como Presidente
+ *     tags: [Viviendas]
+ *     security:
+ *       - xToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - action
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [approve, reject]
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Aprobación registrada
+ *       400:
+ *         description: Ya aprobaste/rechazaste esta vivienda
+ *       404:
+ *         description: Vivienda no encontrada
+ */
+router.post('/:id/approve/president', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), auditLog('dwelling', 'approve'), approveByPresident);
+
+/**
+ * @swagger
+ * /api/dwellings/{id}/approve/treasurer:
+ *   post:
+ *     summary: Aprobar vivienda como Tesorero
+ *     tags: [Viviendas]
+ *     security:
+ *       - xToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - action
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [approve, reject]
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Aprobación registrada
+ *       400:
+ *         description: Ya aprobaste/rechazaste esta vivienda
+ *       404:
+ *         description: Vivienda no encontrada
+ */
+router.post('/:id/approve/treasurer', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), auditLog('dwelling', 'approve'), approveByTreasurer);
+
+/**
+ * @swagger
+ * /api/dwellings/{id}/approve/secretary:
+ *   post:
+ *     summary: Aprobar vivienda como Secretario
+ *     tags: [Viviendas]
+ *     security:
+ *       - xToken: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - action
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [approve, reject]
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Aprobación registrada
+ *       400:
+ *         description: Ya aprobaste/rechazaste esta vivienda
+ *       404:
+ *         description: Vivienda no encontrada
+ */
+router.post('/:id/approve/secretary', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), auditLog('dwelling', 'approve'), approveBySecretary);
+
+// Ruta genérica /:id va al final
 router.get('/:id', auth, checkPermission('dwelling', 'read'), getDwellingById);
 
 /**
@@ -84,7 +224,7 @@ router.get('/:id', auth, checkPermission('dwelling', 'read'), getDwellingById);
  *         description: Datos inválidos
  */
 // POST /api/dwellings - Crear vivienda (requiere dwelling:create)
-router.post('/', auth, checkPermission('dwelling', 'create'), validate(createDwellingSchema), createDwelling);
+router.post('/', auth, checkPermission('dwelling', 'create'), validate(createDwellingSchema), auditLog('dwelling', 'create'), createDwelling);
 
 /**
  * @swagger
@@ -129,7 +269,7 @@ router.post('/', auth, checkPermission('dwelling', 'create'), validate(createDwe
  *         description: Vivienda no encontrada
  */
 // PUT /api/dwellings/:id - Actualizar vivienda (requiere dwelling:update)
-router.put('/:id', auth, checkPermission('dwelling', 'update'), validate(updateDwellingSchema), updateDwelling);
+router.put('/:id', auth, checkPermission('dwelling', 'update'), validate(updateDwellingSchema), auditLog('dwelling', 'update'), updateDwelling);
 
 /**
  * @swagger
@@ -148,145 +288,6 @@ router.put('/:id', auth, checkPermission('dwelling', 'update'), validate(updateD
  *         description: Vivienda eliminada
  */
 // DELETE /api/dwellings/:id - Eliminar vivienda (requiere dwelling:delete)
-router.delete('/:id', auth, checkPermission('dwelling', 'delete'), deleteDwelling);
-
-/**
- * @swagger
- * /api/dwellings/{id}/approve/president:
- *   post:
- *     summary: Presidente aprueba/rechaza vivienda
- *     tags: [Viviendas]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [pending, approved, rejected]
- *                 description: Estado de la aprobación
- *     responses:
- *       200:
- *         description: Aprobación del presidente registrada
- *       404:
- *         description: Vivienda no encontrada
- */
-// POST /api/dwellings/:id/approve/president - Presidente aprueba (requiere dwelling:update)
-router.post('/:id/approve/president', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), approveByPresident);
-
-/**
- * @swagger
- * /api/dwellings/{id}/approve/treasurer:
- *   post:
- *     summary: Tesorero aprueba/rechaza vivienda
- *     tags: [Viviendas]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [pending, approved, rejected]
- *                 description: Estado de la aprobación
- *     responses:
- *       200:
- *         description: Aprobación del tesorero registrada
- *       404:
- *         description: Vivienda no encontrada
- */
-router.post('/:id/approve/treasurer', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), approveByTreasurer);
-
-/**
- * @swagger
- * /api/dwellings/{id}/approve/secretary:
- *   post:
- *     summary: Secretario aprueba/rechaza vivienda
- *     tags: [Viviendas]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [pending, approved, rejected]
- *                 description: Estado de la aprobación
- *     responses:
- *       200:
- *         description: Aprobación del secretario registrada
- *       404:
- *         description: Vivienda no encontrada
- */
-router.post('/:id/approve/secretary', auth, checkPermission('dwelling', 'update'), validate(approveDwellingSchema), approveBySecretary);
-
-/**
- * @swagger
- * /api/dwellings/{id}/approval-status:
- *   get:
- *     summary: Obtener estado de aprobación de vivienda
- *     tags: [Viviendas]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Estado de aprobación obtenido
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     dwelling:
- *                       type: object
- *                     approvals:
- *                       type: object
- *                       properties:
- *                         president:
- *                           type: boolean
- *                         treasurer:
- *                           type: boolean
- *                         secretary:
- *                           type: boolean
- *                         count:
- *                           type: integer
- *                         isFullyApproved:
- *                           type: boolean
- *       404:
- *         description: Vivienda no encontrada
- */
-router.get('/:id/approval-status', auth, checkPermission('dwelling', 'read'), getApprovalStatus);
+router.delete('/:id', auth, checkPermission('dwelling', 'delete'), auditLog('dwelling', 'delete'), deleteDwelling);
 
 export default router;

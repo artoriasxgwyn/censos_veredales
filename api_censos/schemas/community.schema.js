@@ -1,10 +1,20 @@
 import { z } from 'zod';
 
+// Validación para URL de Google Maps con coordenadas
+const googleMapsUrlSchema = z.string().url('Debe ser una URL válida').refine(
+  (url) => {
+    const googleMapsPattern = /^https:\/\/(www\.)?google\.com\/maps\?.*q=-?\d+\.?\d*,-?\d+\.?\d*/i;
+    return googleMapsPattern.test(url);
+  },
+  { message: 'Debe ser una URL de Google Maps con coordenadas (ej: https://www.google.com/maps?q=7.123,-73.123)' }
+);
+
 export const createCommunitySchema = z.object({
   neighborhood: z.string().min(1, 'El barrio es requerido'),
   city: z.string().min(1, 'La ciudad es requerida'),
+  department: z.string().min(1, 'El departamento es requerido'),
   communityHallAddress: z.string().min(1, 'La dirección del salón comunal es requerida'),
-  mapLocation: z.string().url('URL inválida').optional(),
+  mapLocation: googleMapsUrlSchema.optional(),
   estimatedResidentCount: z.number().positive('Debe ser un número positivo').optional(),
   president: z.object({
     fullName: z.string().min(1, 'El nombre completo es requerido'),
@@ -20,8 +30,9 @@ export const createCommunitySchema = z.object({
 export const updateCommunitySchema = z.object({
   neighborhood: z.string().min(1).optional(),
   city: z.string().min(1).optional(),
+  department: z.string().min(1).optional(),
   communityHallAddress: z.string().min(1).optional(),
-  mapLocation: z.string().url().optional(),
+  mapLocation: googleMapsUrlSchema.optional(),
   estimatedResidentCount: z.number().positive().optional(),
   isActive: z.boolean().optional()
 });

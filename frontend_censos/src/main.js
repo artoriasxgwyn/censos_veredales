@@ -54,6 +54,7 @@ app.use(Quasar, {
     Loading
   },
   config: {
+    dark: true,
     notify: {
       position: 'top-right',
       timeout: 3000,

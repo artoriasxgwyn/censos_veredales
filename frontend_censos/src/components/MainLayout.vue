@@ -6,7 +6,7 @@
       show-if-above
       bordered
       class="sidebar"
-      :style="{ backgroundColor: '#fafafa' }"
+      :style="{ backgroundColor: 'var(--surface)' }"
     >
       <div class="sidebar-content">
         <!-- Logo -->
@@ -16,7 +16,7 @@
         </div>
 
         <!-- User Profile -->
-        <div class="user-profile">
+        <div class="user-profile" @click="goToProfile" style="cursor: pointer;">
           <div class="avatar-container">
             <q-avatar size="40px">
               <span class="material-symbols-outlined">person</span>
@@ -26,6 +26,7 @@
             <p class="user-name">{{ authStore.user?.fullName || 'Usuario' }}</p>
             <p class="user-role">{{ getRoleLabel(authStore.userRole) }}</p>
           </div>
+          <span class="material-symbols-outlined edit-icon">edit</span>
         </div>
 
         <!-- Navigation -->
@@ -107,6 +108,21 @@
               </q-item-section>
               <q-item-section>
                 <q-item-label>Anuncios</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              :to="{ name: 'MyCommunity' }"
+              v-if="hasPermission('community', 'read')"
+              class="nav-item"
+            >
+              <q-item-section avatar>
+                <span class="material-symbols-outlined">account_balance</span>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Mi Comunidad</q-item-label>
               </q-item-section>
             </q-item>
 
@@ -213,7 +229,21 @@
             <q-item
               clickable
               v-ripple
-              :to="{ name: 'UserProfile' }"
+              :to="{ name: 'MyCommunity' }"
+              class="nav-item"
+            >
+              <q-item-section avatar>
+                <span class="material-symbols-outlined">account_balance</span>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Mi Comunidad</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+              :to="{ name: 'UserProfileUniversal' }"
               class="nav-item"
             >
               <q-item-section avatar>
@@ -266,14 +296,64 @@
             flat
             round
             icon="notifications"
-            @click="showNotifications = !showNotifications"
+            @click="toggleNotifications"
             aria-label="Notificaciones"
-            :aria-busy="hasNotifications"
+            :aria-busy="notificationStore.hasUnreadNotifications"
           >
-            <q-badge color="red" floating v-if="hasNotifications">
-              {{ notificationCount }}
+            <q-badge color="red" floating v-if="notificationStore.hasUnreadNotifications">
+              {{ notificationStore.unreadCount }}
             </q-badge>
           </q-btn>
+
+          <!-- Notifications Dropdown -->
+          <q-dialog v-model="showNotifications" persistent>
+            <q-card class="notifications-dialog" style="min-width: 400px; max-width: 600px;">
+              <q-card-section class="row items-center q-pb-none">
+                <div class="text-h6">Notificaciones</div>
+                <q-space />
+                <q-btn
+                  v-if="notificationStore.hasUnreadNotifications"
+                  flat
+                  round
+                  dense
+                  icon="done_all"
+                  @click="markAllAsRead"
+                  aria-label="Marcar todas como leídas"
+                />
+                <q-btn flat round dense icon="close" v-close-popup />
+              </q-card-section>
+
+              <q-separator />
+
+              <q-card-section style="max-height: 400px; overflow-y: auto;">
+                <div v-if="notificationStore.loading" class="text-center q-pa-md">
+                  <q-spinner color="primary" size="3em" />
+                </div>
+                <div v-else-if="notificationStore.notifications.length === 0" class="text-center q-pa-md">
+                  <span class="material-symbols-outlined" style="font-size: 48px; color: var(--outline);">notifications_none</span>
+                  <p class="q-mt-sm text-grey-7">No hay notificaciones</p>
+                </div>
+                <div v-else class="notifications-list">
+                  <div
+                    v-for="notification in notificationStore.notifications"
+                    :key="notification._id"
+                    class="notification-item"
+                    :class="{ 'notification-unread': !notification.read }"
+                    @click="markAsRead(notification._id)"
+                  >
+                    <div class="notification-icon">
+                      <span class="material-symbols-outlined">{{ getNotificationIcon(notification.type) }}</span>
+                    </div>
+                    <div class="notification-content">
+                      <div class="notification-title">{{ notification.title }}</div>
+                      <div class="notification-message">{{ notification.message }}</div>
+                      <div class="notification-time">{{ formatTime(notification.createdAt) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+          </q-dialog>
         </div>
       </q-toolbar>
     </q-header>
@@ -286,22 +366,32 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth.store'
+import { useNotificationStore } from '@/stores/notification.store'
 
 const router = useRouter()
 const route = useRoute()
 const $q = useQuasar()
 const authStore = useAuthStore()
+const notificationStore = useNotificationStore()
 
 const leftDrawerOpen = ref(false)
 const showNotifications = ref(false)
 
-// Variables para notificaciones (pendientes de implementar)
-const hasNotifications = ref(false)
-const notificationCount = ref(0)
+// Cargar notificaciones al montar
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await notificationStore.fetchNotifications()
+    await notificationStore.fetchUnreadCount()
+  }
+})
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value
+}
 
 // Rol admin: presidente, tesorero o secretario
 const isAdmin = computed(() => {
@@ -354,7 +444,8 @@ const pageTitle = computed(() => {
     LetterRequest: 'Solicitar Carta',
     ResidentAnnouncementList: 'Anuncios',
     ResidentAnnouncementDetail: 'Detalle de Anuncio',
-    UserProfile: 'Mi Perfil'
+    UserProfile: 'Mi Perfil',
+    UserProfileUniversal: 'Mi Perfil'
   }
   return titles[route.name] || 'Censos Veredales'
 })
@@ -374,16 +465,58 @@ const getRoleLabel = (role) => {
   return labels[role] || 'Usuario'
 }
 
+const goToProfile = () => {
+  router.push({ path: '/profile', hash: '#personal-info' })
+}
+
 const handleLogout = async () => {
   $q.dialog({
     title: 'Cerrar sesión',
     message: '¿Estás seguro de que deseas cerrar sesión?',
     cancel: true,
-    persistent: true
+    persistent: true,
+    cardClass: 'dark-dialog'
   }).onOk(async () => {
     await authStore.logout()
     router.push('/login')
   })
+}
+
+const markAsRead = async (id) => {
+  await notificationStore.markAsRead(id)
+}
+
+const markAllAsRead = async () => {
+  await notificationStore.markAllAsRead()
+}
+
+const getNotificationIcon = (type) => {
+  const icons = {
+    profile_change: 'person',
+    password_change: 'lock',
+    dwelling_change: 'home',
+    resident_approval: 'people',
+    dwelling_approval: 'home',
+    letter_approval: 'description',
+    general: 'notifications'
+  }
+  return icons[type] || 'notifications'
+}
+
+const formatTime = (date) => {
+  if (!date) return ''
+  const now = new Date()
+  const past = new Date(date)
+  const diffMs = now - past
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 1) return 'Ahora'
+  if (diffMins < 60) return `hace ${diffMins} min`
+  if (diffHours < 24) return `hace ${diffHours} h`
+  if (diffDays < 7) return `hace ${diffDays} d`
+  return past.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
 </script>
 
@@ -413,6 +546,13 @@ const handleLogout = async () => {
   height: 100%;
   padding: 20px 16px;
   background-color: var(--surface-container) !important;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar-content .logo-icon,
@@ -499,6 +639,25 @@ const handleLogout = async () => {
   background: var(--surface-container) !important;
   border-radius: 12px;
   border: 1px solid var(--surface-container-highest);
+  transition: all 0.2s;
+}
+
+.user-profile:hover {
+  background: var(--primary-50) !important;
+  border-color: var(--primary);
+}
+
+.edit-icon {
+  font-size: 18px;
+  color: var(--outline);
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.user-profile:hover .edit-icon {
+  opacity: 1;
+  color: var(--primary);
 }
 
 .avatar-container {
@@ -669,6 +828,34 @@ const handleLogout = async () => {
   background: var(--surface-container-highest) !important;
 }
 
+/* Scroll independiente: sidebar vs contenido */
+:deep(.q-layout) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+:deep(.q-page-container) {
+  overflow-y: auto;
+  height: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+:deep(.q-page-container::-webkit-scrollbar) {
+  display: none;
+}
+
+/* Ocultar scrollbar del drawer pero permitir scroll */
+:deep(.sidebar .q-drawer__content) {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+:deep(.sidebar .q-drawer__content::-webkit-scrollbar) {
+  display: none;
+}
+
 /* Header */
 .header {
   background: var(--surface-container);
@@ -800,5 +987,123 @@ const handleLogout = async () => {
   :deep(.q-toolbar-title) {
     font-size: 16px !important;
   }
+}
+
+/* Notifications Dialog */
+.notifications-dialog {
+  border-radius: 16px !important;
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  background: var(--surface-container-lowest);
+}
+
+.notification-item:hover {
+  background: var(--surface-container-high);
+}
+
+.notification-unread {
+  background: var(--primary-container);
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-container-highest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.notification-icon .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--on-primary-container);
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0 0 4px 0;
+}
+
+.notification-message {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  margin: 0 0 6px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-time {
+  font-size: 11px;
+  color: var(--outline-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 599px) {
+  .notifications-dialog {
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Dark Dialog Styles */
+.dark-dialog {
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.dark-dialog :deep(.q-card__section) {
+  background: transparent !important;
+}
+
+.dark-dialog :deep(.q-card__section--vert) {
+  background: transparent !important;
+}
+
+.dark-dialog :deep(.q-dialog__title) {
+  color: var(--on-surface) !important;
+}
+
+.dark-dialog :deep(.q-dialog__message) {
+  color: var(--on-surface-variant) !important;
+}
+
+.dark-dialog :deep(.q-separator) {
+  background: var(--surface-container-highest) !important;
+}
+
+.dark-dialog :deep(.q-btn--standard) {
+  color: var(--on-surface) !important;
+}
+
+.dark-dialog :deep(.q-btn--flat) {
+  color: var(--on-surface) !important;
 }
 </style>

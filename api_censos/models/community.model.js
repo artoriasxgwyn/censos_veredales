@@ -9,6 +9,10 @@ const communitySchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  department: {
+    type: String,
+    trim: true
+  },
   communityHallAddress: {
     type: String,
     trim: true
@@ -32,6 +36,18 @@ const communitySchema = new mongoose.Schema({
   secretaryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  presidentWhatsApp: {
+    type: String,
+    trim: true
+  },
+  secretaryWhatsApp: {
+    type: String,
+    trim: true
+  },
+  treasurerWhatsApp: {
+    type: String,
+    trim: true
   },
   code: {
     type: String,

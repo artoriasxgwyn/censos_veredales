@@ -1,17 +1,39 @@
+import mongoose from 'mongoose';
 import Letter from '../models/letter.model.js';
 import Resident from '../models/resident.model.js';
 import Community from '../models/community.model.js';
 import User from '../models/user.model.js';
+import Role from '../models/role.model.js';
 import { v4 as uuidv4 } from 'uuid';
+import { notifyAllAdmins } from './notification.controller.js';
 
 /**
  * Solicitar nueva carta (normal o juramentada)
- * - Carta normal: requiere residente aprobado
- * - Carta juramentada: requiere al menos 1 año de antigüedad
+ * - Carta normal: requiere residente aprobado y permiso letter:generateNormal
+ * - Carta juramentada: requiere al menos 1 año de antigüedad y permiso letter:generateJuramentada
  */
 export const requestLetter = async (req, res) => {
   try {
     const { type, residentId } = req.body;
+
+    // Validar permiso según el tipo de carta
+    const requiredPermission = type === 'juramentada' ? 'generateJuramentada' : 'generateNormal';
+
+    // El presidente tiene todos los permisos por defecto
+    if (req.userRole !== 'president') {
+      const Role = mongoose.model('Role');
+      const userRole = await Role.findOne({
+        communityId: req.communityId,
+        name: req.userRole,
+        isActive: true
+      });
+
+      if (!userRole || !userRole.permissions.letter[requiredPermission]) {
+        return res.status(403).json({
+          message: `No tienes permiso para solicitar carta ${type}`
+        });
+      }
+    }
 
     // Validar que el residente existe y está aprobado
     const resident = await Resident.findOne({
@@ -33,8 +55,8 @@ export const requestLetter = async (req, res) => {
       });
     }
 
-    // Para carta juramentada, verificar 1 año de antigüedad
-    if (type === 'juramentada') {
+    // Para carta juramentada, verificar 1 año de antigüedad (excepto para presidente)
+    if (type === 'juramentada' && req.userRole !== 'president') {
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
@@ -45,14 +67,49 @@ export const requestLetter = async (req, res) => {
       }
     }
 
+    // Presidente crea cartas normales directamente (issued)
+    // Cartas juramentadas y cartas de otros roles quedan pendientes de 3 aprobaciones
+    const initialStatus = (type === 'normal' && req.userRole === 'president')
+      ? 'issued'
+      : 'pending';
+
+    const initialApprovals = req.userRole === 'president'
+      ? {
+          approvedByPresident: 'approved',
+          approvedByTreasurer: 'approved',
+          approvedBySecretary: 'approved',
+          status: 'issued'
+        }
+      : {
+          approvedByPresident: 'pending',
+          approvedByTreasurer: 'pending',
+          approvedBySecretary: 'pending',
+          status: 'pending'
+        };
+
     // Crear carta con código QR único
     const letter = await Letter.create({
       userId: req.userId,
       residentId,
       communityId: req.communityId,
       type,
-      qrCodigo: `LETTER-${uuidv4().slice(0, 8).toUpperCase()}`
+      createdBy: req.userId,
+      qrCodigo: `LETTER-${uuidv4().slice(0, 8).toUpperCase()}`,
+      ...initialApprovals
     });
+
+    // Notificar a los admins si la carta queda pendiente (no fue creada por presidente)
+    if (req.userRole !== 'president') {
+      await notifyAllAdmins({
+        communityId: req.communityId,
+        type: 'letter_approval',
+        title: `Nueva carta ${type} pendiente de aprobación`,
+        message: `Se ha solicitado una carta ${type}. Requiere tu aprobación.`,
+        entity: 'letter',
+        entityId: letter._id,
+        actionUrl: `/letters/${letter._id}`
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -75,7 +132,9 @@ export const getMyLetters = async (req, res) => {
       userId: req.userId,
       communityId: req.communityId,
       isActive: true
-    }).populate('residentId', 'userId');
+    })
+      .populate('residentId', 'userId')
+      .populate('communityId', 'neighborhood city code');
 
     res.json({
       success: true,
@@ -90,28 +149,29 @@ export const getMyLetters = async (req, res) => {
 };
 
 /**
- * Obtener todas las cartas de la comunidad (solo presidentes y admins)
+ * Obtener todas las cartas de la comunidad (Presidente, Secretario y Tesorero ven todas)
  */
 export const getCommunityLetters = async (req, res) => {
   try {
-    // Solo presidente puede ver todas
-    if (req.userRole !== 'president') {
-      return res.status(403).json({
-        message: 'Solo el presidente puede ver todas las cartas de la comunidad'
+    // Presidente, Secretario y Tesorero ven todas las cartas de su comunidad
+    if (req.userRole === 'president' || req.userRole === 'secretario' || req.userRole === 'tesorero') {
+      const letters = await Letter.find({
+        communityId: req.communityId,
+        isActive: true
+      })
+        .populate('userId', 'fullName email')
+        .populate('residentId', 'userId')
+        .populate('communityId', 'neighborhood city code')
+        .sort({ createdAt: -1 });
+
+      return res.json({
+        success: true,
+        data: letters
       });
     }
 
-    const letters = await Letter.find({
-      communityId: req.communityId,
-      isActive: true
-    })
-      .populate('userId', 'fullName email')
-      .populate('residentId', 'userId')
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: letters
+    return res.status(403).json({
+      message: 'No tienes permiso para ver las cartas de la comunidad'
     });
   } catch (error) {
     console.error('Error al obtener cartas de la comunidad:', error);
@@ -130,7 +190,8 @@ export const getLetterById = async (req, res) => {
       _id: req.params.id,
       communityId: req.communityId,
       isActive: true
-    });
+    })
+      .populate('communityId', 'neighborhood city code');
 
     if (!letter) {
       return res.status(404).json({
@@ -162,7 +223,7 @@ export const getLetterById = async (req, res) => {
  */
 export const approveByPresident = async (req, res) => {
   try {
-    const { status } = req.body; // 'approved' o 'rejected'
+    const { status } = req.body;
 
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({
@@ -182,18 +243,24 @@ export const approveByPresident = async (req, res) => {
       });
     }
 
-    letter.approvedByPresident = status;
+    const updateData = { approvedByPresident: status };
+    const approvals = [status, letter.approvedByTreasurer || 'pending', letter.approvedBySecretary || 'pending'];
 
-    // Verificar si todos aprobaron
-    if (letter.approvedByTreasurer === 'approved' && letter.approvedBySecretary === 'approved') {
-      letter.status = status === 'approved' ? 'approved' : 'rejected';
+    if (approvals.some(a => a === 'rejected')) {
+      updateData.status = 'rejected';
+    } else if (approvals.every(a => a === 'approved')) {
+      updateData.status = 'issued'; // Carta aprobada se emite automáticamente
     }
 
-    await letter.save();
+    const updatedLetter = await Letter.findOneAndUpdate(
+      { _id: req.params.id, communityId: req.communityId },
+      updateData,
+      { new: true }
+    );
 
     res.json({
       success: true,
-      data: letter
+      data: updatedLetter
     });
   } catch (error) {
     console.error('Error al aprobar carta (presidente):', error);
@@ -228,18 +295,24 @@ export const approveByTreasurer = async (req, res) => {
       });
     }
 
-    letter.approvedByTreasurer = status;
+    const updateData = { approvedByTreasurer: status };
+    const approvals = [letter.approvedByPresident || 'pending', status, letter.approvedBySecretary || 'pending'];
 
-    // Verificar si todos aprobaron
-    if (letter.approvedByPresident === 'approved' && letter.approvedBySecretary === 'approved') {
-      letter.status = status === 'approved' ? 'approved' : 'rejected';
+    if (approvals.some(a => a === 'rejected')) {
+      updateData.status = 'rejected';
+    } else if (approvals.every(a => a === 'approved')) {
+      updateData.status = 'issued'; // Carta aprobada se emite automáticamente
     }
 
-    await letter.save();
+    const updatedLetter = await Letter.findOneAndUpdate(
+      { _id: req.params.id, communityId: req.communityId },
+      updateData,
+      { new: true }
+    );
 
     res.json({
       success: true,
-      data: letter
+      data: updatedLetter
     });
   } catch (error) {
     console.error('Error al aprobar carta (tesorero):', error);
@@ -274,18 +347,24 @@ export const approveBySecretary = async (req, res) => {
       });
     }
 
-    letter.approvedBySecretary = status;
+    const updateData = { approvedBySecretary: status };
+    const approvals = [letter.approvedByPresident || 'pending', letter.approvedByTreasurer || 'pending', status];
 
-    // Verificar si todos aprobaron
-    if (letter.approvedByPresident === 'approved' && letter.approvedByTreasurer === 'approved') {
-      letter.status = status === 'approved' ? 'approved' : 'rejected';
+    if (approvals.some(a => a === 'rejected')) {
+      updateData.status = 'rejected';
+    } else if (approvals.every(a => a === 'approved')) {
+      updateData.status = 'issued'; // Carta aprobada se emite automáticamente
     }
 
-    await letter.save();
+    const updatedLetter = await Letter.findOneAndUpdate(
+      { _id: req.params.id, communityId: req.communityId },
+      updateData,
+      { new: true }
+    );
 
     res.json({
       success: true,
-      data: letter
+      data: updatedLetter
     });
   } catch (error) {
     console.error('Error al aprobar carta (secretario):', error);
@@ -404,6 +483,13 @@ export const downloadPdf = async (req, res) => {
     if (!letter || !letter.pdfUrl) {
       return res.status(404).json({
         message: 'PDF no disponible'
+      });
+    }
+
+    // Solo presidente o el dueño de la carta pueden descargar
+    if (req.userRole !== 'president' && letter.userId.toString() !== req.userId) {
+      return res.status(403).json({
+        message: 'No tienes permiso para descargar esta carta'
       });
     }
 

@@ -48,8 +48,8 @@
               <span class="info-value">{{ getDwellingName(resident.dwellingId) }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">Comunidad</span>
-              <span class="info-value">{{ getCommunityName(resident.communityId) }}</span>
+              <span class="info-label">Código de Comunidad</span>
+              <span class="info-value">{{ getCommunityCode(resident.communityId) }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">Fecha de Registro</span>
@@ -284,11 +284,16 @@ const getDwellingName = (dwellingId) => {
   return dwelling?.houseNomenclature || 'Vivienda'
 }
 
-const getCommunityName = (communityId) => {
-  if (typeof communityId === 'object' && communityId !== null) {
-    return communityId.neighborhood || 'Comunidad'
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
   }
-  return communityId || 'N/A'
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
 }
 
 const getStatusColor = (status) => {
@@ -658,8 +663,8 @@ const handleDelete = async () => {
 }
 
 .approval-card.pending {
-  border-color: var(--warning);
-  background: var(--warning-container);
+  border-color: var(--outline);
+  background: var(--surface-container-highest);
 }
 
 .approval-icon {
@@ -682,8 +687,8 @@ const handleDelete = async () => {
 }
 
 .pending .approval-icon {
-  background: var(--warning);
-  color: var(--on-warning);
+  background: var(--outline);
+  color: var(--on-surface);
 }
 
 .approval-icon .material-symbols-outlined {
@@ -707,7 +712,7 @@ const handleDelete = async () => {
   font-weight: 700;
 }
 
-.approved .approval-status { color: var(--success); }
+.approved .approval-status { color: var(--primary); }
 .rejected .approval-status { color: var(--error); }
 .pending .approval-status { color: var(--on-surface-variant); }
 

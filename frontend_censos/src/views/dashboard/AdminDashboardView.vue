@@ -4,9 +4,9 @@
       <!-- Page Header -->
       <div class="page-header">
         <div>
-          <p class="page-subtitle">Administración Global</p>
-          <h1 class="page-title">Panel de Administración</h1>
-          <p class="page-description">Gestión de comunidad y residentes</p>
+          <p class="page-subtitle">{{ pageTitle }}</p>
+          <h1 class="page-title">{{ pageTitle }}</h1>
+          <p class="page-description">{{ pageDescription }}</p>
         </div>
       </div>
 
@@ -34,11 +34,11 @@
 
         <q-card class="stat-card">
           <div class="stat-icon tertiary">
-            <span class="material-symbols-outlined">description</span>
+            <span class="material-symbols-outlined">calendar_month</span>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ stats.pendingLetters }}</div>
-            <div class="stat-label">Cartas Pendientes</div>
+            <div class="stat-value">{{ stats.upcomingAnniversaries }}</div>
+            <div class="stat-label">Próximos a cumplir 1 año</div>
           </div>
         </q-card>
 
@@ -48,7 +48,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ stats.pendingApprovals }}</div>
-            <div class="stat-label">Aprobaciones Pendientes</div>
+            <div class="stat-label">{{ pendingLabel }}</div>
           </div>
         </q-card>
       </div>
@@ -62,7 +62,7 @@
             <h2 class="card-title">Accesos Rápidos</h2>
           </div>
           <div class="actions-grid">
-            <router-link to="/president/approvals" class="action-card highlight">
+            <router-link to="/president/approvals" class="action-card highlight" v-if="hasPermission('resident', 'update')">
               <span class="material-symbols-outlined">pending_actions</span>
               <span>Aprobaciones</span>
               <q-badge v-if="pendingApprovalsForPresident > 0" color="warning" class="count-badge">
@@ -70,42 +70,42 @@
               </q-badge>
             </router-link>
 
-            <router-link to="/admin/dwellings" class="action-card">
+            <router-link to="/admin/dwellings" class="action-card" v-if="hasPermission('dwelling', 'read')">
               <span class="material-symbols-outlined">home</span>
               <span>Viviendas</span>
             </router-link>
 
-            <router-link to="/admin/residents" class="action-card">
+            <router-link to="/admin/residents" class="action-card" v-if="hasPermission('resident', 'read')">
               <span class="material-symbols-outlined">people</span>
               <span>Residentes</span>
             </router-link>
 
-            <router-link to="/admin/letters" class="action-card">
+            <router-link to="/admin/letters" class="action-card" v-if="hasPermission('letter', 'read')">
               <span class="material-symbols-outlined">description</span>
               <span>Cartas</span>
             </router-link>
 
-            <router-link to="/admin/announcements" class="action-card">
+            <router-link to="/admin/announcements" class="action-card" v-if="hasPermission('announcement', 'read')">
               <span class="material-symbols-outlined">campaign</span>
               <span>Anuncios</span>
             </router-link>
 
-            <router-link to="/admin/users" class="action-card">
+            <router-link to="/admin/users" class="action-card" v-if="hasPermission('user', 'read')">
               <span class="material-symbols-outlined">group</span>
               <span>Usuarios</span>
             </router-link>
 
-            <router-link to="/president/roles" class="action-card">
+            <router-link to="/president/roles" class="action-card" v-if="hasPermission('user', 'manageRoles')">
               <span class="material-symbols-outlined">badge</span>
               <span>Roles</span>
             </router-link>
 
-            <router-link to="/president/qr-scanner" class="action-card">
+            <router-link to="/president/qr-scanner" class="action-card" v-if="hasPermission('letter', 'qrScan')">
               <span class="material-symbols-outlined">qr_code_scanner</span>
               <span>Escanear QR</span>
             </router-link>
 
-            <router-link to="/president/audit-logs" class="action-card">
+            <router-link to="/president/audit-logs" class="action-card" v-if="hasPermission('dashboard', 'access')">
               <span class="material-symbols-outlined">fact_check</span>
               <span>Auditoría</span>
             </router-link>
@@ -136,26 +136,86 @@
         </aside>
       </div>
 
-      <!-- Pending Approvals -->
+      <!-- Últimos Anuncios -->
+      <section class="announcements-section">
+        <div class="section-header">
+          <span class="material-symbols-outlined">campaign</span>
+          <h2 class="section-title">Últimos Anuncios</h2>
+        </div>
+
+        <div class="announcements-grid">
+          <div v-if="dashboardStore.adminStats?.recentAnnouncements?.length === 0" class="empty-state">
+            <span class="material-symbols-outlined">campaign</span>
+            <p>No hay anuncios publicados recientemente</p>
+          </div>
+
+          <div
+            v-for="announcement in dashboardStore.adminStats?.recentAnnouncements"
+            :key="announcement._id"
+            class="announcement-card"
+            @click="router.push(`/admin/announcements/${announcement._id}`)"
+          >
+            <h3 class="announcement-title">{{ announcement.title }}</h3>
+            <p class="announcement-header">{{ announcement.header }}</p>
+            <p class="announcement-body">{{ truncate(announcement.body, 120) }}</p>
+            <div class="announcement-footer">
+              <span class="announcement-date">{{ formatDate(announcement.publishedAt) }}</span>
+              <span class="announcement-author">por {{ announcement.createdBy?.fullName || 'Admin' }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mis Registros Recientes (Presidente, Secretario y Tesorero) -->
+      <section v-if="isPresident || isSecretary || isTreasurer" class="recent-registrations-section">
+        <div class="section-header">
+          <span class="material-symbols-outlined">fact_check</span>
+          <h2 class="section-title">Mis Registros Recientes</h2>
+        </div>
+
+        <div class="recent-list">
+          <div v-if="recentRegistrations.length === 0" class="empty-state">
+            <span class="material-symbols-outlined">info</span>
+            <p>No has registrado elementos recientemente</p>
+          </div>
+
+          <div v-else class="recent-items">
+            <div v-for="item in recentRegistrations" :key="item._id" class="recent-item">
+              <div class="recent-info">
+                <span class="material-symbols-outlined recent-icon">{{ getIconForType(item.type) }}</span>
+                <div class="recent-details">
+                  <p class="recent-name">{{ item.name }}</p>
+                  <p class="recent-type">{{ item.type }} • {{ formatDate(item.createdAt) }}</p>
+                </div>
+              </div>
+              <q-badge :color="getStatusColor(item.status)" class="status-badge">
+                {{ item.status }}
+              </q-badge>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Aprobaciones Pendientes (Mi Voto Pendiente) -->
       <section class="pending-section">
         <div class="section-header">
           <span class="material-symbols-outlined">pending_actions</span>
-          <h2 class="section-title">Aprobaciones Pendientes</h2>
+          <h2 class="section-title">Pendientes de Mi Voto</h2>
         </div>
 
         <div class="pending-list">
-          <div v-if="pendingItems.length === 0" class="empty-state">
+          <div v-if="myPendingItems.length === 0" class="empty-state">
             <span class="material-symbols-outlined">check_circle</span>
-            <p>No hay aprobaciones pendientes</p>
+            <p>No tienes aprobaciones pendientes</p>
           </div>
 
           <div v-else class="pending-items">
-            <div v-for="item in pendingItems" :key="item._id" class="pending-item">
+            <div v-for="item in myPendingItems" :key="item._id" class="pending-item">
               <div class="pending-info">
                 <span class="material-symbols-outlined pending-icon">{{ getIconForType(item.type) }}</span>
                 <div class="pending-details">
                   <p class="pending-name">{{ item.name }}</p>
-                  <p class="pending-type">{{ item.type }}</p>
+                  <p class="pending-type">{{ item.typeLabel }}</p>
                 </div>
               </div>
               <div class="pending-actions">
@@ -187,6 +247,7 @@
           </div>
         </div>
       </section>
+
     </div>
   </div>
 </template>
@@ -209,6 +270,15 @@ const dwellingStore = useDwellingStore()
 const residentStore = useResidentStore()
 const letterStore = useLetterStore()
 
+const isPresident = computed(() => authStore.isPresident)
+const isSecretary = computed(() => authStore.isSecretary)
+const isTreasurer = computed(() => authStore.isTreasurer)
+
+// Verificar permisos usando el getter del store
+const hasPermission = (module, action) => {
+  return authStore.hasPermission(module, action)
+}
+
 // Redirect president to their specific dashboard
 onMounted(() => {
   if (authStore.isPresident) {
@@ -220,11 +290,23 @@ onMounted(() => {
 const stats = ref({
   totalResidents: 0,
   totalDwellings: 0,
-  pendingLetters: 0,
+  upcomingAnniversaries: 0,
   pendingApprovals: 0
 })
 
-// Calcular aprobaciones pendientes SOLO para el presidente (donde no ha votado)
+const pageTitle = computed(() => {
+  if (isSecretary.value) return 'Secretaría'
+  if (isTreasurer.value) return 'Tesorería'
+  return 'Administración'
+})
+
+const pageDescription = computed(() => {
+  if (isSecretary.value) return 'Gestión de documentos y aprobaciones'
+  if (isTreasurer.value) return 'Control financiero y aprobaciones'
+  return 'Gestión de comunidad y residentes'
+})
+
+// Calcular aprobaciones pendientes para el badge de accesos rápidos (solo presidente)
 const pendingApprovalsForPresident = computed(() => {
   const dwellingsToApprove = dwellingStore.dwellings.filter(d => d.approvedByPresident === 'pending').length
   const residentsToApprove = residentStore.residents.filter(r => r.approvedByPresident === 'pending').length
@@ -232,95 +314,174 @@ const pendingApprovalsForPresident = computed(() => {
   return dwellingsToApprove + residentsToApprove + lettersToApprove
 })
 
-const pendingItems = computed(() => {
+// Obtener items pendientes de MI voto (cada rol ve solo lo que aún no ha votado)
+const myPendingItems = computed(() => {
   const items = []
 
-  // Filtrar solo elementos donde el presidente AÚN NO HA VOTADO
-  const dwellingsToApprove = dwellingStore.dwellings.filter(d => d.approvedByPresident === 'pending')
-  const residentsToApprove = residentStore.residents.filter(r => r.approvedByPresident === 'pending')
-  const lettersToApprove = letterStore.letters.filter(l => l.approvedByPresident === 'pending')
+  if (isPresident.value) {
+    // Presidente ve solo donde él NO ha votado
+    dwellingStore.dwellings
+      .filter(d => d.approvedByPresident === 'pending')
+      .forEach(d => items.push({
+        _id: d._id,
+        type: 'dwelling',
+        typeLabel: 'Vivienda',
+        name: d.houseNomenclature || 'Sin nomenclatura',
+        status: d.status
+      }))
 
-  dwellingsToApprove.forEach(d => {
-    items.push({
-      _id: d._id,
-      type: 'dwelling',
-      name: d.houseNomenclature || 'Sin nomenclatura',
-      status: d.status,
-      approvals: {
-        president: d.approvedByPresident,
-        treasurer: d.approvedByTreasurer,
-        secretary: d.approvedBySecretary
-      }
-    })
-  })
+    residentStore.residents
+      .filter(r => r.approvedByPresident === 'pending')
+      .forEach(r => items.push({
+        _id: r._id,
+        type: 'resident',
+        typeLabel: 'Residente',
+        name: r.userId?.fullName || 'Residente',
+        status: r.status
+      }))
 
-  residentsToApprove.forEach(r => {
-    items.push({
-      _id: r._id,
-      type: 'resident',
-      name: r.userId?.fullName || 'Residente',
-      status: r.status,
-      approvals: {
-        president: r.approvedByPresident,
-        treasurer: r.approvedByTreasurer,
-        secretary: r.approvedBySecretary
-      }
-    })
-  })
+    letterStore.letters
+      .filter(l => l.approvedByPresident === 'pending')
+      .forEach(l => items.push({
+        _id: l._id,
+        type: 'letter',
+        typeLabel: `Carta ${l.type}`,
+        name: `Carta ${l.type}`,
+        status: l.status
+      }))
+  }
 
-  lettersToApprove.forEach(l => {
-    items.push({
-      _id: l._id,
-      type: 'letter',
-      name: `Carta ${l.type}`,
-      status: l.status,
-      approvals: {
-        president: l.approvedByPresident,
-        treasurer: l.approvedByTreasurer,
-        secretary: l.approvedBySecretary
-      }
-    })
-  })
+  if (isSecretary.value) {
+    // Secretario ve solo donde él NO ha votado
+    dwellingStore.dwellings
+      .filter(d => d.approvedBySecretary === 'pending')
+      .forEach(d => items.push({
+        _id: d._id,
+        type: 'dwelling',
+        typeLabel: 'Vivienda',
+        name: d.houseNomenclature || 'Sin nomenclatura',
+        status: d.status
+      }))
+
+    residentStore.residents
+      .filter(r => r.approvedBySecretary === 'pending')
+      .forEach(r => items.push({
+        _id: r._id,
+        type: 'resident',
+        typeLabel: 'Residente',
+        name: r.userId?.fullName || 'Residente',
+        status: r.status
+      }))
+
+    letterStore.letters
+      .filter(l => l.approvedBySecretary === 'pending')
+      .forEach(l => items.push({
+        _id: l._id,
+        type: 'letter',
+        typeLabel: `Carta ${l.type}`,
+        name: `Carta ${l.type}`,
+        status: l.status
+      }))
+  }
+
+  if (isTreasurer.value) {
+    // Tesorero ve solo donde él NO ha votado
+    dwellingStore.dwellings
+      .filter(d => d.approvedByTreasurer === 'pending')
+      .forEach(d => items.push({
+        _id: d._id,
+        type: 'dwelling',
+        typeLabel: 'Vivienda',
+        name: d.houseNomenclature || 'Sin nomenclatura',
+        status: d.status
+      }))
+
+    residentStore.residents
+      .filter(r => r.approvedByTreasurer === 'pending')
+      .forEach(r => items.push({
+        _id: r._id,
+        type: 'resident',
+        typeLabel: 'Residente',
+        name: r.userId?.fullName || 'Residente',
+        status: r.status
+      }))
+
+    letterStore.letters
+      .filter(l => l.approvedByTreasurer === 'pending')
+      .forEach(l => items.push({
+        _id: l._id,
+        type: 'letter',
+        typeLabel: `Carta ${l.type}`,
+        name: `Carta ${l.type}`,
+        status: l.status
+      }))
+  }
 
   return items
 })
 
-const dashboardData = computed(() => dashboardStore.adminDashboard)
+// Obtener registros recientes según el rol (Secretario y Tesorero)
+const recentRegistrations = computed(() => {
+  const items = []
+  const currentUserId = authStore.user?.id
+
+  const myDwellings = dwellingStore.dwellings
+    .filter(d => d.createdBy === currentUserId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+
+  const myResidents = residentStore.residents
+    .filter(r => r.createdBy === currentUserId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+
+  return [...myDwellings.map(d => ({
+    _id: d._id,
+    type: 'dwelling',
+    name: d.houseNomenclature || 'Sin nomenclatura',
+    status: d.status,
+    createdAt: d.createdAt
+  })), ...myResidents.map(r => ({
+    _id: r._id,
+    type: 'resident',
+    name: r.userId?.fullName || 'Residente',
+    status: r.status,
+    createdAt: r.createdAt
+  }))]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
+})
+
+// Calcular próximos aniversarios de 1 año
+const calculateUpcomingAnniversaries = () => {
+  const now = new Date()
+  const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+  const oneYearAndThirtyDaysAgo = new Date(now.getTime() - (365 + 30) * 24 * 60 * 60 * 1000)
+
+  return residentStore.residents.filter(r => {
+    if (!r.createdAt) return false
+    const createdAt = new Date(r.createdAt)
+    return createdAt >= oneYearAndThirtyDaysAgo && createdAt <= oneYearAgo
+  }).length
+}
 
 onMounted(async () => {
   // Fetch dashboard data from API
-  const data = await dashboardStore.fetchAdminDashboard()
+  await dashboardStore.fetchAdminDashboard()
 
-  if (data) {
-    // Use API data for stats
-    stats.value = {
-      totalResidents: data.stats?.residents?.total || 0,
-      totalDwellings: data.stats?.dwellings?.total || 0,
-      pendingLetters: data.stats?.pending?.letters || 0,
-      pendingApprovals: (data.stats?.pending?.residents || 0) +
-                        (data.stats?.pending?.dwellings || 0) +
-                        (data.stats?.pending?.letters || 0)
-    }
-  }
-
-  // Also fetch individual data for pending items list
+  // Fetch data for pending approvals badge
   await Promise.all([
     dwellingStore.fetchDwellings(),
     residentStore.fetchResidents(),
     letterStore.fetchCommunityLetters()
   ])
 
-  // Recalculate stats from local stores as fallback
-  if (!data) {
-    stats.value = {
-      totalResidents: residentStore.residentCount || 0,
-      totalDwellings: dwellingStore.dwellingCount || 0,
-      pendingLetters: letterStore.pendingLetters?.length || 0,
-      pendingApprovals: pendingApprovalsForPresident.value.length || 0
-    }
-  } else {
-    // Actualizar pendingApprovals incluso con datos del API
-    stats.value.pendingApprovals = pendingApprovalsForPresident.value
+  // Calcular stats desde los datos locales
+  stats.value = {
+    totalResidents: residentStore.residentCount || 0,
+    totalDwellings: dwellingStore.dwellingCount || 0,
+    upcomingAnniversaries: calculateUpcomingAnniversaries(),
+    pendingApprovals: pendingApprovalsForPresident.value
   }
 })
 
@@ -343,6 +504,22 @@ const getStatusColor = (status) => {
   return colors[status] || 'grey'
 }
 
+const formatDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
+const truncate = (text, length) => {
+  if (!text) return ''
+  // Quitar tags HTML antes de truncar
+  const plainText = text.replace(/<[^>]*>/g, '')
+  return plainText.length > length ? plainText.substring(0, length) + '...' : plainText
+}
+
 const handleApprove = async (item) => {
   try {
     let result
@@ -359,9 +536,9 @@ const handleApprove = async (item) => {
     if (result?.success) {
       $q.notify({
         type: 'positive',
-        message: `${item.type === 'dwelling' ? 'Vivienda' : item.type === 'resident' ? 'Residente' : 'Carta'} aprobado exitosamente`
+        message: `${item.typeLabel} aprobado exitosamente`
       })
-      // Refresh data
+      // Refresh data para que el item desaparezca de la lista
       await Promise.all([
         dwellingStore.fetchDwellings(),
         residentStore.fetchResidents(),
@@ -394,9 +571,9 @@ const handleReject = async (item) => {
     if (result?.success) {
       $q.notify({
         type: 'negative',
-        message: `${item.type === 'dwelling' ? 'Vivienda' : item.type === 'resident' ? 'Residente' : 'Carta'} rechazado`
+        message: `${item.typeLabel} rechazado`
       })
-      // Refresh data
+      // Refresh data para que el item desaparezca de la lista
       await Promise.all([
         dwellingStore.fetchDwellings(),
         residentStore.fetchResidents(),
@@ -852,20 +1029,7 @@ const handleReject = async (item) => {
   margin: 2px 0 0 0;
 }
 
-/* Pending Section */
-.pending-section {
-  background: var(--surface-container-lowest);
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
-}
-
-@media (max-width: 599px) {
-  .pending-section {
-    padding: 16px;
-  }
-}
-
+/* Section Header (reutilizable) */
 .section-header {
   display: flex;
   align-items: center;
@@ -900,10 +1064,6 @@ const handleReject = async (item) => {
   }
 }
 
-.pending-list {
-  min-height: 100px;
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -922,6 +1082,25 @@ const handleReject = async (item) => {
 .empty-state p {
   font-size: 14px;
   margin: 0;
+}
+
+/* Pending Approvals Section */
+.pending-section {
+  background: var(--surface-container-lowest);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+  margin-bottom: 24px;
+}
+
+@media (max-width: 599px) {
+  .pending-section {
+    padding: 16px;
+  }
+}
+
+.pending-list {
+  min-height: 100px;
 }
 
 .pending-items {
@@ -999,5 +1178,164 @@ const handleReject = async (item) => {
 .action-btn {
   width: 32px;
   height: 32px;
+}
+
+/* Recent Registrations Section (Secretary/Treasurer) */
+.recent-registrations-section {
+  background: var(--surface-container-lowest);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+  margin-bottom: 24px;
+}
+
+@media (max-width: 599px) {
+  .recent-registrations-section {
+    padding: 16px;
+  }
+}
+
+.recent-list {
+  min-height: 100px;
+}
+
+.recent-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--surface-container);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.recent-item:hover {
+  background: var(--primary-50);
+}
+
+.recent-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.recent-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--surface-container-lowest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.recent-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0;
+}
+
+.recent-type {
+  font-size: 12px;
+  color: var(--outline);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 2px 0 0 0;
+}
+
+/* Announcements Section */
+.announcements-section {
+  background: var(--surface-container-lowest);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 16px 32px rgba(25, 28, 30, 0.06);
+  margin-bottom: 24px;
+}
+
+@media (max-width: 599px) {
+  .announcements-section {
+    padding: 16px;
+  }
+}
+
+.announcements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.announcement-card {
+  background: var(--surface-container);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.announcement-card:hover {
+  background: var(--primary-50);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.announcement-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0 0 8px 0;
+}
+
+.announcement-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0 0 8px 0;
+}
+
+.announcement-body {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.announcement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.announcement-date {
+  font-size: 12px;
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+.announcement-author {
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 599px) {
+  .announcement-title {
+    font-size: 14px;
+  }
+
+  .announcement-body {
+    font-size: 13px;
+  }
 }
 </style>

@@ -18,9 +18,9 @@
         />
         <q-btn
           v-if="canEdit"
-          :color="isPublished ? 'warning' : 'positive'"
+          :color="isPublished ? 'secondary' : 'positive'"
           :label="isPublished ? 'Mover a Borrador' : 'Publicar'"
-          :icon="isPublished ? 'draft' : 'publish'"
+          :icon="isPublished ? 'archive' : 'publish'"
           @click="handleTogglePublish"
         />
         <q-btn
@@ -232,6 +232,15 @@ const handleDelete = async () => {
   gap: 8px;
 }
 
+.header-actions :deep(.q-btn--secondary .q-btn__content) {
+  color: #0f172a;
+}
+
+body.body--dark .header-actions :deep(.q-btn--secondary .q-btn__content),
+body.body--dark .header-actions :deep(.q-btn--secondary .q-btn__content .q-icon) {
+  color: #e2e8f0;
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -240,6 +249,16 @@ const handleDelete = async () => {
 
 .announcement-card {
   border-radius: 12px;
+  background: var(--surface-container) !important;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.announcement-card :deep(.q-card__section) {
+  background: transparent !important;
+}
+
+.announcement-card :deep(.q-separator) {
+  background: var(--surface-container-highest) !important;
 }
 
 .announcement-header {
@@ -251,16 +270,21 @@ const handleDelete = async () => {
 .announcement-icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--warning) 0%, var(--warning-container) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.dark .announcement-icon {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .announcement-icon .material-symbols-outlined {
   font-size: 28px;
-  color: var(--on-warning);
+  color: var(--white);
 }
 
 .announcement-info {
@@ -288,7 +312,137 @@ const handleDelete = async () => {
 .announcement-content {
   font-size: 15px;
   line-height: 1.8;
+  color: var(--on-surface);
+}
+
+/* Estilos para contenido HTML renderizado (v-html) */
+.announcement-content :deep(h1),
+.announcement-content :deep(h2),
+.announcement-content :deep(h3),
+.announcement-content :deep(h4) {
+  color: var(--on-surface);
+  font-weight: 700;
+  margin: 24px 0 12px 0;
+  line-height: 1.3;
+}
+
+.announcement-content :deep(h1) { font-size: 28px; }
+.announcement-content :deep(h2) { font-size: 24px; }
+.announcement-content :deep(h3) { font-size: 20px; }
+.announcement-content :deep(h4) { font-size: 18px; }
+
+.announcement-content :deep(p) {
+  margin: 0 0 16px 0;
   color: var(--on-surface-variant);
+}
+
+.announcement-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.announcement-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 16px 0;
+  display: block;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.announcement-content :deep(ul),
+.announcement-content :deep(ol) {
+  margin: 16px 0;
+  padding-left: 24px;
+  color: var(--on-surface-variant);
+}
+
+.announcement-content :deep(li) {
+  margin-bottom: 8px;
+}
+
+.announcement-content :deep(blockquote) {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border-left: 4px solid var(--primary);
+  background: var(--surface-container);
+  border-radius: 0 12px 12px 0;
+  font-style: italic;
+  color: var(--on-surface-variant);
+}
+
+.announcement-content :deep(a) {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.announcement-content :deep(a:hover) {
+  color: var(--on-primary-container);
+}
+
+.announcement-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.announcement-content :deep(th),
+.announcement-content :deep(td) {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--surface-container-highest);
+}
+
+.announcement-content :deep(th) {
+  background: var(--surface-container);
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.announcement-content :deep(td) {
+  color: var(--on-surface-variant);
+}
+
+.announcement-content :deep(pre) {
+  background: var(--surface-container);
+  padding: 16px;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.announcement-content :deep(code) {
+  background: var(--surface-container);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--primary);
+}
+
+.announcement-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--surface-container-highest);
+  margin: 24px 0;
+}
+
+.announcement-content :deep(strong) {
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.announcement-content :deep(em) {
+  font-style: italic;
+}
+
+.announcement-card :deep(.q-separator) {
+  background: var(--surface-container-highest);
+}
+
+.announcement-card :deep(.q-card__section) {
+  background: transparent;
 }
 
 .section-title {

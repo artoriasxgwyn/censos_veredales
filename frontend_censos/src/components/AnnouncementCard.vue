@@ -1,34 +1,32 @@
 <template>
-  <q-card class="announcement-card" @click="handleClick" :class="{ clickable }">
-    <q-card-section class="announcement-header">
-      <div class="announcement-icon">
-        <span class="material-symbols-outlined">campaign</span>
-      </div>
-      <div class="announcement-info">
-        <h3 class="announcement-title">{{ announcement.title }}</h3>
-        <div class="announcement-meta">
-          <span class="material-symbols-outlined">person</span>
-          <span>{{ getAuthorName(announcement.createdBy) }}</span>
-          <span class="separator">•</span>
-          <span class="material-symbols-outlined">calendar_today</span>
-          <span>{{ formatDate(announcement.createdAt) }}</span>
-        </div>
-      </div>
-      <q-badge :color="getStatusColor(isPublished(announcement))">
-        {{ getStatusLabel(isPublished(announcement)) }}
-      </q-badge>
-    </q-card-section>
+  <div class="announcement-card" @click="handleClick" :class="{ clickable }">
+    <div class="announcement-badge" :class="isPublished(announcement) ? 'published' : 'draft'">
+      {{ getStatusLabel(isPublished(announcement)) }}
+    </div>
 
-    <q-separator />
+    <div class="announcement-icon">
+      <span class="material-symbols-outlined">campaign</span>
+    </div>
 
-    <q-card-section class="announcement-body">
+    <h3 class="announcement-title">{{ announcement.title }}</h3>
+    <p class="announcement-community">{{ getAuthorName(announcement.createdBy) }}</p>
+
+    <div class="announcement-body">
       <p class="announcement-excerpt">{{ getExcerpt(announcement.body) }}</p>
-    </q-card-section>
+    </div>
 
-    <q-card-actions align="right" v-if="showActions">
+    <div class="announcement-footer">
+      <span class="announcement-date">
+        <span class="material-symbols-outlined">calendar_today</span>
+        {{ formatDate(announcement.createdAt) }}
+      </span>
+      <span class="material-symbols-outlined chevron">chevron_right</span>
+    </div>
+
+    <div class="announcement-actions" v-if="showActions">
       <slot name="actions"></slot>
-    </q-card-actions>
-  </q-card>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -98,69 +96,108 @@ const formatDate = (date) => {
 
 <style scoped>
 .announcement-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-highest);
   border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
-.announcement-card.clickable {
-  cursor: pointer;
+@media (max-width: 599px) {
+  .announcement-card {
+    padding: 16px;
+  }
+
+  .announcement-card:hover {
+    transform: none;
+  }
 }
 
 .announcement-card.clickable:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-.announcement-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.announcement-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
+.announcement-badge.published { background: var(--success); color: var(--on-success); }
+.announcement-badge.draft { background: var(--info); color: var(--on-info); }
 
 .announcement-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--warning) 0%, var(--warning-container) 100%);
-  border-radius: 10px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+body.dark .announcement-icon {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 599px) {
+  .announcement-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .announcement-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
 }
 
 .announcement-icon .material-symbols-outlined {
   font-size: 24px;
-  color: var(--on-primary);
-}
-
-.announcement-info {
-  flex: 1;
+  color: var(--white);
 }
 
 .announcement-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--on-surface);
   margin: 0 0 4px 0;
 }
 
-.announcement-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--outline);
+@media (max-width: 599px) {
+  .announcement-title {
+    font-size: 16px;
+  }
 }
 
-.announcement-meta .material-symbols-outlined {
+.announcement-community {
   font-size: 14px;
+  color: var(--on-surface-variant);
+  margin: 0 0 16px 0;
 }
 
-.separator {
-  color: var(--surface-container-highest);
+@media (max-width: 599px) {
+  .announcement-community {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
 }
 
 .announcement-body {
   padding-top: 12px !important;
+  border-top: 1px solid var(--surface-container-highest);
+  margin-bottom: 16px;
 }
 
 .announcement-excerpt {
@@ -168,5 +205,43 @@ const formatDate = (date) => {
   color: var(--on-surface-variant);
   margin: 0;
   line-height: 1.6;
+}
+
+@media (max-width: 599px) {
+  .announcement-excerpt {
+    font-size: 13px;
+  }
+}
+
+.announcement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-container-highest);
+}
+
+.announcement-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+.announcement-date .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.chevron {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+}
+
+.announcement-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
 }
 </style>

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { authService } from '@/services/auth.service'
 import { roleService } from '@/services/role.service'
 import { useQuasar } from 'quasar'
+import api from '@/services/api'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -9,7 +10,8 @@ export const useAuthStore = defineStore('auth', {
     accessToken: localStorage.getItem('access_token') || null,
     refreshToken: localStorage.getItem('refresh_token') || null,
     loading: false,
-    permissions: null
+    permissions: null,
+    communityCode: localStorage.getItem('community_code') || null
   }),
 
   getters: {
@@ -41,11 +43,18 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('refresh_token', refreshToken)
     },
 
+    setCommunityCode(code) {
+      this.communityCode = code
+      localStorage.setItem('community_code', code)
+    },
+
     clearTokens() {
       this.accessToken = null
       this.refreshToken = null
+      this.communityCode = null
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+      localStorage.removeItem('community_code')
     },
 
     async login(email, password) {
@@ -55,6 +64,20 @@ export const useAuthStore = defineStore('auth', {
         const { user, accessToken, refreshToken } = response.data
         this.user = user
         this.setTokens(accessToken, refreshToken)
+
+        // Decododar token para obtener communityId y cargar código de comunidad
+        if (accessToken) {
+          try {
+            const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]))
+            if (tokenPayload?.communityId) {
+              // Cargar información completa de la comunidad
+              await this.fetchCommunityInfo()
+            }
+          } catch (e) {
+            console.error('Error al decodificar token:', e)
+          }
+        }
+
         return { success: true }
       } catch (error) {
         return {
@@ -86,6 +109,8 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await authService.getMe()
         this.user = response.data
+        // Cargar información de la comunidad
+        await this.fetchCommunityInfo()
         // Cargar permisos después de cargar el usuario
         if (this.user?.role !== 'president') {
           await this.fetchPermissions()
@@ -148,6 +173,30 @@ export const useAuthStore = defineStore('auth', {
         return {
           success: false,
           message: error.response?.data?.message || 'Error al restablecer contraseña'
+        }
+      }
+    },
+
+    async fetchCommunityInfo() {
+      try {
+        const response = await api.get('/communities/my-community')
+        console.log('[fetchCommunityInfo] Response:', response.data)
+        if (response.data?.data?.code) {
+          this.setCommunityCode(response.data.data.code)
+        } else if (response.data?.data?._id) {
+          // Fallback: usar ID si no hay código
+          console.log('[fetchCommunityInfo] No hay código, usando ID:', response.data.data._id)
+        }
+      } catch (error) {
+        console.error('Error al cargar información de comunidad:', error)
+        // Si falla, intentar obtener el communityId del token
+        if (this.accessToken) {
+          try {
+            const tokenPayload = JSON.parse(atob(this.accessToken.split('.')[1]))
+            console.log('[fetchCommunityInfo] communityId del token:', tokenPayload?.communityId)
+          } catch (e) {
+            console.error('Error al decodificar token para fallback:', e)
+          }
         }
       }
     }

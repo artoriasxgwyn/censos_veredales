@@ -63,7 +63,7 @@
           </div>
           <div class="resident-details">
             <h4 class="resident-name">{{ getResidentName(letter.residentId) }}</h4>
-            <p class="resident-community">{{ getCommunityName(letter.communityId) }}</p>
+            <p class="resident-community">Código: {{ getCommunityCode(letter.communityId) }}</p>
           </div>
         </div>
       </q-card-section>
@@ -191,12 +191,16 @@ const getResidentName = (residentId) => {
   return user?.fullName || 'Residente'
 }
 
-const getCommunityName = (communityId) => {
-  if (typeof communityId === 'object' && communityId?.name) {
-    return communityId.name
+const getCommunityCode = (communityId) => {
+  if (!communityId) return 'N/A'
+  if (typeof communityId === 'object' && communityId?.code) {
+    return communityId.code
   }
-  const community = communityStore.communities.find(c => c._id === communityId)
-  return community?.name || 'Comunidad'
+  if (typeof communityId === 'string') {
+    const community = communityStore.communities.find(c => c._id === communityId)
+    return community?.code || 'N/A'
+  }
+  return 'N/A'
 }
 
 const getRoleLabel = (role) => {

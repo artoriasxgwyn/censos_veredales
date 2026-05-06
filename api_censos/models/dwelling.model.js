@@ -37,6 +37,11 @@ const dwellingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Community'
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
     trim: true,
@@ -73,25 +78,5 @@ const dwellingSchema = new mongoose.Schema({
 // Índices compuestos
 dwellingSchema.index({ ownerUserId: 1, isActive: 1 });
 dwellingSchema.index({ communityId: 1, isActive: 1 });
-
-// Hook: actualizar estado según las aprobaciones
-dwellingSchema.post('save', async function(doc) {
-  const approvals = [doc.approvedByPresident, doc.approvedByTreasurer, doc.approvedBySecretary];
-  const hasRejection = approvals.some(a => a === 'rejected');
-  const allApproved = approvals.every(a => a === 'approved');
-
-  let newStatus;
-  if (hasRejection) {
-    newStatus = 'rejected';
-  } else if (allApproved) {
-    newStatus = 'approved';
-  } else {
-    newStatus = 'pending';
-  }
-
-  if (doc.status !== newStatus) {
-    await this.constructor.findByIdAndUpdate(doc._id, { status: newStatus });
-  }
-});
 
 export default mongoose.model('Dwelling', dwellingSchema);

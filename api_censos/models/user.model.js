@@ -22,10 +22,13 @@ const userSchema = new mongoose.Schema({
     lowercase: true
   },
   digitalSignature: {
-    type: String
+    type: String  // dataURL de la firma (base64 PNG)
   },
   password: {
     type: String
+  },
+  pendingPassword: {
+    type: String  // Contraseña hasheada pendiente de aprobación (solo para residentes)
   },
   role: {
     type: String,

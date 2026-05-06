@@ -1,0 +1,9 @@
+{
+  "name": "censos-veredales",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Censos Veredales - Fullstack deploy",
+  "scripts": {
+    "build": "cd frontend_censos && npm install && npm run build && cd ../api_censos && npm install",
+    "start": "cd api_censos && npm start"
+  }
+}

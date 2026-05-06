@@ -32,8 +32,20 @@ export const dwellingService = {
   },
 
   async approveByTreasurer(id, status) {
-    const response = await api.post(`/dwellings/${id}/approve/treasurer`, { status })
-    return response.data
+    console.log('=== DWELLING SERVICE DEBUG ===');
+    console.log('id:', id);
+    console.log('status:', status);
+    console.log('Calling POST /dwellings/:id/approve/treasurer');
+    try {
+      const response = await api.post(`/dwellings/${id}/approve/treasurer`, { status })
+      console.log('Response:', response);
+      return response.data
+    } catch (error) {
+      console.error('Service error:', error);
+      console.error('error.response:', error.response);
+      console.error('error.response?.data:', error.response?.data);
+      throw error;
+    }
   },
 
   async approveBySecretary(id, status) {
