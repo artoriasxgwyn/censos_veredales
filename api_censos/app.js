@@ -173,7 +173,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // SPA catch-all - return index.html for any non-API route
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/api-docs')) {
+    return next();
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
