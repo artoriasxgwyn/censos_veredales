@@ -69,6 +69,11 @@ app.use(Quasar, {
 })
 
 app.use(pinia)
+
+// Restaurar sesión ANTES de montar el router
+const authStore = useAuthStore()
+await authStore.restoreSession()
+
 app.use(router)
 
 app.mount('#app')

@@ -301,38 +301,7 @@ const handleSubmit = async () => {
   color: #ffffff !important;
 }
 
-/* Quitar TODO borde azul en hover/focus */
-:deep(.form-card .q-field--outlined .q-field__control) {
-  border: 1px solid var(--outline) !important;
-  border-radius: 4px;
-}
-
-:deep(.form-card .q-field--outlined:hover .q-field__control),
-:deep(.form-card .q-field--outlined.q-field--focused .q-field__control) {
-  border-color: var(--outline) !important;
-}
-
-:deep(.form-card .q-field--outlined .q-field__control:before),
-:deep(.form-card .q-field--outlined .q-field__control:after) {
-  border: none !important;
-  display: none !important;
-}
-
-:deep(.form-card .q-field--focused .q-field__label) {
-  color: #ffffff !important;
-}
-
-/* Quitar outline nativo */
-:deep(.form-card .q-field__native:focus),
-:deep(.form-card .q-field__native:focus-visible) {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-:deep(.form-card .q-field__control) {
-  outline: none !important;
-  box-shadow: none !important;
-}
+/* Bordes de inputs manejados globalmente en style.css */
 
 /* Q-toggle label blanco */
 :deep(.form-card .q-toggle__label) {

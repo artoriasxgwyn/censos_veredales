@@ -65,7 +65,8 @@
       "PowerShell(Test-Path *)",
       "WebFetch(domain:censos-veredales.onrender.com)",
       "Bash(Sort-Object LastWriteTime -Descending)",
-      "Bash(Select-Object -First 5 Name)"
+      "Bash(Select-Object -First 5 Name)",
+      "Bash(del *)"
     ]
   }
 }

@@ -174,15 +174,32 @@ body {
   color: inherit;
 }
 
-/* Quitar borde azul en focus para todos los inputs */
-.q-field--outlined .q-field__control:before,
-.q-field--outlined .q-field__control:after {
+/* Quitar borde azul en focus para todos los inputs - Censos Veredales */
+/* El borde de Quasar se dibuja con ::after, no con :before */
+.q-field--outlined .q-field__control:before {
   border: none !important;
-  display: none !important;
 }
 
+.q-field--outlined .q-field__control::after {
+  border: none !important;
+}
+
+.q-field--outlined .q-field__control {
+  border: 1px solid var(--outline) !important;
+  box-shadow: none !important;
+}
+
+/* Quitar borde azul cuando el campo tiene foco */
 .q-field--outlined.q-field--focused .q-field__control {
   border-color: var(--outline) !important;
+  box-shadow: none !important;
+}
+
+/* Quitar outline nativo del navegador en inputs */
+.q-field--outlined .q-field__native:focus,
+.q-field--outlined .q-field__native:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Dropdown menus oscuros para Quasar - Forzar siempre con alta especificidad */
@@ -313,7 +330,7 @@ body::-webkit-scrollbar,
   box-shadow: 0 16px 32px 0 rgba(25, 28, 30, 0.06);
 }
 
-/* Focus visible - Accesibilidad */
+/* Focus visible - Accesibilidad (excluye inputs de Quasar para evitar borde azul) */
 *:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -327,6 +344,15 @@ textarea:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px var(--primary-50);
+}
+
+/* Excepción: inputs dentro de q-field NO deben tener outline azul */
+.q-field--outlined input:focus-visible,
+.q-field--outlined textarea:focus-visible,
+.q-field--outlined .q-field__native:focus-visible,
+.q-editor .q-editor__content:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Skip link para accesibilidad */

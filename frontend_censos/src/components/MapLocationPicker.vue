@@ -305,15 +305,7 @@ watch(showMapDialog, (newVal) => {
   color: #ffffff !important;
 }
 
-.map-location-picker :deep(.q-field--outlined .q-field__control) {
-  border: 1px solid var(--outline) !important;
-}
-
-.map-location-picker :deep(.q-field--outlined .q-field__control:before),
-.map-location-picker :deep(.q-field--outlined .q-field__control:after) {
-  border: none !important;
-  display: none !important;
-}
+/* Bordes de inputs manejados globalmente en style.css */
 
 .map-dialog-card {
   min-height: 80vh;

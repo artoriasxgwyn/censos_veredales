@@ -142,23 +142,40 @@ const handleLogin = async () => {
 
   const result = await authStore.login(validation.data.email, validation.data.password)
 
+  console.log('[LoginView] Resultado login:', result)
+  console.log('[LoginView] User role:', authStore.user?.role)
+  console.log('[LoginView] isPresident:', authStore.isPresident)
+
   if (result.success) {
-    $q.notify({
-      type: 'positive',
-      message: '¡Bienvenido!'
-    })
-
-    // Cargar permisos del usuario
-    await authStore.fetchPermissions()
-
     // Redirigir según el rol
-    if (authStore.isPresident || authStore.isTreasurer || authStore.isSecretary) {
-      router.push('/admin/dashboard')
-    } else if (authStore.isResident || authStore.isCensista) {
-      router.push('/resident/dashboard')
-    } else {
-      // Usuario sin rol (recién registrado, pendiente de asignación)
-      router.push('/resident/dashboard')
+    let targetPath = '/login'
+    if (authStore.isPresident) {
+      targetPath = '/president/dashboard'
+    } else if (authStore.isTreasurer || authStore.isSecretary) {
+      targetPath = '/admin/dashboard'
+    } else if (authStore.isCensista) {
+      targetPath = '/censista/dashboard'
+    } else if (authStore.isResident) {
+      targetPath = '/resident/dashboard'
+    }
+
+    console.log('[LoginView] Redirigiendo a:', targetPath)
+
+    // Esperar la navegación y solo mostrar éxito si funciona
+    try {
+      await router.push(targetPath)
+      $q.notify({
+        type: 'positive',
+        message: '¡Bienvenido!'
+      })
+    } catch (navError) {
+      console.error('[LoginView] Error en navegación:', navError)
+      // Si falla navegación, hacer logout y mostrar error
+      authStore.logout()
+      $q.notify({
+        type: 'negative',
+        message: 'Error al iniciar sesión'
+      })
     }
   } else {
     // Debug: ver qué mensaje llega del backend
@@ -186,14 +203,25 @@ const handleLogin = async () => {
         message: 'La contraseña es incorrecta',
         caption: 'Intenta nuevamente o restablece tu contraseña'
       })
-    } else if (errorMsg.toLowerCase().includes('comunidad') || errorMsg.toLowerCase().includes('asignada')) {
-      // Usuario sin comunidad asignada
-      errors.value.email = ['Usuario sin comunidad asignada']
-      console.log('[LoginView] Mostrando notificación: sin comunidad')
+    } else if (errorMsg.toLowerCase().includes('rol') || errorMsg.toLowerCase().includes('role')) {
+      // Usuario sin rol asignado (registro público sin vivienda)
+      errors.value.email = ['Sin rol asignado']
+      console.log('[LoginView] Mostrando notificación: sin rol')
       $q.notify({
-        type: 'negative',
-        message: 'Usuario sin comunidad asignada',
-        caption: 'Contacta al administrador para que asigne tu comunidad'
+        type: 'warning',
+        message: 'Tu usuario no tiene un rol asignado',
+        caption: 'Contacta al administrador de tu comunidad para que asigne tu rol',
+        timeout: 5000
+      })
+    } else if (errorMsg.toLowerCase().includes('pendiente') || errorMsg.toLowerCase().includes('aprobación') || errorMsg.toLowerCase().includes('vivienda')) {
+      // Residente pendiente de aprobación (sin vivienda asignada o sin triple aprobación)
+      errors.value.email = ['Registro pendiente']
+      console.log('[LoginView] Mostrando notificación: pendiente de aprobación')
+      $q.notify({
+        type: 'warning',
+        message: 'Tu registro está pendiente',
+        caption: 'Debes tener una vivienda asignada y la aprobación del presidente, tesorero y secretario',
+        timeout: 5000
       })
     } else {
       // Error genérico "Credenciales inválidas" - no especificamos cuál para seguridad

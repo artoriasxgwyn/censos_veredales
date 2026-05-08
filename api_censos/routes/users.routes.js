@@ -28,14 +28,16 @@ router.get('/', auth, checkPermission('resident', 'read'), getUsers);
  * @swagger
  * /api/users/public:
  *   get:
- *     summary: Obtener todos los usuarios activos (PÚBLICO - sin autenticación)
+ *     summary: Obtener todos los usuarios activos de la comunidad (requiere autenticación)
  *     tags: [Users]
+ *     security:
+ *       - xToken: []
  *     responses:
  *       200:
- *         description: Lista de usuarios activos
+ *         description: Lista de usuarios activos de la comunidad
  */
-// GET /api/users/public - Endpoint público sin autenticación
-router.get('/public', getAllUsers);
+// GET /api/users/public - Endpoint para usuarios autenticados de la comunidad
+router.get('/public', auth, getAllUsers);
 
 /**
  * @swagger

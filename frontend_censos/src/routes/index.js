@@ -424,79 +424,92 @@ export const router = createRouter({
 router.beforeEach(async (to, from) => {
   const authStore = useAuthStore()
 
-  // Check if user is authenticated
-  const hasToken = !!authStore.accessToken
+  console.log('[Router Guard] START - to:', to.fullPath, 'from:', from.fullPath)
 
-  // If no token, allow only guest routes
-  if (!hasToken) {
-    if (to.meta.requiresAuth) {
-      return '/login'
+  try {
+    // Rutas públicas - siempre permitir
+    if (!to.meta.requiresAuth) {
+      console.log('[Router Guard] Ruta pública, permitiendo')
+      return true
     }
-    return
-  }
 
-  // User has token - ensure user data is loaded
-  if (!authStore.user) {
-    const user = await authStore.fetchUser()
-    // If fetch failed, redirect to login
-    if (!user) {
-      return '/login'
+    // Verificar token en localStorage (fuente de verdad)
+    const token = localStorage.getItem('access_token')
+
+    // No token - redirect a login
+    if (!token) {
+      console.log('[Router Guard] No token, redirect a login')
+      return { name: 'Login' }
     }
-  }
 
-  // Asegurar que los permisos estén cargados (excepto para presidente)
-  if (!authStore.permissions && authStore.userRole !== 'president') {
-    await authStore.fetchPermissions()
-  }
-
-  const userRole = authStore.userRole
-
-  // If route requires guest but user is authenticated
-  // Allow reset-password even if authenticated (user might want to change password)
-  if (to.meta.requiresGuest && to.name !== 'ResetPassword') {
-    if (userRole === 'president') {
-      return '/president/dashboard'
-    } else if (userRole === 'tesorero' || userRole === 'secretario') {
-      return '/admin/dashboard'
-    } else if (userRole === 'censista') {
-      return '/censista/dashboard'
-    } else {
-      return '/resident/dashboard'
-    }
-  }
-
-  // Check role restrictions for protected routes
-  if (to.meta.roles && !to.meta.roles.includes(userRole)) {
-    // Redirect to appropriate dashboard based on role
-    if (userRole === 'president') {
-      return '/president/dashboard'
-    } else if (userRole === 'tesorero' || userRole === 'secretario') {
-      return '/admin/dashboard'
-    } else if (userRole === 'censista') {
-      return '/censista/dashboard'
-    } else {
-      return '/resident/dashboard'
-    }
-  }
-
-  // Check permissions if route requires specific permission
-  if (to.meta.requiresPermission) {
-    const { module, action } = to.meta.requiresPermission
-
-    // Presidente tiene todos los permisos
-    if (userRole !== 'president') {
-      // Verificar si el usuario tiene el permiso requerido
-      const hasPerm = authStore.hasPermission(module, action)
-      if (!hasPerm) {
-        // Redirigir al dashboard apropiado si no tiene permisos
-        if (userRole === 'tesorero' || userRole === 'secretario') {
-          return '/admin/dashboard'
-        } else if (userRole === 'censista') {
-          return '/censista/dashboard'
-        } else {
-          return '/resident/dashboard'
-        }
+    // Cargar usuario si no existe
+    if (!authStore.user) {
+      console.log('[Router Guard] Cargando usuario desde fetchUser...')
+      const user = await authStore.fetchUser()
+      if (!user) {
+        // Token inválido - limpiar y redirect
+        console.log('[Router Guard] Usuario inválido, logout')
+        authStore.logout()
+        return { name: 'Login', replace: true }
       }
     }
+
+    // Obtener rol del usuario
+    const userRole = authStore.userRole
+    console.log('[Router Guard] userRole:', userRole)
+    console.log('[Router Guard] authStore.user:', authStore.user?.fullName)
+    console.log('[Router Guard] to.path:', to.path)
+    console.log('[Router Guard] to.meta.roles:', to.meta.roles)
+
+    // Cargar permisos si no están cargados (excepto presidente)
+    if (userRole !== 'president' && !authStore.permissionsLoaded && !authStore.permissionsLoadFailed) {
+      console.log('[Router Guard] Cargando permisos...')
+      await authStore.fetchPermissions()
+    }
+
+    // Si es ruta de guest y ya está logueado, redirect a su dashboard
+    if (to.meta.requiresGuest) {
+      console.log('[Router Guard] Es ruta guest, usuario ya logueado')
+      if (userRole === 'president') return { name: 'PresidentDashboard', replace: true }
+      if (userRole === 'tesorero' || userRole === 'secretario') return { name: 'AdminDashboard', replace: true }
+      if (userRole === 'censista') return { name: 'CensistaDashboard', replace: true }
+      if (userRole === 'residente') return { name: 'ResidentDashboard', replace: true }
+      return { name: 'Login', replace: true }
+    }
+
+    // Verificar rol si la ruta lo requiere
+    if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+      console.log('[Router Guard] Rol no permitido, redirect')
+      if (userRole === 'president') return { name: 'PresidentDashboard', replace: true }
+      if (userRole === 'tesorero' || userRole === 'secretario') return { name: 'AdminDashboard', replace: true }
+      if (userRole === 'censista') return { name: 'CensistaDashboard', replace: true }
+      if (userRole === 'residente') return { name: 'ResidentDashboard', replace: true }
+      return { name: 'Login', replace: true }
+    }
+
+    // Verificar permisos si la ruta lo requiere
+    if (to.meta.requiresPermission && userRole !== 'president') {
+      const { module, action } = to.meta.requiresPermission
+      if (!authStore.hasPermission(module, action)) {
+        console.log('[Router Guard] Sin permisos, redirect')
+        if (userRole === 'tesorero' || userRole === 'secretario') return { name: 'AdminDashboard', replace: true }
+        if (userRole === 'censista') return { name: 'CensistaDashboard', replace: true }
+        if (userRole === 'residente') return { name: 'ResidentDashboard', replace: true }
+        return { name: 'Login', replace: true }
+      }
+    }
+
+    console.log('[Router Guard] Todo OK, permitiendo navegación')
+    return true
+  } catch (error) {
+    console.error('[Router Guard] ERROR:', error)
+    // Error crítico - limpiar auth y redirect
+    authStore.logout()
+    return { name: 'Login', replace: true }
   }
+})
+
+// AfterEach para debug
+router.afterEach((to, from, failure) => {
+  console.log('[Router AfterEach] to:', to.fullPath, 'from:', from.fullPath, 'failure:', failure)
 })

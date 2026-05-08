@@ -11,7 +11,10 @@ export const useAuthStore = defineStore('auth', {
     refreshToken: localStorage.getItem('refresh_token') || null,
     loading: false,
     permissions: null,
-    communityCode: localStorage.getItem('community_code') || null
+    communityCode: localStorage.getItem('community_code') || null,
+    permissionsLoaded: false,
+    permissionsLoadFailed: false,
+    isFetchingPermissions: false // Evitar llamadas concurrentes
   }),
 
   getters: {
@@ -52,9 +55,54 @@ export const useAuthStore = defineStore('auth', {
       this.accessToken = null
       this.refreshToken = null
       this.communityCode = null
+      this.permissions = null
+      this.permissionsLoaded = false
+      this.permissionsLoadFailed = false
+      this.isFetchingPermissions = false
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('community_code')
+    },
+
+    async logout() {
+      try {
+        await authService.logout()
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error)
+      } finally {
+        this.user = null
+        this.clearTokens()
+      }
+    },
+
+    /**
+     * Restaurar sesión al iniciar la app
+     * Se llama UNA VEZ al inicio, antes de montar el router
+     */
+    async restoreSession() {
+      const token = localStorage.getItem('access_token')
+      if (!token) {
+        return false
+      }
+
+      try {
+        const user = await this.fetchUser()
+        if (!user) {
+          this.logout()
+          return false
+        }
+
+        // Cargar permisos si no es presidente
+        if (user.role !== 'president') {
+          await this.fetchPermissions()
+        }
+
+        return true
+      } catch (error) {
+        console.error('Error al restaurar sesión:', error)
+        this.logout()
+        return false
+      }
     },
 
     async login(email, password) {
@@ -64,6 +112,10 @@ export const useAuthStore = defineStore('auth', {
         const { user, accessToken, refreshToken } = response.data
         this.user = user
         this.setTokens(accessToken, refreshToken)
+        // Resetear flags de permisos para nuevo login
+        this.permissionsLoaded = false
+        this.permissionsLoadFailed = false
+        this.isFetchingPermissions = false
 
         // Decododar token para obtener communityId y cargar código de comunidad
         if (accessToken) {
@@ -76,6 +128,23 @@ export const useAuthStore = defineStore('auth', {
           } catch (e) {
             console.error('Error al decodificar token:', e)
           }
+        }
+
+        // Cargar permisos ANTES de retornar éxito
+        // Presidente tiene todos los permisos por defecto
+        if (user.role !== 'president') {
+          await this.fetchPermissions()
+          // Si no tiene permisos, el login falló (usuario sin rol válido)
+          if (!this.permissions) {
+            this.logout()
+            return {
+              success: false,
+              message: 'Tu usuario no tiene permisos asignados. Contacta al administrador.'
+            }
+          }
+        } else {
+          this.permissions = { all: true }
+          this.permissionsLoaded = true
         }
 
         return { success: true }
@@ -123,22 +192,35 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async fetchPermissions() {
-      if (!this.accessToken) return
+      if (!this.accessToken) return null
       if (this.user?.role === 'president') {
-        // Presidente tiene todos los permisos
         this.permissions = { all: true }
-        return
+        this.permissionsLoaded = true
+        return { data: { permissions: { all: true } } }
       }
+      // Evitar llamadas concurrentes
+      if (this.isFetchingPermissions) {
+        return null
+      }
+      // Si ya se cargaron o falló, no reintentar
+      if (this.permissionsLoaded || this.permissionsLoadFailed) {
+        return this.permissions ? { data: { permissions: this.permissions } } : null
+      }
+      this.isFetchingPermissions = true
       try {
         const response = await roleService.getMyPermissions()
         const perms = response.data?.permissions
-        // Si el backend retorna 'all' o un objeto de permisos
         this.permissions = perms === 'all' ? { all: true } : (perms || null)
+        this.permissionsLoaded = true
+        this.permissionsLoadFailed = false
         return response.data
       } catch (error) {
         console.error('Error al cargar permisos:', error)
         this.permissions = null
+        this.permissionsLoadFailed = true
         return null
+      } finally {
+        this.isFetchingPermissions = false
       }
     },
 
@@ -149,6 +231,9 @@ export const useAuthStore = defineStore('auth', {
         console.error('Error al cerrar sesión:', error)
       } finally {
         this.user = null
+        this.permissions = null
+        this.permissionsLoaded = false
+        this.permissionsLoadFailed = false
         this.clearTokens()
       }
     },

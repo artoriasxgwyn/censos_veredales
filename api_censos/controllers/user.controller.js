@@ -172,11 +172,14 @@ export const getUsers = async (req, res) => {
 };
 
 /**
- * Endpoint público - devuelve todos los usuarios activos (sin filtro por comunidad)
+ * Endpoint público - devuelve todos los usuarios activos de la comunidad
  */
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ isActive: true }).select('-password');
+    const users = await User.find({
+      communityId: req.communityId,
+      isActive: true
+    }).select('-password');
     res.json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

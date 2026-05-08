@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/user.model.js';
 import Community from '../models/community.model.js';
+import Resident from '../models/resident.model.js';
 import PasswordReset from '../models/passwordReset.model.js';
 import { v4 as uuidv4 } from 'uuid';
 import nodemailer from 'nodemailer';
@@ -48,11 +49,27 @@ export const login = async (req, res) => {
       });
     }
 
-    // Verificar que tenga comunidad asignada
-    if (!user.communityId) {
+    // Verificar que el usuario tenga un rol asignado
+    if (!user.role || user.role === null) {
       return res.status(403).json({
-        message: 'Usuario sin comunidad asignada. Contacta al administrador.'
+        message: 'Tu usuario no tiene un rol asignado. Contacta al administrador de tu comunidad.'
       });
+    }
+
+    // Residentes solo pueden iniciar sesión si están aprobados (tienen vivienda asignada y triple aprobación)
+    if (user.role === 'residente') {
+      const residentRecord = await Resident.findOne({
+        userId: user._id,
+        communityId: user.communityId,
+        status: 'approved',
+        isActive: true
+      });
+
+      if (!residentRecord) {
+        return res.status(403).json({
+          message: 'Tu registro como residente está pendiente de aprobación. Debes ser asignado a una vivienda y contar con la aprobación del presidente, tesorero y secretario.'
+        });
+      }
     }
 
     // Verificar contraseña
