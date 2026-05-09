@@ -87,7 +87,7 @@ router.get('/', auth, checkPermission('announcement', 'read'), getCommunityAnnou
  *       404:
  *         description: Anuncio no encontrado
  */
-router.get('/:id', auth, getAnnouncementById);
+router.get('/:id', auth, checkPermission('announcement', 'read'), getAnnouncementById);
 
 /**
  * @swagger

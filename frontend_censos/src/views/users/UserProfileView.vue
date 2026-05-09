@@ -56,6 +56,10 @@
               <span class="info-label">Teléfono</span>
               <span class="info-value">{{ authStore.user.phone }}</span>
             </div>
+            <div class="info-item" v-if="authStore.user.birthDate">
+              <span class="info-label">Fecha de Nacimiento</span>
+              <span class="info-value">{{ formatDate(authStore.user.birthDate) }}</span>
+            </div>
             <div class="info-item">
               <span class="info-label">Fecha de Registro</span>
               <span class="info-value">{{ formatDate(authStore.user.createdAt) }}</span>

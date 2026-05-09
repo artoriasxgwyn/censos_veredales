@@ -1,5 +1,7 @@
 import Announcement from '../models/announcement.model.js';
 import Community from '../models/community.model.js';
+import User from '../models/user.model.js';
+import { createNotification } from './notification.controller.js';
 
 /**
  * Crear nuevo anuncio (solo presidente y roles con permiso)
@@ -195,6 +197,25 @@ export const publishAnnouncement = async (req, res) => {
 
     announcement.publishedAt = new Date();
     await announcement.save();
+
+    // Notificar a todos los usuarios activos de la comunidad
+    const users = await User.find({
+      communityId: req.communityId,
+      isActive: true
+    });
+
+    for (const user of users) {
+      await createNotification({
+        userId: user._id,
+        communityId: req.communityId,
+        type: 'announcement',
+        title: 'Nuevo anuncio publicado',
+        message: announcement.title,
+        entity: 'announcement',
+        entityId: announcement._id,
+        actionUrl: `/announcements/${announcement._id}`
+      });
+    }
 
     res.json({
       success: true,

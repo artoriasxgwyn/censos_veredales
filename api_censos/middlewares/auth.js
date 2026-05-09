@@ -132,6 +132,25 @@ export const checkPermission = (resource, action) => {
   };
 };
 
+// Middleware para verificar si es miembro de la junta directiva (para aprobaciones)
+export const isBoardMember = (req, res, next) => {
+  if (!req.userRole) {
+    return res.status(403).json({
+      success: false,
+      message: 'Rol no disponible. Por favor inicia sesión nuevamente.'
+    });
+  }
+
+  const boardRoles = ['president', 'secretario', 'tesorero'];
+  if (!boardRoles.includes(req.userRole)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Acceso denegado. Se requiere rol de junta directiva (presidente, secretario o tesorero).'
+    });
+  }
+  next();
+};
+
 // Middleware para verificar si el usuario pertenece a la comunidad correcta
 export const checkCommunityAccess = (communityIdField = 'communityId') => {
   return async (req, res, next) => {

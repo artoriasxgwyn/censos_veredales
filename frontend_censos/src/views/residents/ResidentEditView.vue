@@ -66,13 +66,6 @@
                 </template>
               </q-select>
             </div>
-
-            <div class="col-12">
-              <q-toggle
-                v-model="form.isActive"
-                label="Residente Activo"
-              />
-            </div>
           </div>
 
           <div class="form-actions">
@@ -121,8 +114,7 @@ const statusOptions = [
 const form = ref({
   userId: '',
   dwellingId: '',
-  status: 'pending',
-  isActive: true
+  status: 'pending'
 })
 
 const userOptions = computed(() => {
@@ -140,6 +132,15 @@ const dwellingOptions = computed(() => {
 })
 
 onMounted(async () => {
+  if (!authStore.hasPermission('resident', 'update')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para editar residentes.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     residentStore.fetchResidentById(residentId.value),
     userStore.fetchAllUsersPublic(),
@@ -151,34 +152,78 @@ onMounted(async () => {
     form.value = {
       userId: typeof resident.userId === 'object' ? resident.userId._id : resident.userId,
       dwellingId: typeof resident.dwellingId === 'object' ? resident.dwellingId._id : resident.dwellingId,
-      status: resident.status || 'pending',
-      isActive: resident.isActive ?? true
+      status: resident.status || 'pending'
     }
   }
 })
 
 const handleSubmit = async () => {
-  const updateData = {
-    userId: form.value.userId,
-    dwellingId: form.value.dwellingId,
-    status: form.value.status,
-    isActive: form.value.isActive
+  // Validaciones de campos requeridos
+  if (!form.value.userId) {
+    $q.notify({
+      type: 'warning',
+      message: 'El usuario es requerido',
+      timeout: 4000
+    })
+    return
   }
 
-  const result = await residentStore.updateResident(residentId.value, updateData)
-
-  if (result.success) {
+  if (!form.value.dwellingId) {
     $q.notify({
-      type: 'positive',
-      message: 'Residente actualizado exitosamente'
+      type: 'warning',
+      message: 'La vivienda es requerida',
+      timeout: 4000
     })
-    router.push(`/admin/residents/${residentId.value}`)
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al actualizar residente'
-    })
+    return
   }
+
+  if (!form.value.status) {
+    $q.notify({
+      type: 'warning',
+      message: 'El estado es requerido',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Confirmación antes de guardar
+  $q.dialog({
+    title: 'Confirmar actualización',
+    message: '¿Estás seguro de que deseas actualizar este residente?',
+    cancel: true,
+    persistent: true,
+    ok: {
+      label: 'Guardar',
+      color: 'primary',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    const updateData = {
+      userId: form.value.userId,
+      dwellingId: form.value.dwellingId,
+      status: form.value.status
+    }
+
+    const result = await residentStore.updateResident(residentId.value, updateData)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Residente actualizado exitosamente'
+      })
+      router.push(`/admin/residents/${residentId.value}`)
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.message || 'Error al actualizar residente'
+      })
+    }
+  })
 }
 </script>
 

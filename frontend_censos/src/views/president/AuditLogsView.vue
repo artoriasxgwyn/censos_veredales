@@ -212,12 +212,12 @@ const router = useRouter()
 const $q = useQuasar()
 const authStore = useAuthStore()
 
-// Security check: Only presidents can access this view
+// Security check: Requires dashboard access permission
 onMounted(() => {
-  if (!authStore.isPresident) {
+  if (!authStore.hasPermission('dashboard', 'access')) {
     $q.notify({
       type: 'negative',
-      message: 'Acceso denegado. Solo el presidente puede acceder a esta sección.'
+      message: 'Acceso denegado. No tienes permisos para ver los registros de auditoría.'
     })
     router.push('/admin/dashboard')
   }

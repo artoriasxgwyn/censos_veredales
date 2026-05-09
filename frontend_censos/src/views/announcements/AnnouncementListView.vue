@@ -131,6 +131,16 @@ const filteredAnnouncements = computed(() => {
 })
 
 onMounted(async () => {
+  // Verificar permiso para ver anuncios
+  if (!authStore.hasPermission('announcement', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver anuncios.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     announcementStore.fetchAnnouncements(),
     userStore.fetchAllUsersPublic()

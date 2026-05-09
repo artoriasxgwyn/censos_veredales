@@ -204,7 +204,7 @@
             </div>
 
             <div class="quick-actions-list">
-              <router-link to="/resident/letters/request" class="quick-action-item" v-if="hasPermission('letter', 'create')">
+              <router-link to="/resident/letters/request" class="quick-action-item" v-if="hasPermission('letter', 'generateNormal')">
                 <div class="action-icon-wrapper primary">
                   <span class="material-symbols-outlined">add_circle</span>
                 </div>
@@ -218,7 +218,7 @@
                 <span class="action-label">Mi Perfil</span>
               </router-link>
 
-              <router-link to="/resident/qr-scanner" class="quick-action-item" v-if="hasPermission('letter', 'qrScan')">
+              <router-link to="/resident/qr-scanner" class="quick-action-item" v-if="hasPermission('letter', 'verifyQr')">
                 <div class="action-icon-wrapper tertiary">
                   <span class="material-symbols-outlined">qr_code_scanner</span>
                 </div>

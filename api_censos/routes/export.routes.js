@@ -5,7 +5,7 @@ import {
   exportLetters,
   exportAll
 } from '../controllers/export.controller.js';
-import { auth, isPresident } from '../middlewares/auth.js';
+import { auth, checkPermission } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -26,9 +26,9 @@ const router = Router();
  *               type: string
  *               format: binary
  *       403:
- *         description: Se requiere rol de presidente
+ *         description: Se requiere permiso export:residents
  */
-router.get('/residents', auth, isPresident, exportResidents);
+router.get('/residents', auth, checkPermission('export', 'residents'), exportResidents);
 
 /**
  * @swagger
@@ -47,9 +47,9 @@ router.get('/residents', auth, isPresident, exportResidents);
  *               type: string
  *               format: binary
  *       403:
- *         description: Se requiere rol de presidente
+ *         description: Se requiere permiso export:dwellings
  */
-router.get('/dwellings', auth, isPresident, exportDwellings);
+router.get('/dwellings', auth, checkPermission('export', 'dwellings'), exportDwellings);
 
 /**
  * @swagger
@@ -68,9 +68,9 @@ router.get('/dwellings', auth, isPresident, exportDwellings);
  *               type: string
  *               format: binary
  *       403:
- *         description: Se requiere rol de presidente
+ *         description: Se requiere permiso export:letters
  */
-router.get('/letters', auth, isPresident, exportLetters);
+router.get('/letters', auth, checkPermission('export', 'letters'), exportLetters);
 
 /**
  * @swagger
@@ -88,8 +88,8 @@ router.get('/letters', auth, isPresident, exportLetters);
  *             schema:
  *               type: object
  *       403:
- *         description: Se requiere rol de presidente
+ *         description: Se requiere permiso export:all
  */
-router.get('/all', auth, isPresident, exportAll);
+router.get('/all', auth, checkPermission('export', 'all'), exportAll);
 
 export default router;

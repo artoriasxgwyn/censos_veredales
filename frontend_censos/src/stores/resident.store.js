@@ -103,21 +103,14 @@ export const useResidentStore = defineStore('resident', {
 
     async approveResident(id, role, status) {
       this.loading = true
-      console.log('=== RESIDENT STORE - approveResident ===');
-      console.log('id:', id);
-      console.log('role:', role);
-      console.log('status:', status);
-
       try {
         let response
+        // Los roles deben coincidir con los endpoints del backend (en inglés)
         if (role === 'president') {
-          console.log('Calling approveByPresident...');
           response = await residentService.approveByPresident(id, status)
-        } else if (role === 'tesorero') {
-          console.log('Calling approveByTreasurer...');
+        } else if (role === 'treasurer') {
           response = await residentService.approveByTreasurer(id, status)
-        } else if (role === 'secretario') {
-          console.log('Calling approveBySecretary...');
+        } else if (role === 'secretary') {
           response = await residentService.approveBySecretary(id, status)
         } else {
           console.error('Role no reconocido:', role);

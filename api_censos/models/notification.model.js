@@ -20,6 +20,7 @@ const notificationSchema = new mongoose.Schema({
       'resident_approval',
       'dwelling_approval',
       'letter_approval',
+      'announcement',
       'general'
     ],
     required: true
@@ -34,7 +35,7 @@ const notificationSchema = new mongoose.Schema({
   },
   entity: {
     type: String,
-    enum: ['user', 'resident', 'dwelling', 'letter', 'profile', 'password']
+    enum: ['user', 'resident', 'dwelling', 'letter', 'profile', 'password', 'announcement']
   },
   entityId: {
     type: mongoose.Schema.Types.ObjectId

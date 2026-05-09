@@ -34,28 +34,13 @@ const checkUniqueBoardRole = async (roleName, communityId, excludeUserId = null)
 };
 
 /**
- * Crear usuario con rol (solo presidente)
+ * Crear usuario SIN rol (el rol se asigna después)
+ * - El rol de presidente NO se puede asignar (siempre hay solo uno)
+ * - Los usuarios se crean con role = null
  */
 export const createUser = async (req, res) => {
   try {
-    const { fullName, documentNumber, birthDate, phone, email, password, role: roleName } = req.body;
-
-    // Verificar que el rol existe en esta comunidad
-    const roleDoc = await Role.findOne({
-      communityId: req.communityId,
-      $or: [
-        { name: roleName },
-        { customName: roleName }
-      ],
-      isActive: true
-    });
-
-    if (!roleDoc) {
-      return res.status(404).json({
-        success: false,
-        message: `El rol "${roleName}" no existe o está inactivo en tu comunidad`
-      });
-    }
+    const { fullName, documentNumber, birthDate, phone, email, password } = req.body;
 
     // Verificar email duplicado
     const existingEmail = await User.findOne({
@@ -71,16 +56,10 @@ export const createUser = async (req, res) => {
       });
     }
 
-    // Verificar que no haya otro usuario con el mismo rol de junta directiva
-    const uniqueError = await checkUniqueBoardRole(roleDoc.name, req.communityId);
-    if (uniqueError) {
-      return res.status(409).json({ success: false, message: uniqueError });
-    }
-
     // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear usuario activo inmediatamente
+    // Crear usuario SIN rol (role = null)
     const user = await User.create({
       fullName,
       documentNumber,
@@ -88,21 +67,10 @@ export const createUser = async (req, res) => {
       phone,
       email,
       password: hashedPassword,
-      role: roleDoc.customName || roleDoc.name,
+      role: null,
       communityId: req.communityId,
       isActive: true
     });
-
-    // Si es rol de junta directiva, actualizar Community
-    if (['president', 'tesorero', 'secretario'].includes(roleDoc.name)) {
-      const communityField = roleDoc.name === 'president' ? 'presidentId'
-        : roleDoc.name === 'tesorero' ? 'treasurerId' : 'secretaryId';
-
-      await Community.findByIdAndUpdate(
-        req.communityId,
-        { [communityField]: user._id }
-      );
-    }
 
     res.status(201).json({
       success: true,
@@ -210,6 +178,15 @@ export const assignRole = async (req, res) => {
     const { role } = req.validatedBody;
     const { id } = req.params;
 
+    // CRÍTICO: El rol de presidente NO se puede asignar desde aquí
+    // El presidente se registra directamente en la tabla Community
+    if (role === 'president') {
+      return res.status(403).json({
+        success: false,
+        message: 'No se puede asignar el rol de presidente. El presidente debe estar registrado directamente en la comunidad.'
+      });
+    }
+
     // Verificar que el rol exista y esté activo en la comunidad
     const roleDoc = await Role.findOne({
       communityId: req.communityId,
@@ -284,9 +261,13 @@ export const removeRole = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado en tu comunidad' });
     }
 
-    // Evitar que el presidente se quite su propio rol
-    if (req.userId === user._id.toString() && user.role === 'president') {
-      return res.status(403).json({ success: false, message: 'No puedes remover tu propio rol de presidente. Se requiere que otro administrador lo haga.' });
+    // CRÍTICO: El rol de presidente NO se puede remover NUNCA
+    // Una comunidad siempre debe tener un presidente activo
+    if (user.role === 'president') {
+      return res.status(403).json({
+        success: false,
+        message: 'No se puede remover el rol de presidente. Una comunidad siempre debe tener un presidente activo.'
+      });
     }
 
     // Guardar rol anterior para limpiar referencia en Community

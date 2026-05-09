@@ -9,6 +9,7 @@
           <p class="page-description">Administre los residentes de las comunidades</p>
         </div>
         <q-btn
+          v-if="canCreate"
           color="primary"
           label="Nuevo Residente"
           icon="add"
@@ -108,11 +109,17 @@ import { useRouter } from 'vue-router'
 import { useResidentStore } from '@/stores/resident.store'
 import { useUserStore } from '@/stores/user.store'
 import { useDwellingStore } from '@/stores/dwelling.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const residentStore = useResidentStore()
 const userStore = useUserStore()
 const dwellingStore = useDwellingStore()
+
+const canCreate = computed(() => authStore.hasPermission('resident', 'create'))
+const canEdit = computed(() => authStore.hasPermission('resident', 'update'))
+const canDelete = computed(() => authStore.hasPermission('resident', 'delete'))
 
 const statusFilter = ref('all')
 const statusOptions = [

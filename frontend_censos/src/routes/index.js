@@ -116,11 +116,11 @@ const routes = [
     meta: { requiresAuth: false }
   },
 
-  // Protected routes with MainLayout - Admin
+  // Protected routes with MainLayout - Admin (accesible por permisos)
   {
     path: '/admin',
     component: MainLayout,
-    meta: { requiresAuth: true, roles: adminRoles },
+    meta: { requiresAuth: true },
     children: [
       {
         path: 'dashboard',
@@ -226,7 +226,7 @@ const routes = [
         path: 'verify-letter/:qrCode',
         name: 'LetterVerify',
         component: LetterVerifyView,
-        meta: { requiresPermission: { module: 'letter', action: 'read' } }
+        meta: { requiresPermission: { module: 'letter', action: 'verifyQr' } }
       },
       // Announcements
       {
@@ -265,6 +265,13 @@ const routes = [
         name: 'UserDetail',
         component: UserDetailView,
         meta: { requiresPermission: { module: 'user', action: 'read' } }
+      },
+      // My Dwelling
+      {
+        path: 'my-dwelling',
+        name: 'MyDwellingAdmin',
+        component: MyDwellingView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'read' } }
       }
     ]
   },
@@ -282,11 +289,11 @@ const routes = [
     ]
   },
 
-  // President-only routes (tambien accesible por roles con permisos)
+  // Rutas de administración (accesible por roles con permisos)
   {
     path: '/president',
     component: MainLayout,
-    meta: { requiresAuth: true, roles: ['president'] },
+    meta: { requiresAuth: true },
     children: [
       {
         path: 'dashboard',
@@ -304,7 +311,7 @@ const routes = [
         path: 'roles',
         name: 'PresidentRoleManagement',
         component: RoleManagementView,
-        meta: { requiresPermission: { module: 'user', action: 'manageRoles' } }
+        meta: { requiresPermission: { module: 'role', action: 'read' } }
       },
       {
         path: 'audit-logs',
@@ -316,52 +323,59 @@ const routes = [
         path: 'qr-scanner',
         name: 'PresidentQRScanner',
         component: QRScannerView,
-        meta: { requiresPermission: { module: 'letter', action: 'qrScan' } }
+        meta: { requiresPermission: { module: 'letter', action: 'verifyQr' } }
       }
     ]
   },
-  // Protected routes with MainLayout - Resident
+  // Protected routes with MainLayout - Resident (accesible por permisos)
   {
     path: '/resident',
     component: MainLayout,
-    meta: { requiresAuth: true, roles: residentRoles },
+    meta: { requiresAuth: true },
     children: [
       {
         path: 'dashboard',
         name: 'ResidentDashboard',
-        component: ResidentDashboardView
+        component: ResidentDashboardView,
+        meta: { requiresPermission: { module: 'dashboard', action: 'access' } }
       },
       // My Letters
       {
         path: 'letters',
         name: 'MyLetters',
-        component: MyLettersView
+        component: MyLettersView,
+        meta: { requiresPermission: { module: 'letter', action: 'read' } }
       },
       {
         path: 'letters/request',
         name: 'LetterRequest',
-        component: LetterRequestView
+        component: LetterRequestView,
+        meta: { requiresPermission: { module: 'letter', action: 'generateNormal' } }
       },
       {
         path: 'my-dwelling',
         name: 'MyDwelling',
-        component: MyDwellingView
+        component: MyDwellingView,
+        meta: { requiresPermission: { module: 'dwelling', action: 'read' } }
       },
       {
         path: 'letters/:id',
         name: 'ResidentLetterDetail',
-        component: LetterDetailView
+        component: LetterDetailView,
+        meta: { requiresPermission: { module: 'letter', action: 'read' } }
       },
       // Announcements
       {
         path: 'announcements',
         name: 'ResidentAnnouncementList',
-        component: AnnouncementListView
+        component: AnnouncementListView,
+        meta: { requiresPermission: { module: 'announcement', action: 'read' } }
       },
       {
         path: 'announcements/:id',
         name: 'ResidentAnnouncementDetail',
-        component: AnnouncementDetailView
+        component: AnnouncementDetailView,
+        meta: { requiresPermission: { module: 'announcement', action: 'read' } }
       },
       // Profile
       {
@@ -373,20 +387,22 @@ const routes = [
       {
         path: 'qr-scanner',
         name: 'ResidentQRScanner',
-        component: QRScannerView
+        component: QRScannerView,
+        meta: { requiresPermission: { module: 'letter', action: 'verifyQr' } }
       }
     ]
   },
-  // Protected routes with MainLayout - Censista
+  // Protected routes with MainLayout - Censista (accesible por permisos)
   {
     path: '/censista',
     component: MainLayout,
-    meta: { requiresAuth: true, roles: censistaRoles },
+    meta: { requiresAuth: true },
     children: [
       {
         path: 'dashboard',
         name: 'CensistaDashboard',
-        component: CensistaDashboardView
+        component: CensistaDashboardView,
+        meta: { requiresPermission: { module: 'dashboard', action: 'access' } }
       },
       {
         path: 'dwellings/new',
@@ -404,7 +420,7 @@ const routes = [
         path: 'qr-scanner',
         name: 'CensistaQRScanner',
         component: QRScannerView,
-        meta: { requiresPermission: { module: 'letter', action: 'qrScan' } }
+        meta: { requiresPermission: { module: 'letter', action: 'verifyQr' } }
       }
     ]
   },
@@ -462,9 +478,20 @@ router.beforeEach(async (to, from) => {
     console.log('[Router Guard] to.meta.roles:', to.meta.roles)
 
     // Cargar permisos si no están cargados (excepto presidente)
-    if (userRole !== 'president' && !authStore.permissionsLoaded && !authStore.permissionsLoadFailed) {
-      console.log('[Router Guard] Cargando permisos...')
-      await authStore.fetchPermissions()
+    // O si la ruta requiere permisos y los actuales podrían estar desactualizados
+    if (userRole !== 'president' && !authStore.isFetchingPermissions) {
+      if (!authStore.permissionsLoaded || !authStore.permissionsLoadFailed) {
+        console.log('[Router Guard] Cargando permisos por primera vez...')
+        await authStore.fetchPermissions()
+      } else if (to.meta.requiresPermission) {
+        // Si ya están cargados pero la ruta requiere permisos, verificar
+        const { module, action } = to.meta.requiresPermission
+        if (!authStore.hasPermission(module, action)) {
+          console.log('[Router Guard] Permiso no concedido, recargando permisos forzado...')
+          // Forzar recarga para obtener permisos actualizados
+          await authStore.fetchPermissions(true)
+        }
+      }
     }
 
     // Si es ruta de guest y ya está logueado, redirect a su dashboard

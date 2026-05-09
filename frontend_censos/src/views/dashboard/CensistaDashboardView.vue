@@ -104,7 +104,7 @@
             <span>Registrar Residente</span>
           </router-link>
 
-          <router-link to="/censista/qr-scanner" class="action-card tertiary" v-if="hasPermission('letter', 'qrScan')">
+          <router-link to="/censista/qr-scanner" class="action-card tertiary" v-if="hasPermission('letter', 'verifyQr')">
             <span class="material-symbols-outlined">qr_code_scanner</span>
             <span>Escanear QR</span>
           </router-link>

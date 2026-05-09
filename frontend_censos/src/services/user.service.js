@@ -45,5 +45,15 @@ export const userService = {
   async getMyPendingChanges() {
     const response = await api.get('/profile-changes/my-pending')
     return response.data
+  },
+
+  async createUser(userData) {
+    const response = await api.post('/users', userData)
+    return response.data
+  },
+
+  async uploadSignature(id, signatureData) {
+    const response = await api.post(`/users/${id}/signature`, { signatureData })
+    return response.data
   }
 }

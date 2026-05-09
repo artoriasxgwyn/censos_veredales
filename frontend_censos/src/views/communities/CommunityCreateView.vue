@@ -212,16 +212,28 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useCommunityStore } from '@/stores/community.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { departamentos, getMunicipios } from '@/data/colombia'
 import MapLocationPicker from '@/components/MapLocationPicker.vue'
 
 const router = useRouter()
 const $q = useQuasar()
 const communityStore = useCommunityStore()
+const authStore = useAuthStore()
+
+onMounted(() => {
+  if (!authStore.hasPermission('community', 'create')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para crear comunidades.'
+    })
+    router.push('/admin/dashboard')
+  }
+})
 
 const isPwd = ref(true)
 

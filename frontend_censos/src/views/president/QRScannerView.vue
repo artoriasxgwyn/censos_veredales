@@ -51,12 +51,12 @@ const router = useRouter()
 const $q = useQuasar()
 const authStore = useAuthStore()
 
-// Security check: Only presidents can access this view
+// Security check: Only users with community update permission can access this view
 onMounted(() => {
-  if (!authStore.isPresident) {
+  if (!authStore.hasPermission('community', 'update')) {
     $q.notify({
       type: 'negative',
-      message: 'Acceso denegado. Solo el presidente puede acceder a esta sección.'
+      message: 'Acceso denegado. No tienes permisos para acceder a esta sección.'
     })
     router.push('/admin/dashboard')
   }

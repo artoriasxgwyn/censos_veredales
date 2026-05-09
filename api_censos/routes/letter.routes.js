@@ -85,7 +85,7 @@ router.get('/my-letters', auth, getMyLetters);
  *       403:
  *         description: Solo el presidente puede acceder
  */
-router.get('/community', auth, getCommunityLetters);
+router.get('/community', auth, checkPermission('letter', 'read'), getCommunityLetters);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.get('/community', auth, getCommunityLetters);
  *       404:
  *         description: Carta no encontrada
  */
-router.get('/:id', auth, getLetterById);
+router.get('/:id', auth, checkPermission('letter', 'read'), getLetterById);
 
 /**
  * @swagger
@@ -139,7 +139,7 @@ router.get('/:id', auth, getLetterById);
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/president', auth, auditLog('letter', 'approve'), approveByPresident);
+router.post('/:id/approve/president', auth, checkPermission('letter', 'confirmJuramentada'), auditLog('letter', 'approve'), approveByPresident);
 
 /**
  * @swagger
@@ -171,7 +171,7 @@ router.post('/:id/approve/president', auth, auditLog('letter', 'approve'), appro
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/treasurer', auth, auditLog('letter', 'approve'), approveByTreasurer);
+router.post('/:id/approve/treasurer', auth, checkPermission('letter', 'confirmJuramentada'), auditLog('letter', 'approve'), approveByTreasurer);
 
 /**
  * @swagger
@@ -203,7 +203,7 @@ router.post('/:id/approve/treasurer', auth, auditLog('letter', 'approve'), appro
  *       200:
  *         description: Aprobación registrada
  */
-router.post('/:id/approve/secretary', auth, auditLog('letter', 'approve'), approveBySecretary);
+router.post('/:id/approve/secretary', auth, checkPermission('letter', 'confirmJuramentada'), auditLog('letter', 'approve'), approveBySecretary);
 
 /**
  * @swagger
@@ -265,7 +265,7 @@ router.post('/:id/generate-pdf', auth, generatePdf);
  *       302:
  *         description: Redirección al PDF
  */
-router.get('/:id/download', auth, downloadPdf);
+router.get('/:id/download', auth, checkPermission('letter', 'download'), downloadPdf);
 
 /**
  * @swagger

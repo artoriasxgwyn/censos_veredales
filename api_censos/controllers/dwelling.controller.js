@@ -4,26 +4,17 @@ import { notifyAllAdmins } from './notification.controller.js';
 
 export const getDwellings = async (req, res) => {
   try {
-    // DEBUG: Log para verificar communityId y rol
-    console.log('=== DWELLINGS DEBUG ===');
-    console.log('req.userRole:', req.userRole);
-    console.log('req.communityId:', req.communityId);
-    console.log('req.userId:', req.userId);
-
     // Obtener documento del usuario para obtener su cédula
     const currentUser = await User.findById(req.userId).select('documentNumber communityId');
-    console.log('currentUser.communityId:', currentUser?.communityId?.toString());
 
     // Presidente, Secretario y Tesorero ven todas las viviendas de su comunidad
     if (req.userRole === 'president' || req.userRole === 'secretario' || req.userRole === 'tesorero') {
-      console.log('Rol administrativo - buscando viviendas de communityId:', req.communityId);
       const dwellings = await Dwelling.find({
         communityId: req.communityId,
         isActive: true
       })
         .populate('ownerUserId', 'fullName email')
         .populate('communityId', 'neighborhood city code');
-      console.log('Viviendas encontradas:', dwellings.length);
       return res.json({ success: true, data: dwellings });
     }
 
@@ -82,7 +73,6 @@ export const getDwellingById = async (req, res) => {
     }
     res.json({ success: true, data: dwelling });
   } catch (error) {
-    console.error('Error en getDwellingById:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -256,11 +246,6 @@ export const deleteDwelling = async (req, res) => {
 // Endpoint para aprobación por presidente
 export const approveByPresident = async (req, res) => {
   try {
-    console.log('=== APPROVE DWELLING DEBUG ===');
-    console.log('req.params.id:', req.params.id);
-    console.log('req.communityId:', req.communityId);
-    console.log('req.validatedBody:', req.validatedBody);
-    console.log('req.body:', req.body);
 
     const { status } = req.validatedBody;
 
@@ -286,8 +271,6 @@ export const approveByPresident = async (req, res) => {
       updateData.status = 'approved';
     }
 
-    console.log('updateData:', updateData);
-
     const dwelling = await Dwelling.findOneAndUpdate(
       { _id: req.params.id, communityId: req.communityId },
       updateData,
@@ -297,8 +280,6 @@ export const approveByPresident = async (req, res) => {
     if (!dwelling) {
       return res.status(404).json({ success: false, message: 'Vivienda no encontrada en tu comunidad' });
     }
-
-    console.log('dwelling actualizada:', dwelling);
 
     const messages = {
       approved: 'Presidente aprobó la vivienda',
@@ -313,7 +294,6 @@ export const approveByPresident = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error en approveByPresident:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -321,12 +301,6 @@ export const approveByPresident = async (req, res) => {
 // Endpoint para aprobación por tesorero
 export const approveByTreasurer = async (req, res) => {
   try {
-    console.log('=== APPROVE DWELLING - TESORERO DEBUG ===');
-    console.log('req.params.id:', req.params.id);
-    console.log('req.communityId:', req.communityId);
-    console.log('req.userRole:', req.userRole);
-    console.log('req.validatedBody:', req.validatedBody);
-    console.log('req.body:', req.body);
 
     const { status } = req.validatedBody;
 
@@ -348,8 +322,6 @@ export const approveByTreasurer = async (req, res) => {
       updateData.status = 'approved';
     }
 
-    console.log('updateData:', updateData);
-
     const dwelling = await Dwelling.findOneAndUpdate(
       { _id: req.params.id, communityId: req.communityId },
       updateData,
@@ -359,8 +331,6 @@ export const approveByTreasurer = async (req, res) => {
     if (!dwelling) {
       return res.status(404).json({ success: false, message: 'Vivienda no encontrada en tu comunidad' });
     }
-
-    console.log('dwelling actualizada:', dwelling);
 
     const messages = {
       approved: 'Tesorero aprobó la vivienda',
@@ -375,7 +345,6 @@ export const approveByTreasurer = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error en approveByTreasurer:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

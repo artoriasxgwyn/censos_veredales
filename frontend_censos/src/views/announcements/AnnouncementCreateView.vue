@@ -91,14 +91,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAnnouncementStore } from '@/stores/announcement.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
 const $q = useQuasar()
 const announcementStore = useAnnouncementStore()
+const authStore = useAuthStore()
+
+onMounted(() => {
+  // Verificar permiso para crear anuncios
+  if (!authStore.hasPermission('announcement', 'create')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para crear anuncios.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+})
 
 const form = ref({
   title: '',

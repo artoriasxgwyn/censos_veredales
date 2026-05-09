@@ -112,6 +112,15 @@ const dwellingOptions = computed(() => {
 })
 
 onMounted(async () => {
+  if (!authStore.hasPermission('resident', 'create')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para crear residentes.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     userStore.fetchAllUsersPublic(),
     dwellingStore.fetchDwellings()

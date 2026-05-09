@@ -109,13 +109,6 @@
                 </template>
               </q-select>
             </div>
-
-            <div class="col-12">
-              <q-toggle
-                v-model="form.isActive"
-                label="Vivienda Activa"
-              />
-            </div>
           </div>
 
           <div class="form-actions">
@@ -144,6 +137,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useUserStore } from '@/stores/user.store'
+import { useAuthStore } from '@/stores/auth.store'
 import MapLocationPicker from '@/components/MapLocationPicker.vue'
 
 const route = useRoute()
@@ -151,6 +145,7 @@ const router = useRouter()
 const $q = useQuasar()
 const dwellingStore = useDwellingStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const dwellingId = computed(() => route.params.id)
 
@@ -167,8 +162,7 @@ const form = ref({
   constructionDate: '',
   homePhoto: '',
   ownerUserId: '',
-  status: 'pending',
-  isActive: true
+  status: 'pending'
 })
 
 const userOptions = computed(() => {
@@ -179,6 +173,15 @@ const userOptions = computed(() => {
 })
 
 onMounted(async () => {
+  if (!authStore.hasPermission('dwelling', 'update')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para editar viviendas.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await dwellingStore.fetchDwellingById(dwellingId.value)
   await userStore.fetchAllUsersPublic()
 
@@ -191,59 +194,94 @@ onMounted(async () => {
       constructionDate: dwelling.constructionDate ? new Date(dwelling.constructionDate).toISOString().split('T')[0] : '',
       homePhoto: dwelling.homePhoto || '',
       ownerUserId: typeof dwelling.ownerUserId === 'object' ? dwelling.ownerUserId._id : dwelling.ownerUserId,
-      status: dwelling.status || 'pending',
-      isActive: dwelling.isActive ?? true
+      status: dwelling.status || 'pending'
     }
   }
 })
 
 const handleSubmit = async () => {
-  const updateData = {
-    houseNomenclature: form.value.houseNomenclature || undefined,
-    arrivalInstructions: form.value.arrivalInstructions,
-    mapLocation: form.value.mapLocation || undefined,
-    constructionDate: form.value.constructionDate || undefined,
-    homePhoto: form.value.homePhoto || undefined,
-    ownerUserId: form.value.ownerUserId,
-    status: form.value.status,
-    isActive: form.value.isActive
-  }
-
-  const result = await dwellingStore.updateDwelling(dwellingId.value, updateData)
-
-  if (result.success) {
+  // Validaciones de campos requeridos
+  if (!form.value.houseNomenclature?.trim()) {
     $q.notify({
-      type: 'positive',
-      message: 'Vivienda actualizada exitosamente',
-      timeout: 3000
+      type: 'warning',
+      message: 'La nomenclatura de la vivienda es requerida',
+      timeout: 4000
     })
-    router.push(`/admin/dwellings/${dwellingId.value}`)
-  } else {
-    const errorMsg = result.message || ''
-
-    if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
-      $q.notify({
-        type: 'negative',
-        message: 'No tienes permisos para editar',
-        caption: 'Se requiere autorización de administrador',
-        timeout: 4000
-      })
-    } else if (errorMsg.toLowerCase().includes('no existe') || errorMsg.toLowerCase().includes('not found')) {
-      $q.notify({
-        type: 'negative',
-        message: 'Vivienda no encontrada',
-        caption: 'La vivienda no existe o fue eliminada',
-        timeout: 4000
-      })
-    } else {
-      $q.notify({
-        type: 'negative',
-        message: 'Error al actualizar vivienda',
-        caption: errorMsg,
-        timeout: 5000
-      })
-    }
+    return
   }
+
+  if (!form.value.status) {
+    $q.notify({
+      type: 'warning',
+      message: 'El estado de la vivienda es requerido',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Confirmación antes de guardar
+  $q.dialog({
+    title: 'Confirmar actualización',
+    message: '¿Estás seguro de que deseas actualizar esta vivienda?',
+    cancel: true,
+    persistent: true,
+    ok: {
+      label: 'Guardar',
+      color: 'primary',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    const updateData = {
+      houseNomenclature: form.value.houseNomenclature.trim(),
+      arrivalInstructions: form.value.arrivalInstructions?.trim() || undefined,
+      mapLocation: form.value.mapLocation || undefined,
+      constructionDate: form.value.constructionDate || undefined,
+      homePhoto: form.value.homePhoto || undefined,
+      ownerUserId: form.value.ownerUserId,
+      status: form.value.status
+    }
+
+    const result = await dwellingStore.updateDwelling(dwellingId.value, updateData)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Vivienda actualizada exitosamente',
+        timeout: 3000
+      })
+      router.push(`/admin/dwellings/${dwellingId.value}`)
+    } else {
+      const errorMsg = result.message || ''
+
+      if (errorMsg.toLowerCase().includes('permiso') || errorMsg.toLowerCase().includes('autorización')) {
+        $q.notify({
+          type: 'negative',
+          message: 'No tienes permisos para editar',
+          caption: 'Se requiere autorización de administrador',
+          timeout: 4000
+        })
+      } else if (errorMsg.toLowerCase().includes('no existe') || errorMsg.toLowerCase().includes('not found')) {
+        $q.notify({
+          type: 'negative',
+          message: 'Vivienda no encontrada',
+          caption: 'La vivienda no existe o fue eliminada',
+          timeout: 4000
+        })
+      } else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error al actualizar vivienda',
+          caption: errorMsg,
+          timeout: 5000
+        })
+      }
+    }
+  })
 }
 </script>
 

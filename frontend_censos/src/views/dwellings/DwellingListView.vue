@@ -9,6 +9,7 @@
           <p class="page-description">Administre las viviendas registradas en las comunidades</p>
         </div>
         <q-btn
+          v-if="canCreate"
           color="primary"
           label="Nueva Vivienda"
           icon="add"
@@ -107,10 +108,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDwellingStore } from '@/stores/dwelling.store'
 import { useCommunityStore } from '@/stores/community.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const dwellingStore = useDwellingStore()
 const communityStore = useCommunityStore()
+
+const canCreate = computed(() => authStore.hasPermission('dwelling', 'create'))
+const canEdit = computed(() => authStore.hasPermission('dwelling', 'update'))
+const canDelete = computed(() => authStore.hasPermission('dwelling', 'delete'))
 
 const statusFilter = ref('all')
 const statusOptions = [

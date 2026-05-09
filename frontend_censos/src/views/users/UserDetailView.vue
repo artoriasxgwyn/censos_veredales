@@ -123,7 +123,7 @@
                 @click="handleAssignRole(role)"
               />
               <q-btn
-                v-else-if="user.role === role && user._id !== authStore.user?._id"
+                v-else-if="user.role === role && user._id !== authStore.user?._id && user.role !== 'president'"
                 color="negative"
                 label="Remover"
                 size="sm"
@@ -136,6 +136,14 @@
               >
                 <span class="material-symbols-outlined" style="font-size: 14px;">verified_user</span>
                 Tu rol
+              </q-badge>
+              <q-badge
+                v-else-if="user.role === 'president'"
+                color="secondary"
+                outline
+              >
+                <span class="material-symbols-outlined" style="font-size: 14px;">admin_panel_settings</span>
+                Presidente
               </q-badge>
               <q-badge
                 v-else
@@ -188,10 +196,10 @@ const userId = computed(() => route.params.id)
 const user = computed(() => userStore.currentUser)
 
 const canManageRoles = computed(() => {
-  // Solo el presidente puede gestionar roles de junta directiva
-  const userRole = authStore.user?.role || authStore.userRole
-  const result = userRole === 'president'
-  return result
+  // Presidente tiene todos los permisos
+  if (authStore.isPresident) return true
+  // Verificar permiso user.manageRoles
+  return authStore.hasPermission('user', 'manageRoles')
 })
 
 const userResident = computed(() => {
@@ -249,6 +257,16 @@ const getRoleLabel = (role) => {
 }
 
 onMounted(async () => {
+  // Verificar permiso para ver usuarios
+  if (!authStore.hasPermission('user', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver usuarios.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     userStore.fetchUserById(userId.value),
     userStore.fetchUsers(),
@@ -337,6 +355,7 @@ const handleAssignRole = async (role) => {
 
 const handleRemoveRole = async () => {
   const currentRole = user.value.role
+
   $q.dialog({
     title: 'Confirmar remoción de rol',
     message: `¿Estás seguro de que deseas remover el rol <strong>${getRoleLabel(currentRole)}</strong> de este usuario?<br><br>El usuario quedará sin rol asignado.`,

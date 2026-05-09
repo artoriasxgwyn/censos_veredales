@@ -153,6 +153,16 @@ const canEdit = computed(() => {
 })
 
 onMounted(async () => {
+  // Verificar permiso para ver comunidades (read es suficiente para ver detalle)
+  if (!authStore.hasPermission('community', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver comunidades.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await communityStore.fetchCommunityById(communityId.value)
   await userStore.fetchAllUsersPublic()
 })

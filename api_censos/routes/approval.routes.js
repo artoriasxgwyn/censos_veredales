@@ -6,7 +6,7 @@ import {
   approveDwelling,
   approveLetter
 } from '../controllers/approval.controller.js';
-import { auth } from '../middlewares/auth.js';
+import { auth, checkPermission } from '../middlewares/auth.js';
 import { auditLog } from '../middlewares/audit.js';
 
 const router = Router();
@@ -25,7 +25,7 @@ const router = Router();
  *       401:
  *         description: No autorizado
  */
-router.get('/pending-count', auth, getPendingCount);
+router.get('/pending-count', auth, checkPermission('dashboard', 'access'), getPendingCount);
 
 /**
  * @swagger
@@ -41,7 +41,7 @@ router.get('/pending-count', auth, getPendingCount);
  *       401:
  *         description: No autorizado
  */
-router.get('/pending', auth, getPendingRequests);
+router.get('/pending', auth, checkPermission('dashboard', 'access'), getPendingRequests);
 
 /**
  * @swagger
@@ -79,7 +79,7 @@ router.get('/pending', auth, getPendingRequests);
  *       404:
  *         description: Residente no encontrado
  */
-router.post('/resident/:id', auth, auditLog('resident', 'approve'), approveResident);
+router.post('/resident/:id', auth, checkPermission('resident', 'update'), auditLog('resident', 'approve'), approveResident);
 
 /**
  * @swagger
@@ -115,7 +115,7 @@ router.post('/resident/:id', auth, auditLog('resident', 'approve'), approveResid
  *       404:
  *         description: Vivienda no encontrada
  */
-router.post('/dwelling/:id', auth, auditLog('dwelling', 'approve'), approveDwelling);
+router.post('/dwelling/:id', auth, checkPermission('dwelling', 'update'), auditLog('dwelling', 'approve'), approveDwelling);
 
 /**
  * @swagger
@@ -151,6 +151,6 @@ router.post('/dwelling/:id', auth, auditLog('dwelling', 'approve'), approveDwell
  *       404:
  *         description: Carta no encontrada
  */
-router.post('/letter/:id', auth, auditLog('letter', 'approve'), approveLetter);
+router.post('/letter/:id', auth, checkPermission('letter', 'confirmJuramentada'), auditLog('letter', 'approve'), approveLetter);
 
 export default router;

@@ -177,6 +177,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useCommunityStore } from '@/stores/community.store'
 import { useUserStore } from '@/stores/user.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { departamentos, getMunicipios } from '@/data/colombia'
 import MapLocationPicker from '@/components/MapLocationPicker.vue'
 
@@ -185,6 +186,17 @@ const router = useRouter()
 const $q = useQuasar()
 const communityStore = useCommunityStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
+
+onMounted(() => {
+  if (!authStore.hasPermission('community', 'update')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para editar comunidades.'
+    })
+    router.push('/admin/dashboard')
+  }
+})
 
 const communityId = computed(() => route.params.id)
 
@@ -236,32 +248,97 @@ onMounted(async () => {
 })
 
 const handleSubmit = async () => {
-  const updateData = {
-    neighborhood: form.value.neighborhood,
-    city: form.value.city,
-    department: form.value.department,
-    communityHallAddress: form.value.communityHallAddress,
-    mapLocation: form.value.mapLocation || undefined,
-    estimatedResidentCount: form.value.estimatedResidentCount || undefined,
-    presidentId: form.value.presidentId,
-    treasurerId: form.value.treasurerId || undefined,
-    secretaryId: form.value.secretaryId || undefined,
+  // Validaciones de campos requeridos
+  if (!form.value.neighborhood?.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'El nombre del barrio es requerido',
+      timeout: 4000
+    })
+    return
   }
 
-  const result = await communityStore.updateCommunity(communityId.value, updateData)
-
-  if (result.success) {
+  if (!form.value.department) {
     $q.notify({
-      type: 'positive',
-      message: 'Comunidad actualizada exitosamente'
+      type: 'warning',
+      message: 'El departamento es requerido',
+      timeout: 4000
     })
-    router.push(`/admin/communities/${communityId.value}`)
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al actualizar comunidad'
-    })
+    return
   }
+
+  if (!form.value.city) {
+    $q.notify({
+      type: 'warning',
+      message: 'La ciudad es requerida',
+      timeout: 4000
+    })
+    return
+  }
+
+  if (!form.value.presidentId) {
+    $q.notify({
+      type: 'warning',
+      message: 'El presidente de la comunidad es requerido',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Validar número estimado de residentes (si se proporciona)
+  if (form.value.estimatedResidentCount && form.value.estimatedResidentCount < 1) {
+    $q.notify({
+      type: 'warning',
+      message: 'El número de residentes debe ser mayor a 0',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Confirmación antes de guardar
+  $q.dialog({
+    title: 'Confirmar actualización',
+    message: '¿Estás seguro de que deseas actualizar la información de esta comunidad?',
+    cancel: true,
+    persistent: true,
+    ok: {
+      label: 'Guardar',
+      color: 'primary',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    const updateData = {
+      neighborhood: form.value.neighborhood.trim(),
+      city: form.value.city,
+      department: form.value.department,
+      communityHallAddress: form.value.communityHallAddress?.trim() || undefined,
+      mapLocation: form.value.mapLocation || undefined,
+      estimatedResidentCount: form.value.estimatedResidentCount || undefined,
+      presidentId: form.value.presidentId,
+      treasurerId: form.value.treasurerId || undefined,
+      secretaryId: form.value.secretaryId || undefined,
+    }
+
+    const result = await communityStore.updateCommunity(communityId.value, updateData)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Comunidad actualizada exitosamente'
+      })
+      router.push(`/admin/communities/${communityId.value}`)
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.message || 'Error al actualizar comunidad'
+      })
+    }
+  })
 }
 </script>
 

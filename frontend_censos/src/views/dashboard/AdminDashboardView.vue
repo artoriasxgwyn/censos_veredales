@@ -95,12 +95,12 @@
               <span>Usuarios</span>
             </router-link>
 
-            <router-link to="/president/roles" class="action-card" v-if="hasPermission('user', 'manageRoles')">
+            <router-link to="/president/roles" class="action-card" v-if="hasPermission('role', 'read')">
               <span class="material-symbols-outlined">badge</span>
               <span>Roles</span>
             </router-link>
 
-            <router-link to="/president/qr-scanner" class="action-card" v-if="hasPermission('letter', 'qrScan')">
+            <router-link to="/president/qr-scanner" class="action-card" v-if="hasPermission('letter', 'verifyQr')">
               <span class="material-symbols-outlined">qr_code_scanner</span>
               <span>Escanear QR</span>
             </router-link>

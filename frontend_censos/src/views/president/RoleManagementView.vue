@@ -9,6 +9,7 @@
           <p class="page-description">Administre los roles y permisos de la comunidad</p>
         </div>
         <q-btn
+          v-if="canCreateRole"
           color="primary"
           label="Nuevo Rol"
           icon="add"
@@ -47,7 +48,8 @@
             v-for="role in roleStore.baseRoles"
             :key="role._id"
             class="role-card"
-            @click="role.name !== 'presidente' ? editRole(role) : null"
+            :class="{ 'clickable': canUpdateRole }"
+            @click="canUpdateRole && role.name !== 'president' ? editRole(role) : null"
           >
             <div class="role-header">
               <div class="role-icon base">
@@ -76,7 +78,8 @@
             v-for="role in roleStore.customRoles"
             :key="role._id"
             class="role-card"
-            @click="editRole(role)"
+            :class="{ 'clickable': canUpdateRole }"
+            @click="canUpdateRole ? editRole(role) : null"
           >
             <div class="role-header">
               <div class="role-icon custom">
@@ -87,6 +90,7 @@
                 <q-badge color="secondary" outline>Personalizado</q-badge>
               </div>
               <q-btn
+                v-if="canDeleteRole"
                 flat
                 round
                 dense
@@ -129,10 +133,8 @@
 
             <q-input
               v-model="newRoleName"
-              :label="editingRole?.isBaseRole ? '' : 'Nombre del Rol'"
               placeholder="Ej: Coordinador"
               outlined
-              stack-label
               :readonly="!!editingRole?.isBaseRole"
               :disable="!!editingRole?.isBaseRole || editingRole?.name === 'president'"
               class="q-mb-md dark-input"
@@ -182,8 +184,10 @@
               </div>
               <div class="permission-row">
                 <q-checkbox v-model="newRolePermissions.letter.generateNormal" label="Normal" :disable="editingRole?.name === 'president'" />
-                <q-checkbox v-model="newRolePermissions.letter.generateSworn" label="Juramentada" :disable="editingRole?.name === 'president'" />
-                <q-checkbox v-model="newRolePermissions.letter.qrScan" label="Escanear QR" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.generateJuramentada" label="Juramentada" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.confirmJuramentada" label="Confirmar Jur." :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.download" label="Descargar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.letter.verifyQr" label="Verificar QR" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
 
@@ -214,6 +218,10 @@
                 <strong>Usuario</strong>
               </div>
               <div class="permission-row">
+                <q-checkbox v-model="newRolePermissions.user.create" label="Crear" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.user.read" label="Leer" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.user.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.user.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
                 <q-checkbox v-model="newRolePermissions.user.changePassword" label="Cambiar Contraseña" :disable="editingRole?.name === 'president'" />
                 <q-checkbox v-model="newRolePermissions.user.manageRoles" label="Gestionar Roles" :disable="editingRole?.name === 'president'" />
               </div>
@@ -230,6 +238,47 @@
                 <q-checkbox v-model="newRolePermissions.announcement.read" label="Leer" :disable="editingRole?.name === 'president'" />
                 <q-checkbox v-model="newRolePermissions.announcement.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
                 <q-checkbox v-model="newRolePermissions.announcement.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
+              </div>
+            </div>
+
+            <!-- Community Permissions -->
+            <div class="permission-group">
+              <div class="group-header">
+                <span class="material-symbols-outlined">apartment</span>
+                <strong>Comunidad</strong>
+              </div>
+              <div class="permission-row">
+                <q-checkbox v-model="newRolePermissions.community.read" label="Ver" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.community.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.community.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
+              </div>
+            </div>
+
+            <!-- Role Permissions -->
+            <div class="permission-group">
+              <div class="group-header">
+                <span class="material-symbols-outlined">badge</span>
+                <strong>Roles</strong>
+              </div>
+              <div class="permission-row">
+                <q-checkbox v-model="newRolePermissions.role.create" label="Crear" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.role.read" label="Leer" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.role.update" label="Actualizar" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.role.delete" label="Eliminar" :disable="editingRole?.name === 'president'" />
+              </div>
+            </div>
+
+            <!-- Export Permissions -->
+            <div class="permission-group">
+              <div class="group-header">
+                <span class="material-symbols-outlined">download</span>
+                <strong>Exportar</strong>
+              </div>
+              <div class="permission-row">
+                <q-checkbox v-model="newRolePermissions.export.residents" label="Residentes" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.export.dwellings" label="Viviendas" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.export.letters" label="Cartas" :disable="editingRole?.name === 'president'" />
+                <q-checkbox v-model="newRolePermissions.export.all" label="Todo" :disable="editingRole?.name === 'president'" />
               </div>
             </div>
           </q-card-section>
@@ -303,12 +352,16 @@ const $q = useQuasar()
 const authStore = useAuthStore()
 const roleStore = useRoleStore()
 
-// Security check: Only presidents can access this view
+// Security check: verificar permiso role.read
 onMounted(() => {
-  if (!authStore.isPresident) {
+  // Presidente tiene todos los permisos
+  if (authStore.isPresident) return
+
+  // Verificar permiso role.read
+  if (!authStore.hasPermission('role', 'read')) {
     $q.notify({
       type: 'negative',
-      message: 'Acceso denegado. Solo el presidente puede acceder a esta sección.'
+      message: 'Acceso denegado. No tienes permisos para gestionar roles.'
     })
     router.push('/admin/dashboard')
   }
@@ -322,15 +375,33 @@ const newRoleName = ref('')
 const newRolePermissions = ref({
   resident: { create: false, read: false, update: false, delete: false },
   dwelling: { create: false, read: false, update: false, delete: false },
-  letter: { generateNormal: false, generateSworn: false, qrScan: false },
+  letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: false },
   dashboard: { access: false, scope: 'limited' },
-  user: { changePassword: false, manageRoles: false },
-  announcement: { create: false, read: false, update: false, delete: false }
+  user: { create: false, read: false, update: false, delete: false, changePassword: false, manageRoles: false },
+  announcement: { create: false, read: false, update: false, delete: false },
+  community: { read: false, update: false, delete: false },
+  role: { create: false, read: false, update: false, delete: false },
+  export: { residents: false, dwellings: false, letters: false, all: false }
 })
 const saving = ref(false)
 
 onMounted(async () => {
   await roleStore.fetchCommunityRoles()
+})
+
+const canCreateRole = computed(() => {
+  if (authStore.isPresident) return true
+  return authStore.hasPermission('role', 'create')
+})
+
+const canUpdateRole = computed(() => {
+  if (authStore.isPresident) return true
+  return authStore.hasPermission('role', 'update')
+})
+
+const canDeleteRole = computed(() => {
+  if (authStore.isPresident) return true
+  return authStore.hasPermission('role', 'delete')
 })
 
 const getRoleIcon = (roleName) => {
@@ -362,7 +433,10 @@ const formatModuleName = (module) => {
     letter: 'Cartas',
     dashboard: 'Dashboard',
     user: 'Usuario',
-    announcement: 'Anuncios'
+    announcement: 'Anuncios',
+    community: 'Comunidad',
+    role: 'Roles',
+    export: 'Exportar'
   }
   return names[module] || module
 }
@@ -374,12 +448,18 @@ const formatPermissionName = (key) => {
     update: 'Actualizar',
     delete: 'Eliminar',
     generateNormal: 'Generar Normal',
-    generateSworn: 'Generar Juramentada',
-    qrScan: 'Escanear QR',
+    generateJuramentada: 'Generar Juramentada',
+    confirmJuramentada: 'Confirmar Juramentada',
+    download: 'Descargar',
+    verifyQr: 'Verificar QR',
     access: 'Acceso',
     scope: 'Alcance',
     changePassword: 'Cambiar Contraseña',
-    manageRoles: 'Gestionar Roles'
+    manageRoles: 'Gestionar Roles',
+    residents: 'Residentes',
+    dwellings: 'Viviendas',
+    letters: 'Cartas',
+    all: 'Todo'
   }
   return names[key] || key
 }
@@ -399,6 +479,10 @@ const editRole = (role) => {
   if (role.name === 'president') {
     return
   }
+  // Verificar permiso para editar
+  if (!canUpdateRole.value) {
+    return
+  }
   // Edit both base and custom roles
   editingRole.value = role
   newRoleName.value = role.customName || formatRoleName(role.name)
@@ -407,30 +491,44 @@ const editRole = (role) => {
 }
 
 const showRoleMenu = (role, event) => {
+  const options = []
+
+  // Todos pueden ver permisos si tienen role.read
+  if (authStore.hasPermission('role', 'read') || authStore.isPresident) {
+    options.push({
+      label: 'Ver Permisos',
+      handler: () => {
+        selectedRole.value = role
+        showViewPermissions.value = true
+      }
+    })
+  }
+
+  // Solo quienes tienen role.update pueden editar
+  if (canUpdateRole.value) {
+    options.push({
+      label: 'Editar',
+      handler: () => editRole(role)
+    })
+  }
+
+  // Solo quienes tienen role.delete pueden desactivar
+  if (canDeleteRole.value) {
+    options.push({
+      label: 'Desactivar',
+      handler: () => deactivateRole(role)
+    })
+  }
+
+  options.push({
+    label: 'Cancelar',
+    handler: () => {}
+  })
+
   $q.dialog({
     message: '¿Qué desea hacer con este rol?',
     persistent: true,
-    options: [
-      {
-        label: 'Ver Permisos',
-        handler: () => {
-          selectedRole.value = role
-          showViewPermissions.value = true
-        }
-      },
-      {
-        label: 'Editar',
-        handler: () => editRole(role)
-      },
-      {
-        label: 'Desactivar',
-        handler: () => deactivateRole(role)
-      },
-      {
-        label: 'Cancelar',
-        handler: () => {}
-      }
-    ]
+    options
   })
 }
 
@@ -494,16 +592,36 @@ const cancelEdit = () => {
   newRolePermissions.value = {
     resident: { create: false, read: false, update: false, delete: false },
     dwelling: { create: false, read: false, update: false, delete: false },
-    letter: { generateNormal: false, generateSworn: false, qrScan: false },
+    letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: false },
     dashboard: { access: false, scope: 'limited' },
-    user: { changePassword: false, manageRoles: false },
-    announcement: { create: false, read: false, update: false, delete: false }
+    user: { create: false, read: false, update: false, delete: false, changePassword: false, manageRoles: false },
+    announcement: { create: false, read: false, update: false, delete: false },
+    community: { read: false, update: false, delete: false },
+    role: { create: false, read: false, update: false, delete: false },
+    export: { residents: false, dwellings: false, letters: false, all: false }
   }
 }
 
 const saveRole = async () => {
   // Block saving changes to president role - silently
   if (editingRole.value?.name === 'president') {
+    return
+  }
+
+  // Verificar permisos según la acción
+  if (editingRole.value && !canUpdateRole.value) {
+    $q.notify({
+      type: 'negative',
+      message: 'No tienes permisos para editar roles'
+    })
+    return
+  }
+
+  if (!editingRole.value && !canCreateRole.value) {
+    $q.notify({
+      type: 'negative',
+      message: 'No tienes permisos para crear roles'
+    })
     return
   }
 
@@ -712,7 +830,11 @@ const saveRole = async () => {
   transition: all 0.2s;
 }
 
-.role-card:hover {
+.role-card:not(.clickable) {
+  cursor: default;
+}
+
+.role-card.clickable:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
   transform: translateY(-2px);
 }

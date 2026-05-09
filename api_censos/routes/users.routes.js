@@ -21,8 +21,8 @@ const router = Router();
  *       401:
  *         description: No autorizado
  */
-// GET /api/users - Leer residentes (requiere permiso resident:read)
-router.get('/', auth, checkPermission('resident', 'read'), getUsers);
+// GET /api/users - Leer usuarios (requiere permiso user:read)
+router.get('/', auth, checkPermission('user', 'read'), getUsers);
 
 /**
  * @swagger
@@ -61,7 +61,7 @@ router.get('/public', auth, getAllUsers);
  *       404:
  *         description: Usuario no encontrado
  */
-router.get('/:id', auth, checkPermission('resident', 'read'), getUserById);
+router.get('/:id', auth, checkPermission('user', 'read'), getUserById);
 
 /**
  * @swagger
@@ -139,8 +139,8 @@ router.put('/:id', auth, checkPermission('user', 'update'), validate(updateUserS
  *       403:
  *         description: Se requiere rol de presidente
  */
-// DELETE /api/users/:id - Eliminar usuario (solo presidente con resident:delete)
-router.delete('/:id', auth, checkPermission('resident', 'delete'), auditLog('user', 'delete'), deleteUser);
+// DELETE /api/users/:id - Eliminar usuario (requiere user:delete)
+router.delete('/:id', auth, checkPermission('user', 'delete'), auditLog('user', 'delete'), deleteUser);
 
 /**
  * @swagger

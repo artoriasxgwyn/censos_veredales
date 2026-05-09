@@ -60,19 +60,31 @@ onMounted(() => {
       // Ajustar el tamaño del canvas
       const parent = canvas.parentElement
       const rect = parent.getBoundingClientRect()
-      canvas.width = rect.width
-      canvas.height = Math.max(200, rect.width * 0.4) // Responsive height
+
+      // Establecer dimensiones CSS
+      canvas.style.width = rect.width + 'px'
+      canvas.style.height = Math.max(200, rect.width * 0.4) + 'px'
+
+      // Establecer resolución real del canvas (accounting for DPI)
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = Math.floor(rect.width * dpr)
+      canvas.height = Math.floor(Math.max(200, rect.width * 0.4) * dpr)
+
+      // Escalar el contexto para coordenadas correctas
+      const ctx = canvas.getContext('2d')
+      ctx.scale(dpr, dpr)
 
       // Obtener colores del tema CSS
       const style = getComputedStyle(document.documentElement)
-      const surfaceColor = style.getPropertyValue('--surface-container-lowest').trim() || '#ffffff'
       const onSurfaceColor = style.getPropertyValue('--on-surface').trim() || '#000000'
 
       signaturePad = new SignaturePad(canvas, {
         backgroundColor: 'transparent',
         penColor: onSurfaceColor || 'rgb(0, 0, 0)',
         minWidth: 2,
-        maxWidth: 4
+        maxWidth: 4,
+        velocityFilterWeight: 0.7,
+        throttle: 0
       })
 
       // Escuchar cambios en la firma
@@ -131,9 +143,18 @@ const handleResize = () => {
       // Guardar datos actuales
       const data = signaturePad.toData()
 
-      // Redimensionar canvas
-      canvas.width = rect.width
-      canvas.height = Math.max(200, rect.width * 0.4)
+      // Establecer dimensiones CSS
+      canvas.style.width = rect.width + 'px'
+      canvas.style.height = Math.max(200, rect.width * 0.4) + 'px'
+
+      // Establecer resolución real del canvas
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = Math.floor(rect.width * dpr)
+      canvas.height = Math.floor(Math.max(200, rect.width * 0.4) * dpr)
+
+      // Escalar el contexto
+      const ctx = canvas.getContext('2d')
+      ctx.scale(dpr, dpr)
 
       // Restaurar datos
       signaturePad.fromData(data)

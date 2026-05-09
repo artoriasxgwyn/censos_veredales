@@ -7,7 +7,7 @@ import {
   deleteRole,
   getMyPermissions
 } from '../controllers/role.controller.js';
-import { auth, isPresident } from '../middlewares/auth.js';
+import { auth, checkPermission } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -25,7 +25,7 @@ const router = Router();
  *       401:
  *         description: No autorizado
  */
-router.get('/', auth, getCommunityRoles);
+router.get('/', auth, checkPermission('role', 'read'), getCommunityRoles);
 
 /**
  * @swagger
@@ -98,7 +98,7 @@ router.get('/my-permissions', auth, getMyPermissions);
  *       409:
  *         description: Ya existe un rol con este nombre
  */
-router.post('/', auth, isPresident, createRole);
+router.post('/', auth, checkPermission('role', 'create'), createRole);
 
 /**
  * @swagger
@@ -120,7 +120,7 @@ router.post('/', auth, isPresident, createRole);
  *       404:
  *         description: Rol no encontrado
  */
-router.get('/:id', auth, getRoleById);
+router.get('/:id', auth, checkPermission('role', 'read'), getRoleById);
 
 /**
  * @swagger
@@ -181,7 +181,7 @@ router.get('/:id', auth, getRoleById);
  *       404:
  *         description: Rol no encontrado
  */
-router.put('/:id/permissions', auth, isPresident, updateRolePermissions);
+router.put('/:id/permissions', auth, checkPermission('role', 'update'), updateRolePermissions);
 
 /**
  * @swagger
@@ -207,6 +207,6 @@ router.put('/:id/permissions', auth, isPresident, updateRolePermissions);
  *       404:
  *         description: Rol no encontrado
  */
-router.delete('/:id', auth, isPresident, deleteRole);
+router.delete('/:id', auth, checkPermission('role', 'delete'), deleteRole);
 
 export default router;

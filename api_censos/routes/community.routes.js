@@ -248,8 +248,8 @@ router.post('/', validate(createCommunitySchema), createCommunity);
  *       404:
  *         description: Comunidad no encontrada
  */
-// PUT /api/communities/:id - Actualizar comunidad (requiere presidente)
-router.put('/:id', auth, isPresident, validate(updateCommunitySchema), auditLog('community', 'update'), updateCommunity);
+// PUT /api/communities/:id - Actualizar comunidad (requiere community:update)
+router.put('/:id', auth, checkPermission('community', 'update'), validate(updateCommunitySchema), auditLog('community', 'update'), updateCommunity);
 
 /**
  * @swagger

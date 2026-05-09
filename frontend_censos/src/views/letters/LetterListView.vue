@@ -8,6 +8,18 @@
           <h1 class="page-title">Cartas de la Comunidad</h1>
           <p class="page-description">Administre las cartas y certificados emitidos</p>
         </div>
+        <q-btn
+          v-if="canCreate"
+          color="primary"
+          label="Nueva Carta"
+          icon="add"
+          @click="router.push('/admin/letters/create')"
+          class="create-btn"
+        >
+          <template v-slot:append>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </template>
+        </q-btn>
       </div>
 
       <!-- Filters -->
@@ -96,10 +108,17 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLetterStore } from '@/stores/letter.store'
 import { useUserStore } from '@/stores/user.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const letterStore = useLetterStore()
 const userStore = useUserStore()
+
+const canCreate = computed(() => {
+  // Verificar si puede generar cartas normales o juramentadas
+  return authStore.hasPermission('letter', 'generateNormal') || authStore.hasPermission('letter', 'generateJuramentada')
+})
 
 const statusFilter = ref('all')
 const statusOptions = [
@@ -118,6 +137,16 @@ const filteredLetters = computed(() => {
 })
 
 onMounted(async () => {
+  // Verificar permiso para ver cartas
+  if (!authStore.hasPermission('letter', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver cartas.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     letterStore.fetchCommunityLetters(),
     userStore.fetchAllUsersPublic()

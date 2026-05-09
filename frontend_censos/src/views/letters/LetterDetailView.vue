@@ -188,9 +188,9 @@ const letterId = computed(() => route.params.id)
 const letter = computed(() => letterStore.currentLetter)
 
 const canApprove = computed(() => {
-  // Necesita tener rol de aprobador Y permiso para generar cartas
+  // Necesita tener rol de aprobador Y permiso para confirmar cartas
   const isApprover = authStore.isPresident || authStore.isTreasurer || authStore.isSecretary
-  return isApprover && authStore.hasPermission('letter', 'generateNormal')
+  return isApprover && authStore.hasPermission('letter', 'confirmJuramentada')
 })
 
 const alreadyApproved = computed(() => {
@@ -207,6 +207,16 @@ const verificationUrl = computed(() => {
 })
 
 onMounted(async () => {
+  // Verificar permiso para ver cartas
+  if (!authStore.hasPermission('letter', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver cartas.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await letterStore.fetchLetterById(letterId.value)
 })
 

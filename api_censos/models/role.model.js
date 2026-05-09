@@ -19,7 +19,7 @@ const permissionsSchema = new mongoose.Schema({
   letter: {
     generateNormal: { type: Boolean, default: false },
     generateJuramentada: { type: Boolean, default: false },
-    confirmJuramentada: { type: Boolean, default: false }, // Voto para aprobar carta juramentada
+    confirmJuramentada: { type: Boolean, default: false },
     download: { type: Boolean, default: false },
     verifyQr: { type: Boolean, default: false }
   },
@@ -34,9 +34,12 @@ const permissionsSchema = new mongoose.Schema({
   },
   // Gestión de usuarios
   user: {
+    create: { type: Boolean, default: false },
+    read: { type: Boolean, default: false },
+    update: { type: Boolean, default: false },
+    delete: { type: Boolean, default: false },
     changePassword: { type: Boolean, default: false },
-    manageRoles: { type: Boolean, default: false },
-    update: { type: Boolean, default: false }
+    manageRoles: { type: Boolean, default: false }
   },
   // Comunidad
   community: {
@@ -50,6 +53,20 @@ const permissionsSchema = new mongoose.Schema({
     read: { type: Boolean, default: false },
     update: { type: Boolean, default: false },
     delete: { type: Boolean, default: false }
+  },
+  // Roles
+  role: {
+    create: { type: Boolean, default: false },
+    read: { type: Boolean, default: false },
+    update: { type: Boolean, default: false },
+    delete: { type: Boolean, default: false }
+  },
+  // Exportaciones
+  export: {
+    residents: { type: Boolean, default: false },
+    dwellings: { type: Boolean, default: false },
+    letters: { type: Boolean, default: false },
+    all: { type: Boolean, default: false }
   }
 }, { _id: false });
 
@@ -85,7 +102,7 @@ const roleSchema = new mongoose.Schema({
       dwelling: { create: false, read: false, update: false, delete: false },
       letter: { generateNormal: false, generateJuramentada: false, confirmJuramentada: false, download: false, verifyQr: false },
       dashboard: { access: false, scope: 'limited' },
-      user: { changePassword: false, manageRoles: false, update: false, create: false },
+      user: { create: false, read: false, update: false, delete: false, changePassword: false, manageRoles: false },
       announcement: { create: false, read: false, update: false, delete: false },
       community: { read: false, update: false, delete: false },
       role: { create: false, read: false, update: false, delete: false },

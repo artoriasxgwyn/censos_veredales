@@ -113,10 +113,10 @@ export const useDwellingStore = defineStore('dwelling', {
         if (role === 'president') {
           console.log('Calling approveByPresident...');
           response = await dwellingService.approveByPresident(id, status)
-        } else if (role === 'tesorero') {
+        } else if (role === 'treasurer') {
           console.log('Calling approveByTreasurer...');
           response = await dwellingService.approveByTreasurer(id, status)
-        } else if (role === 'secretario') {
+        } else if (role === 'secretary') {
           console.log('Calling approveBySecretary...');
           response = await dwellingService.approveBySecretary(id, status)
         }

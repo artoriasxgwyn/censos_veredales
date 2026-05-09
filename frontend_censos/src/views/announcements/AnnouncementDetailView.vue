@@ -10,21 +10,21 @@
       <h1 class="title">Detalle del Anuncio</h1>
       <div class="header-actions">
         <q-btn
-          v-if="canEdit"
+          v-if="canEdit && isCreator"
           color="primary"
           label="Editar"
           icon="edit"
           @click="router.push(`/admin/announcements/${announcement._id}/edit`)"
         />
         <q-btn
-          v-if="canEdit"
+          v-if="canEdit && isCreator"
           :color="isPublished ? 'secondary' : 'positive'"
           :label="isPublished ? 'Mover a Borrador' : 'Publicar'"
           :icon="isPublished ? 'archive' : 'publish'"
           @click="handleTogglePublish"
         />
         <q-btn
-          v-if="canDelete"
+          v-if="canDelete && isCreator"
           color="negative"
           label="Eliminar"
           icon="delete"
@@ -124,6 +124,12 @@ const canEdit = computed(() => {
 
 const canDelete = computed(() => {
   return authStore.hasPermission('announcement', 'delete')
+})
+
+const isCreator = computed(() => {
+  // President can edit any announcement, creators can edit their own
+  if (authStore.isPresident) return true
+  return announcement.value?.createdBy === authStore.user?._id
 })
 
 onMounted(async () => {

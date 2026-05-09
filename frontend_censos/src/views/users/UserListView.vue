@@ -8,6 +8,13 @@
           <h1 class="page-title">Usuarios</h1>
           <p class="page-description">Gestione los usuarios del sistema</p>
         </div>
+        <q-btn
+          v-if="canCreateUser"
+          color="primary"
+          label="Nuevo Usuario"
+          icon="add"
+          @click="showCreateUser = true"
+        />
       </div>
 
       <!-- Filters -->
@@ -80,6 +87,130 @@
         <q-spinner color="primary" size="48px" />
         <p>Cargando usuarios...</p>
       </div>
+
+      <!-- Create User Dialog -->
+      <q-dialog v-model="showCreateUser" persistent>
+        <q-card class="dialog-card">
+          <q-card-section>
+            <div class="dialog-header">
+              <h4 class="dialog-title">Nuevo Usuario</h4>
+            </div>
+
+            <div class="form-grid">
+              <q-input
+                v-model="newUser.fullName"
+                label="Nombre Completo"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">person</span>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="newUser.documentNumber"
+                label="Cédula"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">badge</span>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="newUser.email"
+                label="Email"
+                type="email"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">email</span>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="newUser.phone"
+                label="Teléfono"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">phone</span>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="newUser.birthDate"
+                label="Fecha de Nacimiento"
+                type="date"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">calendar_today</span>
+                </template>
+              </q-input>
+
+              <q-input
+                v-model="newUser.password"
+                label="Contraseña"
+                type="password"
+                outlined
+                dense
+                dark
+                class="dark-input"
+              >
+                <template v-slot:prepend>
+                  <span class="material-symbols-outlined">lock</span>
+                </template>
+              </q-input>
+            </div>
+
+            <!-- Firma Digital -->
+            <div class="signature-section">
+              <h5 class="signature-title">Firma Digital <span class="required">*</span></h5>
+              <SignaturePad v-model="newUser.signature" />
+              <p class="hint" style="margin-top: 8px;">
+                <span class="material-symbols-outlined">info</span>
+                La firma es obligatoria para todos los usuarios de la comunidad.
+              </p>
+            </div>
+
+            <p class="hint">
+              <span class="material-symbols-outlined">info</span>
+              El usuario se creará activo inmediatamente en tu comunidad. Podrás asignarle un rol después desde el detalle del usuario.
+            </p>
+          </q-card-section>
+
+          <q-card-actions align="right">
+            <q-btn
+              flat
+              label="Cancelar"
+              @click="cancelCreate"
+              v-close-popup
+            />
+            <q-btn
+              color="primary"
+              label="Crear Usuario"
+              @click="handleCreateUser"
+              :loading="saving"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </div>
   </div>
 </template>
@@ -87,10 +218,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { useUserStore } from '@/stores/user.store'
+import { useAuthStore } from '@/stores/auth.store'
+import SignaturePad from '@/components/SignaturePad.vue'
+import { userService } from '@/services/user.service'
 
 const router = useRouter()
+const $q = useQuasar()
 const userStore = useUserStore()
+const authStore = useAuthStore()
 
 const searchQuery = ref('')
 const roleFilter = ref('all')
@@ -121,7 +258,216 @@ const filteredUsers = computed(() => {
   return result
 })
 
+const canCreateUser = computed(() => {
+  // Presidente tiene todos los permisos
+  if (authStore.isPresident) return true
+  // Verificar permiso user.create
+  return authStore.hasPermission('user', 'create')
+})
+
+const showCreateUser = ref(false)
+const saving = ref(false)
+const newUser = ref({
+  fullName: '',
+  documentNumber: '',
+  email: '',
+  phone: '',
+  birthDate: '',
+  password: '',
+  signature: ''
+})
+
+const cancelCreate = () => {
+  showCreateUser.value = false
+  newUser.value = {
+    fullName: '',
+    documentNumber: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    password: '',
+    signature: ''
+  }
+}
+
+const handleCreateUser = async () => {
+  // Validar nombre completo
+  if (!newUser.value.fullName?.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'El nombre completo es requerido',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Validar cédula (10 dígitos exactamente)
+  const cedulaTrimmed = newUser.value.documentNumber?.trim() || ''
+  if (!cedulaTrimmed) {
+    $q.notify({
+      type: 'warning',
+      message: 'La cédula es requerida',
+      timeout: 4000
+    })
+    return
+  }
+  // Solo verificar que sean exactamente 10 dígitos numéricos
+  const cedulaRegex = /^\d{10}$/
+  if (!cedulaRegex.test(cedulaTrimmed)) {
+    $q.notify({
+      type: 'warning',
+      message: 'La cédula debe tener exactamente 10 dígitos numéricos',
+      caption: `Ingresaste ${cedulaTrimmed.length} dígitos. Ejemplo: 1234567890`,
+      timeout: 5000
+    })
+    return
+  }
+
+  // Validar email
+  if (!newUser.value.email?.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'El email es requerido',
+      timeout: 4000
+    })
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(newUser.value.email.trim())) {
+    $q.notify({
+      type: 'warning',
+      message: 'El email no es válido',
+      caption: 'Ejemplo: usuario@ejemplo.com',
+      timeout: 5000
+    })
+    return
+  }
+
+  // Validar teléfono (opcional pero si se proporciona, debe ser válido)
+  if (newUser.value.phone?.trim()) {
+    const phoneRegex = /^\d{10,11}$/
+    if (!phoneRegex.test(newUser.value.phone.trim())) {
+      $q.notify({
+        type: 'warning',
+        message: 'El teléfono debe tener 10 o 11 dígitos numéricos',
+        timeout: 4000
+      })
+      return
+    }
+  }
+
+  // Validar contraseña (mínimo 6 caracteres)
+  if (!newUser.value.password) {
+    $q.notify({
+      type: 'warning',
+      message: 'La contraseña es requerida',
+      timeout: 4000
+    })
+    return
+  }
+  if (newUser.value.password.length < 6) {
+    $q.notify({
+      type: 'warning',
+      message: 'La contraseña debe tener al menos 6 caracteres',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Validar firma digital (obligatoria)
+  if (!newUser.value.signature) {
+    $q.notify({
+      type: 'warning',
+      message: 'La firma digital es obligatoria',
+      caption: 'Por favor dibuja tu firma en el recuadro correspondiente',
+      timeout: 5000
+    })
+    return
+  }
+
+  saving.value = true
+
+  try {
+    // Crear usuario sin firma primero
+    const userData = {
+      fullName: newUser.value.fullName,
+      documentNumber: newUser.value.documentNumber,
+      email: newUser.value.email,
+      phone: newUser.value.phone,
+      birthDate: newUser.value.birthDate,
+      password: newUser.value.password
+    }
+
+    const result = await userStore.createUser(userData)
+
+    if (result.success) {
+      const userId = result.data._id
+
+      // Si hay firma, subirla después de crear el usuario
+      if (newUser.value.signature) {
+        try {
+          await userService.uploadSignature(userId, newUser.value.signature)
+        } catch (signatureError) {
+          console.error('Error al subir firma:', signatureError)
+          // No fallar el proceso, solo loguear el error
+        }
+      }
+
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario creado exitosamente',
+        caption: newUser.value.signature
+          ? 'El usuario ya puede iniciar sesión con su firma guardada'
+          : 'El usuario ya puede iniciar sesión',
+        timeout: 4000
+      })
+      showCreateUser.value = false
+      cancelCreate()
+      await userStore.fetchUsers()
+    } else {
+      throw new Error(result.message)
+    }
+  } catch (error) {
+    const errorMsg = error.message || ''
+
+    if (errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('duplicado')) {
+      $q.notify({
+        type: 'negative',
+        message: 'El email ya está registrado',
+        caption: 'Usa un email diferente',
+        timeout: 4000
+      })
+    } else if (errorMsg.toLowerCase().includes('ya existe') || errorMsg.toLowerCase().includes('rol')) {
+      $q.notify({
+        type: 'negative',
+        message: 'No se puede crear el usuario',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Error al crear usuario',
+        caption: errorMsg,
+        timeout: 5000
+      })
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
 onMounted(async () => {
+  // Verificar permiso para ver usuarios
+  if (!authStore.hasPermission('user', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver usuarios.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await userStore.fetchUsers()
 })
 
@@ -472,5 +818,185 @@ const getRoleLabel = (role) => {
   font-size: 14px;
   color: var(--on-surface-variant);
   margin-top: 16px;
+}
+
+/* Dialog */
+.dialog-card {
+  border-radius: 16px !important;
+  max-width: 550px;
+  width: 100%;
+  background: var(--surface-container-lowest) !important;
+}
+
+.dialog-card :deep(.q-card__section) {
+  background: var(--surface-container-lowest) !important;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin: 0;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark input styles - TODOS los inputs iguales */
+.dark-input :deep(.q-field__control) {
+  background: #2a2d35 !important;
+  border-radius: 8px !important;
+  min-height: 42px !important;
+}
+
+/* Input nativo - forzar transparente y texto blanco */
+.dark-input :deep(input) {
+  background: transparent !important;
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+  caret-color: white !important;
+}
+
+/* Chrome Autofill - EL VERDADERO BUG */
+.dark-input :deep(input:-webkit-autofill),
+.dark-input :deep(input:-webkit-autofill:hover),
+.dark-input :deep(input:-webkit-autofill:focus) {
+  -webkit-box-shadow: 0 0 0 1000px #2a2d35 inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Date input - color-scheme dark para el picker */
+.dark-input :deep(input[type="date"]) {
+  color-scheme: dark;
+  background: transparent !important;
+  color: white !important;
+}
+
+.dark-input :deep(input[type="date"])::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Password input */
+.dark-input :deep(input[type="password"]) {
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+}
+
+/* Labels */
+.dark-input :deep(.q-field__label) {
+  color: #9ca3af !important;
+  font-size: 12px;
+}
+
+/* Bordes */
+.dark-input :deep(.q-field__control:before) {
+  border: none !important;
+}
+
+.dark-input :deep(.q-field__control::after) {
+  border: 1px solid var(--primary) !important;
+}
+
+/* Iconos prepend/append */
+.dark-input :deep(.q-field__prepend) {
+  color: #9ca3af !important;
+}
+
+.dark-input :deep(.q-field__append) {
+  color: #9ca3af !important;
+}
+
+/* Select dropdown */
+:deep(.q-menu) {
+  background: #2a2d35 !important;
+}
+
+:deep(.q-item) {
+  color: white !important;
+}
+
+:deep(.q-item:hover) {
+  background: #374151 !important;
+}
+
+:deep(.q-item--active) {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+/* Select dropdown */
+:deep(.q-menu) {
+  background-color: var(--surface-container) !important;
+}
+
+:deep(.q-item) {
+  color: var(--on-surface) !important;
+}
+
+:deep(.q-item:hover) {
+  background-color: var(--surface-container-high) !important;
+}
+
+:deep(.q-item--active) {
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  background: var(--surface-container);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.hint .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--primary);
+}
+
+.signature-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-container);
+  border-radius: 8px;
+  border: 1px solid var(--surface-container-highest);
+}
+
+.signature-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin: 0 0 12px 0;
+}
+
+.signature-title .required {
+  color: var(--error);
+  font-size: 16px;
+  margin-left: 4px;
 }
 </style>

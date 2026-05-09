@@ -24,12 +24,12 @@ const initializeBaseRoles = async (communityId) => {
     {
       name: 'secretario',
       permissions: {
-        resident: { create: true, read: true, update: false, delete: false }, // update: false porque solo puede editar los que él creó (se valida en controller)
-        dwelling: { create: true, read: true, update: false, delete: false },
+        resident: { create: true, read: true, update: true, delete: false },
+        dwelling: { create: true, read: true, update: true, delete: false },
         letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
         user: { changePassword: false, manageRoles: false, update: false, create: false },
-        announcement: { create: true, read: true, update: false, delete: false }, // update: false porque solo puede editar los que él creó
+        announcement: { create: true, read: true, update: false, delete: false },
         community: { read: true, update: false, delete: false },
         role: { create: false, read: true, update: false, delete: false },
         export: { residents: true, dwellings: true, letters: true, all: false }
@@ -38,8 +38,8 @@ const initializeBaseRoles = async (communityId) => {
     {
       name: 'tesorero',
       permissions: {
-        resident: { create: true, read: true, update: false, delete: false },
-        dwelling: { create: true, read: true, update: false, delete: false },
+        resident: { create: true, read: true, update: true, delete: false },
+        dwelling: { create: true, read: true, update: true, delete: false },
         letter: { generateNormal: true, generateJuramentada: true, confirmJuramentada: true, download: true, verifyQr: true },
         dashboard: { access: true, scope: 'full' },
         user: { changePassword: false, manageRoles: false, update: false, create: false },

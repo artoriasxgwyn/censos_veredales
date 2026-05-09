@@ -140,6 +140,22 @@ export const useUserStore = defineStore('user', {
 
     setCurrentUser(user) {
       this.currentUser = user
+    },
+
+    async createUser(userData) {
+      this.loading = true
+      try {
+        const response = await userService.createUser(userData)
+        this.users.push(response.data)
+        return { success: true, data: response.data }
+      } catch (error) {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Error al crear usuario'
+        }
+      } finally {
+        this.loading = false
+      }
     }
   }
 })

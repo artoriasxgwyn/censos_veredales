@@ -138,7 +138,7 @@ const loading = ref(false)
 const community = ref(null)
 
 const canEdit = computed(() => {
-  return authStore.isPresident
+  return authStore.hasPermission('community', 'update')
 })
 
 onMounted(async () => {

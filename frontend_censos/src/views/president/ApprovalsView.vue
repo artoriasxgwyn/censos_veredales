@@ -349,12 +349,16 @@ const userStore = useUserStore()
 const authStore = useAuthStore()
 const communityStore = useCommunityStore()
 
-// Security check: Only presidents can access this view
+// Security check: Requires permission to approve residents/dwellings/letters
 onMounted(() => {
-  if (!authStore.isPresident) {
+  const canApproveResidents = authStore.hasPermission('resident', 'update')
+  const canApproveDwellings = authStore.hasPermission('dwelling', 'update')
+  const canApproveLetters = authStore.hasPermission('letter', 'confirmJuramentada')
+
+  if (!canApproveResidents && !canApproveDwellings && !canApproveLetters) {
     $q.notify({
       type: 'negative',
-      message: 'Acceso denegado. Solo el presidente puede acceder a esta sección.'
+      message: 'Acceso denegado. No tienes permisos para aprobar elementos.'
     })
     router.push('/admin/dashboard')
   }

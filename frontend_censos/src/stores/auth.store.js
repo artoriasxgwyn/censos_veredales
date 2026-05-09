@@ -180,8 +180,8 @@ export const useAuthStore = defineStore('auth', {
         this.user = response.data
         // Cargar información de la comunidad
         await this.fetchCommunityInfo()
-        // Cargar permisos después de cargar el usuario
-        if (this.user?.role !== 'president') {
+        // Cargar permisos después de cargar el usuario (solo si no están cargados)
+        if (this.user?.role !== 'president' && !this.permissionsLoaded && !this.isFetchingPermissions) {
           await this.fetchPermissions()
         }
         return response.data
@@ -191,21 +191,28 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async fetchPermissions() {
+    async fetchPermissions(force = false) {
       if (!this.accessToken) return null
       if (this.user?.role === 'president') {
         this.permissions = { all: true }
         this.permissionsLoaded = true
         return { data: { permissions: { all: true } } }
       }
-      // Evitar llamadas concurrentes
-      if (this.isFetchingPermissions) {
+      // Evitar llamadas concurrentes (a menos que sea forzado)
+      if (this.isFetchingPermissions && !force) {
         return null
       }
-      // Si ya se cargaron o falló, no reintentar
-      if (this.permissionsLoaded || this.permissionsLoadFailed) {
+      // Si ya se cargaron o falló, no reintentar (a menos que sea forzado)
+      if ((this.permissionsLoaded || this.permissionsLoadFailed) && !force) {
         return this.permissions ? { data: { permissions: this.permissions } } : null
       }
+
+      // Si es forzado, resetear flags
+      if (force) {
+        this.permissionsLoaded = false
+        this.permissionsLoadFailed = false
+      }
+
       this.isFetchingPermissions = true
       try {
         const response = await roleService.getMyPermissions()

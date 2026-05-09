@@ -97,6 +97,16 @@ const communityStore = useCommunityStore()
 const authStore = useAuthStore()
 
 onMounted(async () => {
+  // Verificar permiso para ver comunidades
+  if (!authStore.hasPermission('community', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver comunidades.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await communityStore.fetchPublicCommunities()
 })
 </script>

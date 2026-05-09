@@ -95,11 +95,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAnnouncementStore } from '@/stores/announcement.store'
+import { useAuthStore } from '@/stores/auth.store'
 
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const announcementStore = useAnnouncementStore()
+const authStore = useAuthStore()
 
 const announcementId = computed(() => route.params.id)
 
@@ -111,6 +113,16 @@ const form = ref({
 })
 
 onMounted(async () => {
+  // Verificar permiso para editar anuncios
+  if (!authStore.hasPermission('announcement', 'update')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para editar anuncios.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await announcementStore.fetchAnnouncementById(announcementId.value)
 
   const announcement = announcementStore.currentAnnouncement
@@ -125,27 +137,75 @@ onMounted(async () => {
 })
 
 const handleSubmit = async () => {
-  const updateData = {
-    title: form.value.title,
-    header: form.value.header,
-    body: form.value.body,
-    publishedAt: form.value.isPublished ? new Date().toISOString() : null
+  // Validaciones de campos requeridos
+  if (!form.value.title?.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'El título del anuncio es requerido',
+      timeout: 4000
+    })
+    return
   }
 
-  const result = await announcementStore.updateAnnouncement(announcementId.value, updateData)
-
-  if (result.success) {
+  if (!form.value.header?.trim()) {
     $q.notify({
-      type: 'positive',
-      message: 'Anuncio actualizado exitosamente'
+      type: 'warning',
+      message: 'El encabezado del anuncio es requerido',
+      timeout: 4000
     })
-    router.push(`/admin/announcements/${announcementId.value}`)
-  } else {
-    $q.notify({
-      type: 'negative',
-      message: result.message || 'Error al actualizar anuncio'
-    })
+    return
   }
+
+  if (!form.value.body?.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'El cuerpo del anuncio es requerido',
+      timeout: 4000
+    })
+    return
+  }
+
+  // Confirmación antes de guardar
+  $q.dialog({
+    title: 'Confirmar actualización',
+    message: form.value.isPublished
+      ? '¿Estás seguro de que deseas actualizar este anuncio? Será visible para todos los residentes.'
+      : '¿Estás seguro de que deseas actualizar este anuncio? Permanecerá como borrador.',
+    cancel: true,
+    persistent: true,
+    ok: {
+      label: 'Guardar',
+      color: 'primary',
+      flat: true
+    },
+    cancel: {
+      label: 'Cancelar',
+      color: 'grey',
+      flat: true
+    }
+  }).onOk(async () => {
+    const updateData = {
+      title: form.value.title.trim(),
+      header: form.value.header.trim(),
+      body: form.value.body,
+      publishedAt: form.value.isPublished ? new Date().toISOString() : null
+    }
+
+    const result = await announcementStore.updateAnnouncement(announcementId.value, updateData)
+
+    if (result.success) {
+      $q.notify({
+        type: 'positive',
+        message: 'Anuncio actualizado exitosamente'
+      })
+      router.push(`/admin/announcements/${announcementId.value}`)
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: result.message || 'Error al actualizar anuncio'
+      })
+    }
+  })
 }
 </script>
 

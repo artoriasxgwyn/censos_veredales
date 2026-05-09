@@ -10,10 +10,19 @@
       <h1 class="title">Detalle de Residente</h1>
       <div class="header-actions">
         <q-btn
+          v-if="canEdit"
           color="primary"
           label="Editar"
           icon="edit"
           @click="router.push(`/admin/residents/${residentId}/edit`)"
+        />
+        <q-btn
+          v-if="canDelete"
+          color="negative"
+          label="Eliminar"
+          icon="delete"
+          flat
+          @click="handleDelete"
         />
       </div>
     </div>
@@ -158,9 +167,9 @@
           </div>
         </q-card-section>
 
-        <q-separator />
+        <q-separator v-if="canDelete" />
 
-        <q-card-section>
+        <q-card-section v-if="canDelete">
           <h3 class="section-title danger">Zona de Peligro</h3>
           <q-btn
             color="negative"
@@ -238,6 +247,9 @@ const canApprove = computed(() => {
   return isApprover && authStore.hasPermission('resident', 'update') && !alreadyVoted.value
 })
 
+const canEdit = computed(() => authStore.hasPermission('resident', 'update'))
+const canDelete = computed(() => authStore.hasPermission('resident', 'delete'))
+
 const aprobacionProgreso = computed(() => {
   if (!resident.value) return { texto: 'Sin datos', porcentaje: 0 }
 
@@ -261,6 +273,16 @@ const aprobacionProgreso = computed(() => {
 })
 
 onMounted(async () => {
+  // Verificar permiso para ver residentes (read es suficiente para ver detalle)
+  if (!authStore.hasPermission('resident', 'read')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para ver residentes.'
+    })
+    router.push('/admin/dashboard')
+    return
+  }
+
   await Promise.all([
     residentStore.fetchResidentById(residentId.value),
     userStore.fetchAllUsersPublic(),

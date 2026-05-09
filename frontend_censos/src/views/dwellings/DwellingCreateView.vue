@@ -185,6 +185,16 @@ const photoPreview = ref(null)
 
 const fileInputRef = ref(null)
 
+onMounted(() => {
+  if (!authStore.hasPermission('dwelling', 'create')) {
+    $q.notify({
+      type: 'negative',
+      message: 'Acceso denegado. No tienes permisos para crear viviendas.'
+    })
+    router.push('/admin/dashboard')
+  }
+})
+
 // Helpers para errores
 const getFieldError = (field) => errors.value[field] || null
 const hasError = (field) => !!getFieldError(field)
